@@ -30,6 +30,8 @@ def init_db():
             who_score INTEGER DEFAULT 0,
             status TEXT DEFAULT 'WATCH',
             source TEXT,
+            last_description_checked TIMESTAMP,
+            last_news_check TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -59,6 +61,19 @@ def init_db():
             source TEXT,
             relevant_products TEXT,
             detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS monitoring_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prospect_id INTEGER REFERENCES prospects(id),
+            event_type TEXT NOT NULL,
+            urgency TEXT NOT NULL,
+            title TEXT NOT NULL,
+            evidence TEXT,
+            source_url TEXT,
+            event_date TEXT,
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_processed INTEGER DEFAULT 0
         );
     """)
     
@@ -193,4 +208,52 @@ def is_qualified_prospect(prospect: dict) -> tuple[bool, str]:
             return False, "B2B only product, no consumer users"
     
     return True, "Qualified"
-    print("Cleaned up non-prospect entries")
+
+
+def record_monitoring_event(prospect_id: int, event_type: str, urgency: str,
+                            title: str, evidence: str = None, 
+                            source_url: str = None, event_date: str = None):
+    """Record a monitoring event for a prospect."""
+    with get_db() as conn:
+        conn.execute("""
+            INSERT INTO monitoring_events 
+            (prospect_id, event_type, urgency, title, evidence, source_url, event_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (prospect_id, event_type, urgency, title, evidence, source_url, event_date))
+        conn.commit()
+
+
+def get_monitoring_events(prospect_id: int, days: int = 7):
+    """Get recent monitoring events for a prospect."""
+    with get_db() as conn:
+        return conn.execute("""
+            SELECT * FROM monitoring_events 
+            WHERE prospect_id = ? 
+            AND datetime(detected_at) >= datetime('now', '-' || ? || ' days')
+            ORDER BY detected_at DESC
+        """, (prospect_id, days)).fetchall()
+
+
+def update_prospect_monitor_timestamp(prospect_id: int, check_type: str):
+    """Update last check timestamp for a prospect."""
+    column = 'last_news_check' if check_type == 'news' else 'last_description_checked'
+    with get_db() as conn:
+        conn.execute(
+            f"UPDATE prospects SET {column} = CURRENT_TIMESTAMP WHERE id = ?",
+            (prospect_id,)
+        )
+        conn.commit()
+
+
+def get_all_prospects_for_monitoring():
+    """Get all qualified prospects that need monitoring."""
+    with get_db() as conn:
+        return conn.execute("""
+            SELECT id, name, play_store_id, description 
+            FROM prospects 
+            WHERE is_existing_partner = 0
+            AND id IN (
+                SELECT id FROM prospects WHERE status IN ('HOT', 'WARM', 'WATCH')
+            )
+            ORDER BY who_score DESC
+        """).fetchall()

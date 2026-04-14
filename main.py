@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import init_db, remove_non_prospects
+from database import init_db, remove_non_prospects, get_monitoring_events
 from discovery.news_monitor import run_news_monitor
 from discovery.play_store import discover_from_play_store
+from discovery.company_monitor import run_full_monitoring
 from signals.scorer import recalculate_all_scores
 from database import get_db
 
@@ -132,3 +133,71 @@ def reset_discovery():
         conn.execute("DELETE FROM processed_articles")
         conn.commit()
     return {"status": "reset complete — next discover will reprocess all articles"}
+
+@app.post("/api/monitor/run")
+def trigger_monitoring():
+    """Run monitoring cycle on all in-universe prospects."""
+    result = run_full_monitoring()
+    return {
+        "status": "monitoring complete",
+        **result
+    }
+
+@app.get("/api/prospects/{prospect_id}/events")
+def get_prospect_monitoring_events(prospect_id: int, days: int = 7):
+    """Get recent monitoring events for a prospect."""
+    with get_db() as conn:
+        prospect = conn.execute(
+            "SELECT * FROM prospects WHERE id = ?", (prospect_id,)
+        ).fetchone()
+        
+        if not prospect:
+            return {"error": "Prospect not found"}
+        
+        events = conn.execute("""
+            SELECT * FROM monitoring_events 
+            WHERE prospect_id = ? 
+            AND datetime(detected_at) >= datetime('now', '-' || ? || ' days')
+            ORDER BY detected_at DESC
+        """, (prospect_id, days)).fetchall()
+    
+    return {
+        "prospect": dict(prospect),
+        "monitoring_events": [dict(e) for e in events],
+        "event_count": len(events) if events else 0
+    }
+
+@app.get("/api/monitoring/summary")
+def get_monitoring_summary():
+    """Get summary of all monitoring events from last 7 days."""
+    with get_db() as conn:
+        events = conn.execute("""
+            SELECT 
+                event_type,
+                urgency,
+                COUNT(*) as count
+            FROM monitoring_events
+            WHERE datetime(detected_at) >= datetime('now', '-7 days')
+            GROUP BY event_type, urgency
+            ORDER BY count DESC
+        """).fetchall()
+        
+        recent_by_prospect = conn.execute("""
+            SELECT 
+                p.name,
+                p.who_score,
+                COUNT(me.id) as event_count,
+                MAX(me.detected_at) as last_event
+            FROM prospects p
+            LEFT JOIN monitoring_events me ON p.id = me.prospect_id
+            AND datetime(me.detected_at) >= datetime('now', '-7 days')
+            WHERE me.id IS NOT NULL
+            GROUP BY p.id
+            ORDER BY event_count DESC
+        """).fetchall()
+    
+    return {
+        "events_by_type": [dict(e) for e in events],
+        "prospects_with_recent_events": [dict(p) for p in recent_by_prospect],
+        "summary": f"{len(recent_by_prospect)} prospects had monitoring events in last 7 days"
+    }
