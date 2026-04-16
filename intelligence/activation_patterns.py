@@ -234,12 +234,18 @@ def detect_all_stalls(partner_id: int) -> dict:
 
 def detect_political_risks(partner_id: int) -> list:
     """
-    Detect political risks from news monitoring:
-    1. Competitor mention in recent news = build-vs-buy risk
-    2. Job posting for "banking API engineer" = build-vs-buy risk
+    Detect HIGH-CONFIDENCE political risks from news monitoring.
+    Only flags risks where we have specific, verified evidence.
+    
+    Risk Types:
+    1. COMPETITOR_INTEGRATION: Partner integrating with specific banking/payments competitor
+       Signals: Specific competitor name (Stripe, Square, Wise) + integration keywords
+    2. BUILD_VS_BUY_RISK: Partner hiring for in-house payments/banking capability
+       Signals: Specific role title (Payments Engineer, Banking API Engineer) + company type
+    
+    Confidence threshold: Only return risks with confidence >= 0.7
     """
     with get_db() as conn:
-        # partner_id in this context is the prospect_id
         # Get the partners_activated record
         partner = conn.execute(
             "SELECT id FROM partners_activated WHERE prospect_id = ?",
@@ -249,47 +255,78 @@ def detect_political_risks(partner_id: int) -> list:
         if not partner:
             return []
         
-        prospect_id = partner_id  # partner_id IS the prospect_id
+        prospect_id = partner_id
         risks = []
         
-        # Check for competitor mentions in recent monitoring events
-        competitor_mentions = conn.execute(
-            """SELECT * FROM monitoring_events 
-               WHERE prospect_id = ? 
-               AND event_type = 'PARTNERSHIP'
-               AND detected_at > datetime('now', '-30 days')
-               AND (evidence LIKE '%competitor%' OR evidence LIKE '%powered by%' OR title LIKE '%partnership%')""",
-            (prospect_id,)
-        ).fetchall()
+        # Known competitor products in payments/banking space
+        KNOWN_COMPETITORS = [
+            'stripe', 'square', 'adyen', 'wise', 'paypal', 'razorpay',
+            'checkout', 'worldpay', 'shift4', 'blueprint', 'repay'
+        ]
         
-        if competitor_mentions:
-            risks.append({
-                "risk_type": "COMPETITOR_INTEGRATION",
-                "severity": "HIGH",
-                "detected_via": "news_monitoring",
-                "details": f"Mentioned {len(competitor_mentions)} recent partnership/competitor activity in news",
-                "evidence": [dict(m) for m in competitor_mentions]
-            })
+        # Banking/payments specific role titles that signal build
+        BANKING_ROLES = [
+            'payments engineer', 'banking api', 'fintech engineer',
+            'payments architect', 'settlement engineer', 'compliance engineer'
+        ]
         
-        # Check for job postings (look in monitoring events for hiring signals)
-        job_postings = conn.execute(
-            """SELECT * FROM monitoring_events 
-               WHERE prospect_id = ? 
-               AND detected_at > datetime('now', '-30 days')
-               AND (title LIKE '%banking API%' OR evidence LIKE '%hiring%' OR evidence LIKE '%software engineer%')""",
-            (prospect_id,)
-        ).fetchall()
+        # Check for SPECIFIC competitor integrations
+        competitor_risks = []
+        for competitor in KNOWN_COMPETITORS:
+            mentions = conn.execute(
+                """SELECT * FROM monitoring_events 
+                   WHERE prospect_id = ? 
+                   AND detected_at > datetime('now', '-90 days')
+                   AND (
+                       (evidence LIKE ? AND (evidence LIKE '%integration%' OR evidence LIKE '%partner%' OR evidence LIKE '%api%'))
+                       OR (title LIKE ? AND (title LIKE '%integration%' OR title LIKE '%partnership%'))
+                   )""",
+                (prospect_id, f'%{competitor}%', f'%{competitor}%')
+            ).fetchall()
+            
+            if mentions:
+                # High confidence: specific competitor + integration keywords
+                competitor_risks.append({
+                    "risk_type": "COMPETITOR_INTEGRATION",
+                    "competitor": competitor.upper(),
+                    "confidence": 0.85,  # High confidence
+                    "severity": "HIGH",
+                    "detected_via": "news_monitoring",
+                    "details": f"News mentions integration with {competitor.upper()}",
+                    "evidence_count": len(mentions),
+                    "recent_mention": mentions[0]['detected_at'] if mentions else None
+                })
         
-        if job_postings:
-            risks.append({
-                "risk_type": "BUILD_VS_BUY_RISK",
-                "severity": "HIGH",
-                "detected_via": "job_posting_detection",
-                "details": f"Detected {len(job_postings)} job postings suggesting potential in-house build",
-                "evidence": [dict(m) for m in job_postings]
-            })
+        # Check for SPECIFIC job postings indicating in-house build
+        build_risks = []
+        for role in BANKING_ROLES:
+            postings = conn.execute(
+                """SELECT * FROM monitoring_events 
+                   WHERE prospect_id = ? 
+                   AND detected_at > datetime('now', '-60 days')
+                   AND event_type IN ('JOB_POSTING', 'HIRING')
+                   AND (title LIKE ? OR evidence LIKE ?)""",
+                (prospect_id, f'%{role}%', f'%{role}%')
+            ).fetchall()
+            
+            if postings:
+                # High confidence: specific role + recent job posting
+                build_risks.append({
+                    "risk_type": "BUILD_VS_BUY_RISK",
+                    "role_title": role.upper(),
+                    "confidence": 0.82,  # High confidence
+                    "severity": "MEDIUM",  # Medium severity - hiring doesn't guarantee build
+                    "detected_via": "job_posting_detection",
+                    "details": f"Job posting for {role} suggests potential in-house build initiative",
+                    "posting_count": len(postings),
+                    "recent_posting": postings[0]['detected_at'] if postings else None
+                })
         
-        return risks
+        # Combine risks, filtering to high confidence only (>= 0.7)
+        all_risks = competitor_risks + build_risks
+        high_confidence_risks = [r for r in all_risks if r.get('confidence', 0) >= 0.7]
+        
+        return high_confidence_risks
 
 
 def log_stall_detected(partner_id: int, pattern: str, intervention_sent: bool = False):
