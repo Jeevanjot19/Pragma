@@ -6,7 +6,7 @@ Tailored based on their current milestone and detected blockers.
 
 from database import get_db
 from outreach.activation import get_activation_recommendations, get_milestone_by_id
-import anthropic
+from intelligence.llm_extractor import _call_llm, _parse_json_response
 
 def generate_reengagement_email(partner_id: int) -> dict:
     """
@@ -136,30 +136,13 @@ Format as JSON with "subject" and "body" keys."""
     # Call LLM
     try:
         from datetime import datetime
-        client = anthropic.Anthropic()
         
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1024,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        
-        response_text = message.content[0].text
+        response_text = _call_llm(prompt, max_tokens=1024)
         
         # Try to parse JSON response
-        import json
-        try:
-            # Try to extract JSON from response
-            json_start = response_text.find('{')
-            json_end = response_text.rfind('}') + 1
-            if json_start >= 0 and json_end > json_start:
-                json_str = response_text[json_start:json_end]
-                email_dict = json.loads(json_str)
-            else:
-                email_dict = {"subject": "Re-engagement", "body": response_text}
-        except json.JSONDecodeError:
+        email_dict = _parse_json_response(response_text)
+        
+        if not email_dict:
             email_dict = {"subject": "Re-engagement", "body": response_text}
         
         return {
@@ -198,20 +181,7 @@ Format as JSON with "subject" and "body" keys."""
             "reengage_persona": recommendations["re_engagement_persona"],
             "email": {
                 "subject": fallback_subjects.get(stall_reason, "Let's move forward together"),
-                "body": f"""Hi {partner_info['name']} team,
-
-We noticed you're working on integrating into {current_milestone.get('name')}.
-
-We want to help you reach {next_milestone} — our teams have seen partners reach this stage in {current_milestone.get('expected_days')} days on average.
-
-The main thing slowing you down: {detected_issues[0].get('description') if detected_issues else 'we're not sure'}
-
-Let's hop on a quick call this week to unblock this. Our {recommendations["re_engagement_persona"].replace('_', ' ').lower()} team is ready to help.
-
-Available anytime that works for you.
-
-Best,
-[Your Name]"""
+                "body": f"Hi {partner_info['name']} team,\n\nWe noticed you're working on integrating into {current_milestone.get('name')}.\n\nWe want to help you reach {next_milestone} — our teams have seen partners reach this stage in {current_milestone.get('expected_days')} days on average.\n\nThe main thing slowing you down: {detected_issues[0].get('description') if detected_issues else 'we are not sure'}\n\nLet's hop on a quick call this week to unblock this. Our {recommendations['re_engagement_persona'].replace('_', ' ').lower()} team is ready to help.\n\nAvailable anytime that works for you.\n\nBest,\n[Your Name]"
             },
             "context": {
                 "template_used": template,

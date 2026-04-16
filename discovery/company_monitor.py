@@ -8,6 +8,7 @@ Key insight: This runs on the universe of existing prospects (from WHO), not dis
 
 import feedparser
 import time
+import re
 from datetime import datetime, timedelta
 from urllib.parse import quote
 from database import (
@@ -143,12 +144,21 @@ def categorize_news(title: str, summary: str, company_name: str) -> tuple:
     if name_lower not in content:
         return (None, None)
 
-    # FUNDING — require specific funding language + money terms
-    funding_terms = ['series a', 'series b', 'series c', 'series d',
-                     'seed round', 'pre-series', 'raises funding',
-                     'raised funding', 'secures funding', 'crore funding',
-                     'million funding', '$', '₹', 'valuation']
-    if sum(1 for t in funding_terms if t in content) >= 2:
+    # FUNDING — require strong funding signals (improved detection)
+    # Look for explicit funding rounds OR funding amount mentions
+    funding_rounds = ['series a', 'series b', 'series c', 'series d', 'series e',
+                      'seed round', 'pre-series', 'seed funding', 'seed investment']
+    funding_verbs = ['raises', 'raised', 'secures', 'secured', 'announces funding']
+    
+    has_round = any(term in content for term in funding_rounds)
+    has_verb = any(term in content for term in funding_verbs)
+    
+    # Check for funding amount (e.g., "₹100 crore", "$10 million")
+    has_amount = bool(re.search(r'[₹$]\s*\d+\s*(crore|million|billion|lakh)', content))
+    
+    # Count signals: need round + verb + amount OR just 2 strong signals
+    funding_signals = sum([has_round, has_verb, has_amount])
+    if funding_signals >= 2:
         return ("FUNDING", "HIGH")
 
     # PRODUCT_LAUNCH — launch language + financial product context

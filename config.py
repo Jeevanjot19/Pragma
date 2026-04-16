@@ -16,25 +16,28 @@ NON_PROSPECTS = [
     "RBI", "Reserve Bank of India", "SEBI", "NPCI", "IRDAI", "MCA",
     "NITI Aayog", "Ministry of Finance", "Government of India",
     "EPF", "EPFO", "Post Office", "India Post", "IPPB",
-    "India Post Payments Bank",
+    "India Post Payments Bank", "Post Office Savings Account",
     
-    # Traditional banks / payment banks
+    # Traditional banks / payment banks / government services
     "SBI", "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Bank",
     "Bank of India", "Punjab National Bank", "Canara Bank", "DCB Bank",
     "Airtel Payments Bank", "Paytm Payments Bank", "Jio Payments Bank",
+    "Jio Finance", "Jio Financial Services",
     
     # Foreign companies with no India product relevance
     "Revolut", "Wise", "N26", "Monzo",
     
-    # Non-fintech companies
+    # Non-fintech companies / retailers
     "Meta", "Facebook", "Google", "Amazon", "Flipkart",
-    "Dabur India", "Falcon",
+    "Dabur India", "Falcon", "Google Pay",
     
-    # News/data companies
+    # News/data companies / generic terms
     "Tracxn", "Inc42", "YourStory", "Entrackr", "VCCircle",
+    "Indian FinTech", "India", "Fintech", "None", "None mentioned",
     
-    # Generic terms
-    "India Fintech", "None", "None mentioned", "Fintech",
+    # Duplicate/compound entries that aren't real companies
+    "Groww, Pine Labs", "ViewTrade International IFSC Pvt Ltd",
+    "Cedar Hill", "MLQ.ai",  # These are too small/niche
 ]
 
 # Product categories and their Blostem fit
