@@ -22,7 +22,7 @@ def generate_dead_on_arrival_email(partner_id: int) -> dict:
             """SELECT p.name, p.category, p.recommended_product, pa.signed_at
                FROM partners_activated pa
                JOIN prospects p ON pa.prospect_id = p.id
-               WHERE pa.id = ?""",
+               WHERE pa.prospect_id = ?""",
             (partner_id,)
         ).fetchone()
     
@@ -66,11 +66,12 @@ Blostem Engineering
     return {
         "partner_id": partner_id,
         "pattern": StallPattern.DEAD_ON_ARRIVAL,
-        "target_role": "CTO",
+        "target_persona": "CTO",
         "target_note": "NOT the person who signed — the person actually integrating",
         "subject": subject,
         "body": body,
         "cta": "30-minute engineering call to get started",
+        "tone": "friendly_engineering",
         "generated_at": datetime.now().isoformat()
     }
 
@@ -87,7 +88,7 @@ def generate_stuck_in_sandbox_email(partner_id: int, stall_data: dict) -> dict:
             """SELECT p.name, p.recommended_product
                FROM partners_activated pa
                JOIN prospects p ON pa.prospect_id = p.id
-               WHERE pa.id = ?""",
+               WHERE pa.prospect_id = ?""",
             (partner_id,)
         ).fetchone()
     
@@ -136,12 +137,13 @@ Blostem Engineering
     return {
         "partner_id": partner_id,
         "pattern": StallPattern.STUCK_IN_SANDBOX,
-        "target_role": "CTO",
+        "target_persona": "CTO",
         "target_note": "The person making the API calls",
         "error_code": error_code,
         "subject": subject,
         "body": body,
         "cta": "15-minute debug call",
+        "tone": "technical_debug",
         "generated_at": datetime.now().isoformat()
     }
 
@@ -158,7 +160,7 @@ def generate_production_blocked_email(partner_id: int, stall_data: dict) -> dict
             """SELECT p.name, p.recommended_product, p.category
                FROM partners_activated pa
                JOIN prospects p ON pa.prospect_id = p.id
-               WHERE pa.id = ?""",
+               WHERE pa.prospect_id = ?""",
             (partner_id,)
         ).fetchone()
     
@@ -199,12 +201,13 @@ Blostem Partnerships
     return {
         "partner_id": partner_id,
         "pattern": StallPattern.PRODUCTION_BLOCKED,
-        "target_role": "Business Contact / CEO / Head of Partnerships",
+        "target_persona": "Business Contact",
         "target_note": "NOT engineering — the person who can approve production launch",
         "days_pending": days,
         "subject": subject,
         "body": body,
         "cta": "20-minute blocker resolution call",
+        "tone": "procurement_blocker_discussion",
         "generated_at": datetime.now().isoformat()
     }
 

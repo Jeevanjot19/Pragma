@@ -28,18 +28,20 @@ def detect_dead_on_arrival(partner_id: int) -> dict | None:
     Partner signed but made ZERO API calls in 14 days.
     Likely cause: Person who signed isn't the person who integrates.
     
+    partner_id: prospect_id from prospects table
     Returns: Detection result or None if pattern not detected
     """
     with get_db() as conn:
-        # Get partner signup date
+        # Get partner activation record (prospect_id is the prospect in prospects table)
         partner = conn.execute(
-            "SELECT signed_at FROM partners_activated WHERE id = ?",
+            "SELECT id, signed_at FROM partners_activated WHERE prospect_id = ?",
             (partner_id,)
         ).fetchone()
         
         if not partner:
             return None
         
+        partner_activation_id = partner['id']  # This is the actual ID for partner_api_calls foreign key
         signed_at = datetime.fromisoformat(partner['signed_at'])
         days_since_signed = (datetime.now() - signed_at).days
         
@@ -50,7 +52,7 @@ def detect_dead_on_arrival(partner_id: int) -> dict | None:
         # Check for ANY API calls (sandbox or production)
         api_calls = conn.execute(
             "SELECT COUNT(*) as count FROM partner_api_calls WHERE partner_id = ?",
-            (partner_id,)
+            (partner_activation_id,)
         ).fetchone()
         
         if api_calls['count'] > 0:
@@ -73,16 +75,28 @@ def detect_stuck_in_sandbox(partner_id: int) -> dict | None:
     Partner made sandbox API calls but then went silent for 7+ days.
     Likely cause: Technical blocker (auth failure, missing field, integration complexity)
     
+    partner_id: prospect_id from prospects table
     Returns: Detection result with last error code (if any)
     """
     with get_db() as conn:
+        # Get partner activation record
+        partner = conn.execute(
+            "SELECT id FROM partners_activated WHERE prospect_id = ?",
+            (partner_id,)
+        ).fetchone()
+        
+        if not partner:
+            return None
+        
+        partner_activation_id = partner['id']
+        
         # Get last sandbox API call
         last_sandbox_call = conn.execute(
             """SELECT called_at, status_code, error_code, error_message, endpoint
                FROM partner_api_calls 
                WHERE partner_id = ? AND environment = 'sandbox'
                ORDER BY called_at DESC LIMIT 1""",
-            (partner_id,)
+            (partner_activation_id,)
         ).fetchone()
         
         if not last_sandbox_call:
@@ -98,7 +112,7 @@ def detect_stuck_in_sandbox(partner_id: int) -> dict | None:
         # Count total sandbox calls
         sandbox_call_count = conn.execute(
             "SELECT COUNT(*) as count FROM partner_api_calls WHERE partner_id = ? AND environment = 'sandbox'",
-            (partner_id,)
+            (partner_activation_id,)
         ).fetchone()
         
         # Check for recent errors
@@ -110,7 +124,7 @@ def detect_stuck_in_sandbox(partner_id: int) -> dict | None:
                AND called_at > datetime('now', '-14 days')
                GROUP BY error_code
                ORDER BY count DESC""",
-            (partner_id,)
+            (partner_activation_id,)
         ).fetchall()
         
         return {
@@ -134,13 +148,31 @@ def detect_production_blocked(partner_id: int) -> dict | None:
     Partner successfully used sandbox (recent API calls with 200s) but zero production calls in 14+ days.
     Likely cause: Approval/procurement/internal sign-off required.
     
+    partner_id: prospect_id from prospects table
     Returns: Detection result
     """
     with get_db() as conn:
+        # Get partner activation record
+        partner = conn.execute(
+            "SELECT id, signed_at FROM partners_activated WHERE prospect_id = ?",
+            (partner_id,)
+        ).fetchone()
+        
+        if not partner:
+            return None
+        
+        partner_activation_id = partner['id']
+        signed_at = datetime.fromisoformat(partner['signed_at'])
+        days_since_signed = (datetime.now() - signed_at).days
+        
+        # Pattern triggers if 14+ days since signing
+        if days_since_signed < 14:
+            return None
+        
         # Check if production calls exist at all
         prod_call_count = conn.execute(
             "SELECT COUNT(*) as count FROM partner_api_calls WHERE partner_id = ? AND environment = 'production'",
-            (partner_id,)
+            (partner_activation_id,)
         ).fetchone()
         
         if prod_call_count['count'] > 0:
@@ -152,31 +184,18 @@ def detect_production_blocked(partner_id: int) -> dict | None:
                WHERE partner_id = ? AND environment = 'sandbox'
                AND status_code = 200
                AND called_at > datetime('now', '-30 days')""",
-            (partner_id,)
+            (partner_activation_id,)
         ).fetchone()
         
         if recent_sandbox_success['count'] == 0:
             return None  # No successful sandbox tests
-        
-        # Get date partner signed
-        partner = conn.execute(
-            "SELECT signed_at FROM partners_activated WHERE id = ?",
-            (partner_id,)
-        ).fetchone()
-        
-        signed_at = datetime.fromisoformat(partner['signed_at'])
-        days_since_signed = (datetime.now() - signed_at).days
-        
-        # Pattern triggers if 14+ days since signing and no prod progress
-        if days_since_signed < 14:
-            return None
         
         # Get last successful sandbox call
         last_success = conn.execute(
             """SELECT called_at FROM partner_api_calls 
                WHERE partner_id = ? AND environment = 'sandbox' AND status_code = 200
                ORDER BY called_at DESC LIMIT 1""",
-            (partner_id,)
+            (partner_activation_id,)
         ).fetchone()
         
         return {
@@ -220,16 +239,17 @@ def detect_political_risks(partner_id: int) -> list:
     2. Job posting for "banking API engineer" = build-vs-buy risk
     """
     with get_db() as conn:
-        # Get partner prospect
+        # partner_id in this context is the prospect_id
+        # Get the partners_activated record
         partner = conn.execute(
-            "SELECT prospect_id FROM partners_activated WHERE id = ?",
+            "SELECT id FROM partners_activated WHERE prospect_id = ?",
             (partner_id,)
         ).fetchone()
         
         if not partner:
             return []
         
-        prospect_id = partner['prospect_id']
+        prospect_id = partner_id  # partner_id IS the prospect_id
         risks = []
         
         # Check for competitor mentions in recent monitoring events

@@ -143,34 +143,35 @@ class TestBlostemWebhookIntegration:
         # Set up partner
         with get_db() as conn:
             signed_at = (datetime.now() - timedelta(days=15)).isoformat()
-            conn.execute("""
+            cursor = conn.execute("""
                 INSERT INTO partners_activated (prospect_id, signed_at, current_milestone)
                 VALUES (?, ?, ?)
             """, (2, signed_at, "M001"))
+            partner_activation_id = cursor.lastrowid
             
-            # Log some sandbox calls
-            call_time = datetime.now() - timedelta(days=9)
+            # Log some sandbox calls 9 days ago
+            call_time = (datetime.now() - timedelta(days=9)).isoformat()
             conn.execute("""
                 INSERT INTO partner_api_calls 
                 (partner_id, environment, endpoint, method, status_code, 
-                 error_code, error_message, response_time_ms, api_key_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (2, "sandbox", "/v1/webhooks/register", "POST", 201, 
-                  None, None, 145, "sk_test_002"))
+                 error_code, error_message, response_time_ms, api_key_id, called_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (partner_activation_id, "sandbox", "/v1/webhooks/register", "POST", 201, 
+                  None, None, 145, "sk_test_002", call_time))
             
-            # Log an error 8 days ago
-            error_time = datetime.now() - timedelta(days=8)
+            # Log an error 8 days ago (more recent, so this becomes the "last" call)
+            error_time = (datetime.now() - timedelta(days=8)).isoformat()
             conn.execute("""
                 INSERT INTO partner_api_calls 
                 (partner_id, environment, endpoint, method, status_code, 
-                 error_code, error_message, response_time_ms, api_key_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (2, "sandbox", "/v1/balance", "GET", 401, 
-                  "AUTH_INVALID_KEY", "API key expired", 89, "sk_test_002"))
+                 error_code, error_message, response_time_ms, api_key_id, called_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (partner_activation_id, "sandbox", "/v1/balance", "GET", 401, 
+                  "AUTH_INVALID_KEY", "API key expired", 89, "sk_test_002", error_time))
             
             conn.commit()
         
-        # Test detection
+        # Test detection (use prospect_id in URL)
         response = client.get("/api/activate/patterns/2")
         
         assert response.status_code == 200
@@ -182,21 +183,22 @@ class TestBlostemWebhookIntegration:
         """Test: Partner with successful sandbox but 0 production calls for 14+ days."""
         with get_db() as conn:
             signed_at = (datetime.now() - timedelta(days=20)).isoformat()
-            conn.execute("""
+            cursor = conn.execute("""
                 INSERT INTO partners_activated (prospect_id, signed_at, current_milestone)
                 VALUES (?, ?, ?)
             """, (3, signed_at, "M002"))
+            partner_activation_id = cursor.lastrowid
             
-            # Log successful sandbox calls (15 days ago)
-            sandbox_time = datetime.now() - timedelta(days=15)
+            # Log successful sandbox calls (5 days ago, so recent enough for detection)
+            sandbox_time = (datetime.now() - timedelta(days=5)).isoformat()
             for i in range(5):
                 conn.execute("""
                     INSERT INTO partner_api_calls 
                     (partner_id, environment, endpoint, method, status_code, 
-                     error_code, error_message, response_time_ms, api_key_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (3, "sandbox", f"/v1/test_{i}", "POST", 200, 
-                      None, None, 145, "sk_test_003"))
+                     error_code, error_message, response_time_ms, api_key_id, called_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (partner_activation_id, "sandbox", f"/v1/test_{i}", "POST", 200, 
+                      None, None, 145, "sk_test_003", sandbox_time))
             
             # NO production calls since then
             conn.commit()
@@ -238,27 +240,30 @@ class TestBlostemWebhookIntegration:
         """Test: Generate debugging-specific email for STUCK_IN_SANDBOX."""
         with get_db() as conn:
             signed_at = (datetime.now() - timedelta(days=15)).isoformat()
-            conn.execute("""
+            cursor = conn.execute("""
                 INSERT INTO partners_activated (prospect_id, signed_at, current_milestone)
                 VALUES (?, ?, ?)
             """, (2, signed_at, "M001"))
+            partner_activation_id = cursor.lastrowid
             
-            # Sandbox calls then error
+            # Sandbox calls 10 days ago
+            call_time = (datetime.now() - timedelta(days=10)).isoformat()
             conn.execute("""
                 INSERT INTO partner_api_calls 
                 (partner_id, environment, endpoint, method, status_code, 
-                 error_code, error_message, response_time_ms, api_key_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (2, "sandbox", "/v1/register", "POST", 201, None, None, 145, "sk_test_002"))
+                 error_code, error_message, response_time_ms, api_key_id, called_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (partner_activation_id, "sandbox", "/v1/register", "POST", 201, None, None, 145, "sk_test_002", call_time))
             
-            # Recent error to trigger stuck pattern
+            # Recent error 8 days ago to trigger stuck pattern
+            error_time = (datetime.now() - timedelta(days=8)).isoformat()
             conn.execute("""
                 INSERT INTO partner_api_calls 
                 (partner_id, environment, endpoint, method, status_code, 
-                 error_code, error_message, response_time_ms, api_key_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (2, "sandbox", "/v1/balance", "GET", 400, 
-                  "INVALID_PARAM", "Missing required field: account_id", 89, "sk_test_002"))
+                 error_code, error_message, response_time_ms, api_key_id, called_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (partner_activation_id, "sandbox", "/v1/balance", "GET", 400, 
+                  "INVALID_PARAM", "Missing required field: account_id", 89, "sk_test_002", error_time))
             
             conn.commit()
         
@@ -409,8 +414,9 @@ class TestBlostemWebhookIntegration:
         response = client.post("/api/activate/onboard/1")
         assert response.status_code == 200
         onboarded = response.json()
-        partner_id = onboarded["partner_id"]
-        print(f"   ✓ Partner {partner_id} onboarded")
+        prospect_id = onboarded["prospect_id"]  # Use prospect_id for detection endpoint
+        partner_id = onboarded["partner_id"]     # Use partner_id for DB updates
+        print(f"   ✓ Partner {partner_id} onboarded (prospect_id={prospect_id})")
         
         # Step 2: Wait 15 days (simulated by back-dating in DB)
         print("\n2. WAITING: 15 days pass with no API activity")
@@ -424,16 +430,16 @@ class TestBlostemWebhookIntegration:
             conn.commit()
         print("   ✓ 15 days simulated")
         
-        # Step 3: Check for stall
+        # Step 3: Check for stall (use prospect_id in endpoint)
         print("\n3. DETECTION: Check for activation stalls")
-        response = client.get(f"/api/activate/patterns/{partner_id}")
+        response = client.get(f"/api/activate/patterns/{prospect_id}")
         data = response.json()
         assert data["stall_detected"] == True
         print(f"   ✓ Stall detected: {data['stall_pattern']}")
         
-        # Step 4: Generate intervention
+        # Step 4: Generate intervention (use prospect_id)
         print("\n4. INTERVENTION: Generate email")
-        response = client.post(f"/api/activate/patterns/{partner_id}/generate-intervention")
+        response = client.post(f"/api/activate/patterns/{prospect_id}/generate-intervention")
         intervention = response.json()
         print(f"   ✓ Email generated for {intervention['intervention']['target_persona']}")
         print(f"   ✓ Subject: {intervention['intervention']['subject'][:60]}...")
