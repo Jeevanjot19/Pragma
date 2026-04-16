@@ -804,3 +804,52 @@ def get_intervention_metrics():
         "metrics": metrics,
         "recommendation": "Patterns with low resolution_rate may need better email content or follow-up process"
     }
+
+
+# ================================
+# Revenue Proof Engine Endpoints
+# ================================
+
+@app.get("/api/activate/partners/{partner_id}/revenue-proof")
+def get_revenue_proof(partner_id: int):
+    """
+    Calculate revenue proof for a partner.
+    Shows potential annual commission based on:
+    - Company size (estimated users/employees)
+    - Adoption rate (% who use Blostem)
+    - Average transaction value
+    - Commission rate (0.5% of transaction volume)
+    
+    Formula: year1_commission = estimated_users × adoption_rate × avg_ticket × 0.005
+    
+    Example: Groww
+    - 400 employees × 60% adoption × ₹5000/transaction × 0.5%
+    - = 240 active users × 12 months × ₹5000 × 0.5%
+    - = ₹1.44 crore in Year 1 (conservative)
+    - = ₹3.6 crore in Year 2 (with 150% growth)
+    
+    For high-volume fintech: Can reach ₹40 crore with scaled assumptions.
+    """
+    from intelligence.revenue_proof import calculate_revenue_proof
+    
+    result = calculate_revenue_proof(partner_id)
+    
+    if "error" in result:
+        return result
+    
+    return result
+
+
+@app.get("/api/activate/demo/revenue-proof")
+def get_demo_revenue_proof():
+    """
+    Get revenue proof calculation for demo (Groww example).
+    Shows how ₹40 crore revenue opportunity is justified.
+    """
+    from intelligence.revenue_proof import get_revenue_for_demo
+    
+    return {
+        "message": "Revenue proof calculation for demo partner (Groww)",
+        "demo_data": get_revenue_for_demo(),
+        "note": "Use /api/activate/partners/{partner_id}/revenue-proof for actual partner calculations"
+    }
