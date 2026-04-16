@@ -282,6 +282,43 @@ def init_db():
             response_notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS partner_api_calls (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            environment TEXT NOT NULL DEFAULT 'sandbox',
+            endpoint TEXT NOT NULL,
+            method TEXT NOT NULL,
+            status_code INTEGER,
+            error_code TEXT,
+            error_message TEXT,
+            response_time_ms INTEGER,
+            api_key_id TEXT,
+            called_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS partner_activation_stalls (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            stall_pattern TEXT NOT NULL,
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            days_of_inactivity INTEGER,
+            last_activity_date TIMESTAMP,
+            intervention_email_sent INTEGER DEFAULT 0,
+            intervention_sent_at TIMESTAMP,
+            issue_resolved INTEGER DEFAULT 0,
+            resolved_at TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS partner_political_risks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            risk_type TEXT NOT NULL,
+            detected_via TEXT NOT NULL,
+            details TEXT,
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            alert_sent INTEGER DEFAULT 0
+        );
     """)
     
     conn.commit()
