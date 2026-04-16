@@ -103,6 +103,10 @@ SIGNAL_WEIGHTS = {
 HOT_THRESHOLD = 60
 WARM_THRESHOLD = 30
 
+# Only monitor prospects with WHO score >= this threshold
+# Prevents wasting resources on low-potential WATCH prospects
+MONITORING_MIN_SCORE = 30  # WARM and HOT only
+
 # LLM config
 LLM_MODEL = "gemini-2.0-flash-lite"
 LLM_DAILY_LIMIT = 1000  # Free tier limit

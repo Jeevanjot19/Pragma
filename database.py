@@ -75,6 +75,213 @@ def init_db():
             detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             is_processed INTEGER DEFAULT 0
         );
+
+        CREATE TABLE IF NOT EXISTS prospect_interactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prospect_id INTEGER REFERENCES prospects(id),
+            interaction_type TEXT NOT NULL,
+            email_persona TEXT,
+            subject_line TEXT,
+            sent_at TIMESTAMP,
+            response_received INTEGER DEFAULT 0,
+            response_type TEXT,
+            response_date TIMESTAMP,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS compliance_overrides (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rule_id TEXT NOT NULL,
+            triggered_phrase TEXT,
+            override_count INTEGER DEFAULT 1,
+            last_override_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            first_override_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            review_status TEXT DEFAULT 'TRACKING'
+        );
+
+        CREATE TABLE IF NOT EXISTS partners_activated (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prospect_id INTEGER REFERENCES prospects(id) UNIQUE,
+            signed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            activation_status TEXT DEFAULT 'INTEGRATION_PENDING',
+            current_milestone TEXT,
+            milestone_reached_at TIMESTAMP,
+            days_in_current_milestone INTEGER DEFAULT 0,
+            last_activity TIMESTAMP,
+            activation_score INTEGER DEFAULT 0,
+            is_at_risk INTEGER DEFAULT 0,
+            next_milestone TEXT,
+            estimated_milestone_completion TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS activation_milestones (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            milestone_type TEXT NOT NULL,
+            milestone_name TEXT,
+            expected_days INTEGER,
+            reached_at TIMESTAMP,
+            detection_method TEXT,
+            evidence TEXT,
+            status TEXT DEFAULT 'PENDING'
+        );
+
+        CREATE TABLE IF NOT EXISTS partner_activity (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            activity_type TEXT NOT NULL,
+            activity_date TIMESTAMP,
+            metric_type TEXT,
+            metric_value REAL,
+            notes TEXT,
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS partner_issues (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            issue_type TEXT NOT NULL,
+            issue_category TEXT,
+            description TEXT,
+            severity TEXT DEFAULT 'MEDIUM',
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            resolved_at TIMESTAMP,
+            resolution_notes TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS activation_reengage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            reengage_type TEXT NOT NULL,
+            trigger_reason TEXT,
+            generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            email_subject TEXT,
+            email_body TEXT,
+            success_persona TEXT,
+            sent_at TIMESTAMP,
+            response_received INTEGER DEFAULT 0,
+            response_type TEXT
+        );
+
+        -- INNOVATION 1: Buyer Committee Intelligence
+        CREATE TABLE IF NOT EXISTS buyer_committee_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prospect_id INTEGER REFERENCES prospects(id),
+            partner_id INTEGER REFERENCES partners_activated(id),
+            name TEXT NOT NULL,
+            title TEXT,
+            role TEXT NOT NULL,
+            email TEXT,
+            linkedin_profile TEXT,
+            seniority_level TEXT,
+            decision_authority TEXT,
+            engagement_level TEXT DEFAULT 'UNKNOWN',
+            sentiment TEXT DEFAULT 'NEUTRAL',
+            is_champion INTEGER DEFAULT 0,
+            is_blocker INTEGER DEFAULT 0,
+            is_economic_buyer INTEGER DEFAULT 0,
+            is_user INTEGER DEFAULT 0,
+            first_contact_at TIMESTAMP,
+            last_engagement_at TIMESTAMP,
+            engagement_score REAL DEFAULT 0.0,
+            opened_emails INTEGER DEFAULT 0,
+            clicked_emails INTEGER DEFAULT 0,
+            calls_attended INTEGER DEFAULT 0,
+            demos_attended INTEGER DEFAULT 0,
+            content_downloads INTEGER DEFAULT 0,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS stakeholder_engagement (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            buyer_id INTEGER REFERENCES buyer_committee_members(id),
+            engagement_type TEXT NOT NULL,
+            detail TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            email_id TEXT,
+            call_duration_seconds INTEGER,
+            demo_duration_seconds INTEGER,
+            sentiment_detected TEXT,
+            confidence REAL,
+            sentiment_notes TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS stakeholder_sentiment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            buyer_id INTEGER REFERENCES buyer_committee_members(id),
+            sentiment_status TEXT DEFAULT 'NEUTRAL',
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reason TEXT,
+            engagement_signals INTEGER,
+            concern_area TEXT,
+            influence_score REAL
+        );
+
+        CREATE TABLE IF NOT EXISTS buyer_committee_committee_consensus (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            prospect_id INTEGER REFERENCES prospects(id),
+            consensus_status TEXT DEFAULT 'FORMING',
+            consensus_score REAL DEFAULT 0.0,
+            champions_count INTEGER DEFAULT 0,
+            blockers_count INTEGER DEFAULT 0,
+            neutral_count INTEGER DEFAULT 0,
+            deal_health TEXT DEFAULT 'HEALTHY',
+            risk_factors TEXT,
+            estimated_close_likelihood REAL DEFAULT 0.0,
+            last_assessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS buyer_committee_playbook_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            buyer_id INTEGER REFERENCES buyer_committee_members(id),
+            role TEXT NOT NULL,
+            intervention_sequence INTEGER,
+            email_subject TEXT,
+            email_body TEXT,
+            resources_sent TEXT,
+            sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            opened_at TIMESTAMP,
+            clicked_at TIMESTAMP,
+            response_received INTEGER DEFAULT 0,
+            response_type TEXT,
+            response_notes TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS activation_campaigns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            prospect_id INTEGER REFERENCES prospects(id),
+            campaign_name TEXT NOT NULL,
+            status TEXT DEFAULT 'PENDING',
+            total_contacts INTEGER,
+            target_completion_date TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            campaign_type TEXT DEFAULT 'MULTI_STAKEHOLDER'
+        );
+
+        CREATE TABLE IF NOT EXISTS activation_campaign_sends (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_id INTEGER REFERENCES activation_campaigns(id),
+            buyer_id INTEGER REFERENCES buyer_committee_members(id),
+            contact_sequence INTEGER,
+            role TEXT,
+            scheduled_date TIMESTAMP,
+            playbook_template TEXT,
+            status TEXT DEFAULT 'SCHEDULED',
+            email_subject TEXT,
+            email_body TEXT,
+            sent_at TIMESTAMP,
+            opened_at TIMESTAMP,
+            clicked_at TIMESTAMP,
+            responded_at TIMESTAMP,
+            response_notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
     
     conn.commit()
@@ -210,10 +417,26 @@ def is_qualified_prospect(prospect: dict) -> tuple[bool, str]:
     return True, "Qualified"
 
 
+def event_already_recorded(prospect_id: int, source_url: str) -> bool:
+    """Check if monitoring event was already recorded for this prospect from this URL."""
+    if not source_url:
+        return False
+    with get_db() as conn:
+        existing = conn.execute("""
+            SELECT id FROM monitoring_events 
+            WHERE prospect_id = ? AND source_url = ?
+        """, (prospect_id, source_url)).fetchone()
+        return existing is not None
+
+
 def record_monitoring_event(prospect_id: int, event_type: str, urgency: str,
                             title: str, evidence: str = None, 
                             source_url: str = None, event_date: str = None):
-    """Record a monitoring event for a prospect."""
+    """Record a monitoring event for a prospect. Deduplicates by (prospect_id, source_url)."""
+    # Skip if already recorded from this source
+    if event_already_recorded(prospect_id, source_url):
+        return False
+    
     with get_db() as conn:
         conn.execute("""
             INSERT INTO monitoring_events 
@@ -221,6 +444,8 @@ def record_monitoring_event(prospect_id: int, event_type: str, urgency: str,
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (prospect_id, event_type, urgency, title, evidence, source_url, event_date))
         conn.commit()
+    
+    return True
 
 
 def get_monitoring_events(prospect_id: int, days: int = 7):
@@ -246,14 +471,12 @@ def update_prospect_monitor_timestamp(prospect_id: int, check_type: str):
 
 
 def get_all_prospects_for_monitoring():
-    """Get all qualified prospects that need monitoring."""
+    """Get all HOT and WARM prospects for monitoring. Excludes WATCH and garbage companies."""
     with get_db() as conn:
         return conn.execute("""
             SELECT id, name, play_store_id, description 
             FROM prospects 
             WHERE is_existing_partner = 0
-            AND id IN (
-                SELECT id FROM prospects WHERE status IN ('HOT', 'WARM', 'WATCH')
-            )
+            AND status IN ('HOT', 'WARM')
             ORDER BY who_score DESC
         """).fetchall()

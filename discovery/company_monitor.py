@@ -14,7 +14,6 @@ from database import (
     get_db, record_monitoring_event, update_prospect_monitor_timestamp,
     get_all_prospects_for_monitoring
 )
-from intelligence.llm_extractor import detect_products_smart
 
 # Google News sources for company-specific monitoring
 NEWS_SOURCES = [
@@ -46,8 +45,9 @@ def build_company_news_url(company_name: str) -> str:
 def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
     """
     Search for recent news about a specific company.
-    Generates FRESH_NEWS monitoring events for articles in last 7 days.
-    Returns count of new events created.
+    Generates monitoring events for substantial news in last 7 days.
+    Deduplicates by source URL to prevent recording same article twice.
+    Returns count of NEW events created (excludes deduplicated).
     """
     new_events = 0
     
@@ -72,6 +72,15 @@ def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
             url = entry.get('link', '')
             summary = entry.get('summary', '')
             
+            # Skip if we already have an event from this URL
+            with get_db() as conn:
+                existing = conn.execute(
+                    "SELECT id FROM monitoring_events WHERE source_url = ?",
+                    (url,)
+                ).fetchone()
+            if existing:
+                continue
+            
             # Parse article publish date
             published = entry.get('published_parsed')
             if published:
@@ -89,7 +98,8 @@ def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
             if event_type:
                 event_date_str = article_date.strftime('%Y-%m-%d')
                 
-                record_monitoring_event(
+                # record_monitoring_event now returns bool (True if recorded, False if deduplicated)
+                recorded = record_monitoring_event(
                     prospect_id=prospect_id,
                     event_type=event_type,
                     urgency=urgency,
@@ -98,8 +108,12 @@ def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
                     source_url=url,
                     event_date=event_date_str
                 )
-                new_events += 1
-                print(f"    ✓ {event_type} ({urgency}): {title[:60]}")
+                
+                if recorded:
+                    new_events += 1
+                    print(f"    ✓ {event_type} ({urgency}): {title[:60]}")
+                else:
+                    print(f"    ⊘ {event_type} (already recorded): {title[:60]}")
             
             time.sleep(0.2)
             
@@ -116,35 +130,55 @@ def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
 def categorize_news(title: str, summary: str, company_name: str) -> tuple:
     """
     Categorize news article by event type and urgency.
-    Returns (event_type, urgency) or (None, None) if not relevant.
+    INTENTIONALLY RESTRICTIVE to avoid noise. Only signals material business events.
+    Returns (event_type, urgency) or (None, None) if not a notable event.
+    
+    Key principle: Article must actually be about THIS company.
+    Generic mentions don't count — require company name in content.
     """
     content = (title + " " + summary).lower()
-    
-    # Funding signals
-    if any(word in content for word in ['fund', 'raise', 'series', 'investment', 'seed', 'crore']):
+    name_lower = company_name.lower()
+
+    # Article must actually be about this company
+    if name_lower not in content:
+        return (None, None)
+
+    # FUNDING — require specific funding language + money terms
+    funding_terms = ['series a', 'series b', 'series c', 'series d',
+                     'seed round', 'pre-series', 'raises funding',
+                     'raised funding', 'secures funding', 'crore funding',
+                     'million funding', '$', '₹', 'valuation']
+    if sum(1 for t in funding_terms if t in content) >= 2:
         return ("FUNDING", "HIGH")
-    
-    # Product expansion
-    if any(word in content for word in ['launch', 'expand', 'new product', 'introduce', 'add']):
+
+    # PRODUCT_LAUNCH — launch language + financial product context
+    launch_terms = ['launches', 'launched', 'introduces', 'introduces new',
+                    'rolls out', 'unveils', 'announces new product',
+                    'new feature', 'expands into']
+    if any(t in content for t in launch_terms):
+        # Extra check: is it financial product related?
+        fin_terms = ['fixed deposit', 'fd', 'savings', 'investment',
+                     'credit', 'loan', 'banking', 'wealth', 'insurance']
+        if any(t in content for t in fin_terms):
+            return ("PRODUCT_LAUNCH", "HIGH")
         return ("PRODUCT_LAUNCH", "MEDIUM")
-    
-    # Leadership changes
-    if any(word in content for word in ['hire', 'appoint', 'ceo', 'cto', 'founder', 'appointed']):
+
+    # LEADERSHIP_HIRE — require 2+ leadership indicators
+    leadership_terms = ['appoints', 'appointed', 'names new',
+                        'hires', 'joins as', 'ceo', 'cto', 'cfo',
+                        'chief', 'vp of', 'head of', 'director of']
+    if sum(1 for t in leadership_terms if t in content) >= 2:
         return ("LEADERSHIP_HIRE", "MEDIUM")
-    
-    # Partnerships / integrations
-    if any(word in content for word in ['partnership', 'integrate', 'collaborate', 'partner']):
+
+    # PARTNERSHIP — explicit partnership language
+    if any(t in content for t in ['partners with', 'partnership with',
+                                   'integrates with', 'ties up with']):
         return ("PARTNERSHIP", "MEDIUM")
-    
-    # Regulatory changes affecting fintech
-    if any(word in content for word in ['rbi', 'sebi', 'regulation', 'compliance', 'norms']):
-        return ("REGULATORY_IMPACT", "HIGH")
-    
-    # Generic fintech news (lower priority)
-    if any(word in content for word in ['fintech', 'banking', 'financial', 'investment']):
-        return ("NEWS", "LOW")
-    
+
+    # Skip regulatory (move to separate detector if needed)
+    # Skip generic news — no boost value
     return (None, None)
+
 
 
 def check_play_store_changes(prospect_id: int, play_store_id: str, 

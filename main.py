@@ -5,6 +5,8 @@ from discovery.news_monitor import run_news_monitor
 from discovery.play_store import discover_from_play_store
 from discovery.company_monitor import run_full_monitoring
 from signals.scorer import recalculate_all_scores
+from signals.timing import calculate_when_score, get_all_when_scores, get_weekly_priorities
+from outreach.generator import generate_outreach_package
 from database import get_db
 
 app = FastAPI(title="Pragma — Blostem GTM Intelligence")
@@ -201,3 +203,716 @@ def get_monitoring_summary():
         "prospects_with_recent_events": [dict(p) for p in recent_by_prospect],
         "summary": f"{len(recent_by_prospect)} prospects had monitoring events in last 7 days"
     }
+
+
+# ============================================================================
+# WHEN LAYER — Temporal Scoring Endpoints
+# ============================================================================
+
+@app.get("/api/when/priorities")
+def get_when_priorities():
+    """
+    Get weekly priority list: Monday morning briefing with action items.
+    Categorizes prospects by engagement level:
+    - CALL THIS WEEK: >65 score + recent event signal
+    - EMAIL THIS WEEK: 50-65 score + recent event signal
+    - SEND INTRO EMAIL: 50+ score, no recent event yet
+    - NURTURE: 30-50 score, early stage
+    - MONITOR: <30 score, keep watching
+    """
+    return get_weekly_priorities()
+
+
+@app.get("/api/when/scores")
+def get_when_scores():
+    """Get WHEN scores for all HOT+WARM prospects. Sorted by when_score DESC."""
+    return {"scores": get_all_when_scores()}
+
+
+@app.get("/api/when/{prospect_id}")
+def get_prospect_when(prospect_id: int):
+    """
+    Get detailed WHEN score for one prospect.
+    Shows:
+    - when_score: temporal priority (0-100)
+    - action: recommended next step
+    - best_recent_event: what triggered the timing signal
+    - score_breakdown: components (scale + maturity + event_boost + recency)
+    """
+    return calculate_when_score(prospect_id)
+
+
+# ============================================================================
+# HOW LAYER — Outreach Package Generation
+# ============================================================================
+
+@app.post("/api/how/generate/{prospect_id}")
+def generate_outreach(prospect_id: int):
+    """
+    Generate complete outreach package for one prospect.
+    Includes 3 persona-specific emails (CTO, CPO, CFO) + compliance checks.
+    Uses 3 LLM calls — run this deliberately, not for all prospects at once.
+    
+    Returns:
+    - Recommended contact sequence
+    - Email for each persona (subject, body, compliance status)
+    - Overall compliance summary
+    - Why now (event trigger)
+    """
+    package = generate_outreach_package(prospect_id)
+    if not package:
+        return {"error": "Prospect not found"}
+    return package
+
+
+@app.get("/api/how/packages")
+def list_packages():
+    """
+    List all previously generated packages.
+    Currently a placeholder — in production would store packages in database.
+    """
+    return {
+        "message": "Generate packages via POST /api/how/generate/{prospect_id}",
+        "example": "POST /api/how/generate/4 to generate for Kreditbee"
+    }
+
+
+# ============================================================================
+# FEEDBACK LOOP INTEGRATION — Issue 1 Fix
+# Mark interactions so WHEN layer doesn't re-contact same prospect
+# ============================================================================
+
+@app.post("/api/prospects/{prospect_id}/mark-contacted")
+def mark_prospect_contacted(prospect_id: int, interaction_type: str = "EMAIL", 
+                            email_persona: str = None, subject_line: str = None):
+    """
+    Record outreach interaction for a prospect.
+    ISSUE 1 FIX: Creates feedback loop so WHEN layer reduces re-engagement urgency.
+    
+    interaction_type: 'EMAIL', 'CALL', 'MEETING', 'RESPONSE_RECEIVED', etc.
+    email_persona: 'CTO', 'CPO', 'CFO' if email-based
+    
+    After logging, WHEN score will apply contact_factor (0.5x-1.0x based on days_since_contact).
+    """
+    with get_db() as conn:
+        prospect = conn.execute(
+            "SELECT * FROM prospects WHERE id = ?", (prospect_id,)
+        ).fetchone()
+        
+        if not prospect:
+            return {"error": "Prospect not found"}
+        
+        conn.execute("""
+            INSERT INTO prospect_interactions
+            (prospect_id, interaction_type, email_persona, subject_line, sent_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """, (prospect_id, interaction_type, email_persona, subject_line))
+        
+        conn.commit()
+        
+        # Recalculate WHEN score with new contact history
+        new_when = calculate_when_score(prospect_id)
+    
+    return {
+        "status": "interaction recorded",
+        "prospect": dict(prospect),
+        "interaction_type": interaction_type,
+        "new_when_score": new_when['when_score'],
+        "new_action": new_when['action'],
+        "contact_factor_applied": new_when['contact_factor'],
+        "message": f"Contact recorded. WHEN action reduced to {new_when['action']} due to recent outreach."
+    }
+
+
+@app.get("/api/prospects/{prospect_id}/interaction-history")
+def get_prospect_interaction_history(prospect_id: int):
+    """
+    Get full interaction history for a prospect.
+    Shows all emails sent, calls logged, responses tracked.
+    Used by sales team to see engagement timeline.
+    """
+    with get_db() as conn:
+        prospect = conn.execute(
+            "SELECT * FROM prospects WHERE id = ?", (prospect_id,)
+        ).fetchone()
+        
+        if not prospect:
+            return {"error": "Prospect not found"}
+        
+        interactions = conn.execute("""
+            SELECT * FROM prospect_interactions 
+            WHERE prospect_id = ? 
+            ORDER BY sent_at DESC
+        """, (prospect_id,)).fetchall()
+        
+        # Calculate days since last contact
+        last_contact = None
+        days_since = None
+        if interactions:
+            from datetime import datetime
+            last_interaction = interactions[0]
+            last_sent = datetime.fromisoformat(last_interaction['sent_at'])
+            days_since = (datetime.now() - last_sent).days
+            last_contact = last_interaction['sent_at']
+    
+    return {
+        "prospect": dict(prospect),
+        "interaction_count": len(interactions) if interactions else 0,
+        "last_contact": last_contact,
+        "days_since_last_contact": days_since,
+        "interactions": [dict(i) for i in interactions]
+    }
+
+
+@app.post("/api/prospects/{prospect_id}/mark-response")
+def mark_prospect_response(prospect_id: int, response_type: str = "OPENED"):
+    """
+    Log a response/engagement from the prospect.
+    response_type: 'OPENED', 'CLICKED', 'REPLIED', 'SCHEDULED_CALL', 'MET', etc.
+    
+    Used to track two-way engagement and improve future timing.
+    """
+    with get_db() as conn:
+        # Find the most recent interaction
+        recent = conn.execute("""
+            SELECT id FROM prospect_interactions 
+            WHERE prospect_id = ? 
+            ORDER BY sent_at DESC LIMIT 1
+        """, (prospect_id,)).fetchone()
+        
+        if not recent:
+            return {"error": "No prior interaction found for this prospect"}
+        
+        conn.execute("""
+            UPDATE prospect_interactions 
+            SET response_received = 1,
+                response_type = ?,
+                response_date = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (response_type, recent['id']))
+        
+        conn.commit()
+    
+    return {
+        "status": "response recorded",
+        "prospect_id": prospect_id,
+        "response_type": response_type
+    }
+
+
+# ============================================================================
+# ACTIVATE LAYER — Post-Signature Partner Lifecycle Management
+# ============================================================================
+
+@app.post("/api/activate/onboard/{prospect_id}")
+def onboard_partner(prospect_id: int):
+    """
+    Register a newly signed partner for activation tracking.
+    Called when prospect receives signed contract.
+    Initializes activation milestones and monitoring.
+    
+    Response includes:
+    - Partner activation ID for future reference
+    - Starting milestone (Integration Started)
+    - Expected days to healthy recurring status
+    """
+    from outreach.activation import log_onboarded_partner
+    
+    with get_db() as conn:
+        prospect = conn.execute(
+            "SELECT name FROM prospects WHERE id = ?",
+            (prospect_id,)
+        ).fetchone()
+        
+        if not prospect:
+            return {"error": "Prospect not found"}
+    
+    partner_id = log_onboarded_partner(prospect_id)
+    
+    return {
+        "status": "activated",
+        "partner_id": partner_id,
+        "prospect_id": prospect_id,
+        "partner_name": dict(prospect)["name"],
+        "starting_milestone": "M001 — Integration Started",
+        "expected_days_to_healthy": 60,
+        "activation_tracking_live": True,
+        "message": f"Pragma is now monitoring {dict(prospect)['name']}'s activation journey"
+    }
+
+
+@app.get("/api/activate/score/{partner_id}")
+def get_activation_score(partner_id: int):
+    """
+    Get activation health score for one partner.
+    Score: 0-100
+    - 75+: ON_TRACK (progressing well)
+    - 50-75: AT_RISK (slowing down, needs attention)
+    - <50: CRITICAL (stalled, needs immediate intervention)
+    
+    Includes breakdown of:
+    - Milestone progress
+    - Speed vs expected timeline
+    - Activity recency
+    - Risk indicators
+    """
+    from outreach.activation import calculate_activation_score
+    
+    return calculate_activation_score(partner_id)
+
+
+@app.get("/api/activate/stalls")
+def detect_stalls():
+    """
+    Identify all partners experiencing activation stalls.
+    Returns list of at-risk partners with:
+    - Current milestone
+    - Time stuck in milestone
+    - Severity (CRITICAL, HIGH, MEDIUM, LOW)
+    - Recommended intervention
+    """
+    from outreach.activation import detect_activation_stalls
+    
+    stalls = detect_activation_stalls()
+    
+    return {
+        "total_at_risk": len(stalls),
+        "critical": len([s for s in stalls if s.get("severity") == "CRITICAL"]),
+        "high": len([s for s in stalls if s.get("severity") == "HIGH"]),
+        "stalls": stalls
+    }
+
+
+@app.post("/api/activate/{partner_id}/log-activity")
+def log_activity(partner_id: int, activity_type: str, 
+                metric_type: str = None, metric_value: float = None, notes: str = None):
+    """
+    Log an activity event for a partner.
+    Called when integration events happen (API call, transaction, etc.)
+    
+    activity_type options:
+    - API_CALL: Partner made API call to Blostem
+    - TRANSACTION: A transaction was processed
+    - LOGIN: Partner logged into admin dashboard
+    - SUPPORT_CONTACT: Partner contacted support
+    - MILESTONE_EVENT: Custom event indicating progress
+    
+    Used to track last_activity timestamp and update activation score.
+    """
+    from outreach.activation import log_partner_activity
+    
+    log_partner_activity(partner_id, activity_type, metric_type, metric_value, notes)
+    
+    return {
+        "status": "activity logged",
+        "partner_id": partner_id,
+        "activity_type": activity_type,
+        "message": f"Activity recorded. Partner activation score recalculated."
+    }
+
+
+@app.post("/api/activate/{partner_id}/advance-milestone")
+def advance_milestone(partner_id: int, milestone_id: str, evidence: str = None):
+    """
+    Advance partner to next milestone when progress is detected.
+    
+    Valid milestone IDs:
+    - M001: Integration Started
+    - M002: Sandbox Integration Complete
+    - M003: Production Ready
+    - M004: First Transaction
+    - M005: 10 Transactions / Volume Validation
+    - M006: Healthy Recurring (5+ days/month)
+    
+    When called, resets days_in_milestone counter and clears at_risk flag if applicable.
+    """
+    from outreach.activation import update_partner_milestone
+    
+    update_partner_milestone(partner_id, milestone_id, evidence)
+    
+    return {
+        "status": "milestone updated",
+        "partner_id": partner_id,
+        "new_milestone": milestone_id,
+        "risk_cleared": True,
+        "message": f"Partner advanced to {milestone_id}"
+    }
+
+
+@app.post("/api/activate/{partner_id}/log-issue")
+def log_issue(partner_id: int, issue_type: str, category: str, 
+             description: str, severity: str = "MEDIUM"):
+    """
+    Log a blocking issue for a partner.
+    
+    Severity levels:
+    - CRITICAL: Blocking all progress
+    - HIGH: Significant blocker
+    - MEDIUM: Slowing progress
+    - LOW: Minor friction
+    
+    Categories:
+    - integration: Technical/API integration issues
+    - business: Business model alignment, product gaps
+    - adoption: User adoption friction
+    - support: Customer support capacity
+    - compliance: Regulatory/compliance delays
+    
+    Marks partner as at_risk automatically.
+    """
+    from outreach.activation import mark_partner_at_risk
+    
+    mark_partner_at_risk(partner_id, issue_type, category, description, severity)
+    
+    return {
+        "status": "issue logged",
+        "partner_id": partner_id,
+        "issue_type": issue_type,
+        "severity": severity,
+        "partner_marked_at_risk": True,
+        "message": f"Issue logged. Partner marked for re-engagement outreach."
+    }
+
+
+@app.post("/api/activate/{partner_id}/resolve-issue/{issue_id}")
+def resolve_issue(partner_id: int, issue_id: int, resolution: str):
+    """
+    Mark an activation issue as resolved.
+    Updates resolution_notes and resolved_at timestamp.
+    """
+    from outreach.activation import resolve_partner_issue
+    
+    resolve_partner_issue(issue_id, resolution)
+    
+    return {
+        "status": "issue resolved",
+        "issue_id": issue_id,
+        "partner_id": partner_id
+    }
+
+
+@app.get("/api/activate/{partner_id}/recommendations")
+def get_recommendations(partner_id: int):
+    """
+    Get specific re-engagement recommendation for a stalled partner.
+    Includes:
+    - Detected blocker (integration vs business vs adoption)
+    - Recommended persona to reach out (technical, product, success)
+    - Re-engagement template to use
+    - Escalation path if issue persists
+    
+    Used to decide what email to generate and who should send it.
+    """
+    from outreach.activation import get_activation_recommendations
+    
+    return get_activation_recommendations(partner_id)
+
+
+@app.post("/api/activate/{partner_id}/generate-reengagement")
+def generate_reengagement(partner_id: int):
+    """
+    Generate targeted re-engagement email for a stalled partner.
+    Analyzes where they're stuck and generates contextual email.
+    
+    Returns:
+    - Email subject line
+    - Email body
+    - Recommended persona to send from
+    - Why now (the blocker that triggered re-engagement)
+    - Escalation path if reply rate is low
+    
+    LLM-generated based on:
+    - Current milestone
+    - Detected issues
+    - Days stuck
+    - Success stories from similar companies
+    """
+    from outreach.activation_reengagement import generate_reengagement_email
+    
+    email_package = generate_reengagement_email(partner_id)
+    
+    if "error" in email_package:
+        return {"error": email_package["error"]}
+    
+    return email_package
+
+
+@app.get("/api/activate/analytics/quarterly")
+def get_analytics():
+    """
+    Quarterly activation health report.
+    Executive briefing on partner activation performance.
+    
+    Returns:
+    - Total activated partners
+    - Breakdown by milestone
+    - At-risk count
+    - Average days from signature to healthy recurring
+    - Trend indicators
+    """
+    from outreach.activation import get_quarterly_activation_analytics
+    from datetime import datetime
+    
+    analytics = get_quarterly_activation_analytics()
+    
+    return {
+        "period": "Q2 2026",
+        "generated_at": datetime.now().isoformat(),
+        **analytics
+    }
+
+
+@app.get("/api/activate/dashboard")
+def activation_dashboard():
+    """
+    Real-time dashboard for activation monitoring team.
+    Shows:
+    - Partners at critical activation risk
+    - Recent activity
+    - Upcoming milestones
+    - Re-engagement campaigns in progress
+    """
+    from outreach.activation import detect_activation_stalls
+    from datetime import datetime
+    
+    stalls = detect_activation_stalls()
+    
+    critical_stalls = [s for s in stalls if s.get("severity") == "CRITICAL"]
+    
+    with get_db() as conn:
+        recent_activity = conn.execute("""
+            SELECT pa.id, p.name, pa.current_milestone, pa.last_activity
+            FROM partners_activated pa
+            JOIN prospects p ON pa.prospect_id = p.id
+            WHERE datetime(pa.last_activity) >= datetime('now', '-7 days')
+            ORDER BY pa.last_activity DESC
+            LIMIT 10
+        """).fetchall()
+    
+    return {
+        "total_at_risk": len(stalls),
+        "critical_count": len(critical_stalls),
+        "recent_activity": [dict(r) for r in recent_activity],
+        "urgent_actions": critical_stalls[:5],
+        "timestamp": datetime.now().isoformat()
+    }
+
+# ============================================================================
+# INNOVATION 1: Buyer Committee Intelligence API Endpoints
+# ============================================================================
+
+@app.post("/api/buyer-committee/add-member")
+def api_add_buyer_member(prospect_id: int = None, partner_id: int = None, name: str = None, 
+                         title: str = None, role: str = None, email: str = None, 
+                         decision_authority: str = None):
+    """Add a stakeholder to the buyer committee."""
+    from intelligence.buyer_committee import add_buyer_committee_member
+    return add_buyer_committee_member(
+        prospect_id=prospect_id,
+        partner_id=partner_id,
+        name=name,
+        title=title,
+        role=role,
+        email=email,
+        decision_authority=decision_authority
+    )
+
+@app.get("/api/buyer-committee/{prospect_id}")
+def api_get_committee(prospect_id: int):
+    """Get buyer committee for a prospect."""
+    from intelligence.buyer_committee import get_buyer_committee
+    return {"committee": get_buyer_committee(prospect_id=prospect_id)}
+
+@app.post("/api/buyer-committee/{buyer_id}/log-engagement")
+def api_log_engagement(buyer_id: int, engagement_type: str, detail: str = None, 
+                       sentiment_detected: str = None):
+    """Log an engagement event for a stakeholder."""
+    from intelligence.buyer_committee import log_stakeholder_engagement
+    return log_stakeholder_engagement(
+        buyer_id=buyer_id,
+        engagement_type=engagement_type,
+        detail=detail,
+        sentiment_detected=sentiment_detected
+    )
+
+@app.post("/api/buyer-committee/{buyer_id}/sentiment")
+def api_update_sentiment(buyer_id: int, sentiment: str, reason: str = None, concern_area: str = None):
+    """Update sentiment for a stakeholder."""
+    from intelligence.buyer_committee import update_stakeholder_sentiment
+    return update_stakeholder_sentiment(
+        buyer_id=buyer_id,
+        sentiment=sentiment,
+        reason=reason,
+        concern_area=concern_area
+    )
+
+@app.post("/api/buyer-committee/{buyer_id}/mark-champion")
+def api_mark_champion(buyer_id: int, reason: str = None):
+    """Mark a stakeholder as a champion."""
+    from intelligence.buyer_committee import identify_champion
+    return identify_champion(buyer_id=buyer_id, reason=reason)
+
+@app.post("/api/buyer-committee/{buyer_id}/mark-blocker")
+def api_mark_blocker(buyer_id: int, reason: str = None):
+    """Mark a stakeholder as a blocker."""
+    from intelligence.buyer_committee import identify_blocker
+    return identify_blocker(buyer_id=buyer_id, reason=reason)
+
+@app.get("/api/buyer-committee/{buyer_id}/engagement-score")
+def api_get_engagement_score(buyer_id: int):
+    """Get engagement score for a stakeholder."""
+    from intelligence.buyer_committee import calculate_engagement_score
+    return calculate_engagement_score(buyer_id=buyer_id)
+
+@app.get("/api/buyer-committee/{prospect_id}/consensus")
+def api_get_consensus(prospect_id: int):
+    """Get buyer committee consensus analysis."""
+    from intelligence.buyer_committee import analyze_committee_consensus
+    return analyze_committee_consensus(prospect_id=prospect_id)
+
+@app.get("/api/buyer-committee/{prospect_id}/status-report")
+def api_get_status_report(prospect_id: int):
+    """Get comprehensive buyer committee status report."""
+    from intelligence.buyer_committee import get_committee_status_report
+    return get_committee_status_report(prospect_id=prospect_id)
+
+# ============================================================================
+# INNOVATION 3: Role-Specific Playbook API Endpoints
+# ============================================================================
+
+@app.get("/api/playbook/{role}")
+def api_get_playbook(role: str):
+    """Get playbook for a specific role."""
+    from intelligence.playbooks import get_playbook_for_role
+    return get_playbook_for_role(role)
+
+@app.post("/api/playbook/select")
+def api_select_playbook(bottleneck_category: str = None, role: str = None):
+    """Select best playbook based on bottleneck category or role."""
+    from intelligence.playbooks import select_playbook_by_bottleneck
+    result = select_playbook_by_bottleneck(bottleneck_category, role)
+    return result
+
+@app.get("/api/playbook/{role}/interventions")
+def api_get_interventions(role: str):
+    """Get all interventions for a playbook."""
+    from intelligence.playbooks import get_playbook_interventions
+    return {"role": role, "interventions": get_playbook_interventions(role)}
+
+@app.post("/api/playbook/{role}/generate-email")
+def api_generate_email(
+    role: str,
+    intervention_sequence: int = 1,
+    buyer_name: str = None,
+    buyer_company: str = None,
+    variables: dict = None
+):
+    """Generate a personalized email for a playbook intervention."""
+    from intelligence.playbooks import generate_playbook_email
+    return generate_playbook_email(
+        role=role,
+        intervention_sequence=intervention_sequence,
+        buyer_name=buyer_name,
+        buyer_company=buyer_company,
+        variables=variables
+    )
+
+@app.post("/api/playbook/log-usage")
+def api_log_playbook_usage(
+    buyer_id: int,
+    role: str,
+    intervention_sequence: int,
+    email_subject: str,
+    email_body: str,
+    resources_sent: list = None
+):
+    """Record playbook usage in database."""
+    from intelligence.playbooks import log_playbook_usage
+    return log_playbook_usage(
+        buyer_id=buyer_id,
+        role=role,
+        intervention_sequence=intervention_sequence,
+        email_subject=email_subject,
+        email_body=email_body,
+        resources_sent=resources_sent
+    )
+
+@app.get("/api/playbook/{buyer_id}/history")
+def api_get_playbook_history(buyer_id: int):
+    """Get playbook usage history for a buyer."""
+    from intelligence.playbooks import get_playbook_history
+    return {"buyer_id": buyer_id, "history": get_playbook_history(buyer_id)}
+
+@app.get("/api/playbook/{role}/effectiveness")
+def api_get_effectiveness(role: str):
+    """Get effectiveness metrics for a playbook."""
+    from intelligence.playbooks import get_playbook_effectiveness
+    return get_playbook_effectiveness(role)
+
+@app.get("/api/playbook/{buyer_id}/next-intervention")
+def api_get_next_intervention(buyer_id: int):
+    """Get recommended next intervention for a buyer."""
+    from intelligence.playbooks import recommend_next_intervention
+    return recommend_next_intervention(buyer_id)
+
+# ============================================================================
+# INNOVATION 4: Multi-Stakeholder Campaign Orchestration API Endpoints
+# ============================================================================
+
+@app.post("/api/campaign/create")
+def api_create_campaign(partner_id: int, prospect_id: int, campaign_name: str = None):
+    """Create a multi-stakeholder activation campaign."""
+    from intelligence.campaign_orchestration import create_activation_campaign
+    return create_activation_campaign(
+        partner_id=partner_id,
+        prospect_id=prospect_id,
+        campaign_name=campaign_name
+    )
+
+@app.get("/api/campaign/{campaign_id}")
+def api_get_campaign(campaign_id: int):
+    """Get campaign details and timeline."""
+    from intelligence.campaign_orchestration import get_campaign_timeline
+    return get_campaign_timeline(campaign_id)
+
+@app.get("/api/campaign/{campaign_id}/effectiveness")
+def api_get_campaign_effectiveness(campaign_id: int):
+    """Get campaign effectiveness metrics."""
+    from intelligence.campaign_orchestration import get_campaign_effectiveness
+    return get_campaign_effectiveness(campaign_id)
+
+@app.post("/api/campaign/send/{send_id}/mark-sent")
+def api_mark_sent(send_id: int, email_subject: str = None, email_body: str = None):
+    """Mark a campaign send as sent."""
+    from intelligence.campaign_orchestration import mark_send_as_sent
+    return mark_send_as_sent(send_id, email_subject, email_body)
+
+@app.post("/api/campaign/send/{send_id}/mark-opened")
+def api_mark_opened(send_id: int):
+    """Mark a campaign send as opened."""
+    from intelligence.campaign_orchestration import mark_send_as_opened
+    return mark_send_as_opened(send_id)
+
+@app.post("/api/campaign/send/{send_id}/mark-clicked")
+def api_mark_clicked(send_id: int):
+    """Mark a campaign send as clicked."""
+    from intelligence.campaign_orchestration import mark_send_as_clicked
+    return mark_send_as_clicked(send_id)
+
+@app.post("/api/campaign/send/{send_id}/mark-responded")
+def api_mark_responded(send_id: int, response_notes: str = None):
+    """Mark a campaign send as responded."""
+    from intelligence.campaign_orchestration import mark_send_as_responded
+    return mark_send_as_responded(send_id, response_notes)
+
+@app.get("/api/campaign/next-sends")
+def api_get_next_sends(limit: int = 10):
+    """Get next campaign sends ready for execution."""
+    from intelligence.campaign_orchestration import get_next_campaign_sends
+    return {"sends": get_next_campaign_sends(limit)}
+
+@app.get("/api/campaign/check-safety/{buyer_id}")
+def api_check_send_safety(buyer_id: int):
+    """Check if safe to send email to buyer (mail bombing prevention)."""
+    from intelligence.campaign_orchestration import is_safe_to_send
+    return is_safe_to_send(buyer_id)
