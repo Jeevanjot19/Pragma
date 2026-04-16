@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prospect Detail - Blostem Pragma</title>
+    <script src="api-client.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .nav-link {
+            color: #64748b;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .prospect-hero {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .prospect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1.5rem;
+        }
+
+        .prospect-title {
+            flex: 1;
+        }
+
+        .prospect-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .prospect-subtitle {
+            font-size: 1.1rem;
+            color: #64748b;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+        }
+
+        .status-hot {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-warm {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-cold {
+            background: #dbeafe;
+            color: #0c2d6b;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .signal-list {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .signal-item {
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .signal-title {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.3rem;
+        }
+
+        .signal-detail {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .description {
+            color: #334155;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .info-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #0f172a;
+            margin-top: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">🎯 Pragma WHO</div>
+            <nav>
+                <a href="who-pipeline.html" class="nav-link">← Back to Pipeline</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="content">
+            <div class="loading">Loading prospect details...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadDetail() {
+            const params = new URLSearchParams(window.location.search);
+            const prospectId = params.get('id');
+
+            if (!prospectId) {
+                document.getElementById('content').innerHTML = '<p class="error">No prospect selected.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/prospects/${prospectId}`);
+                const data = await response.json();
+                
+                // Handle both response formats: { prospect, signals } or direct prospect object
+                const prospect = data.prospect || data;
+                const signals = data.signals || [];
+
+                const statusClass = (prospect.status === 'HOT') ? 'status-hot' : 
+                                   (prospect.status === 'WARM') ? 'status-warm' : 'status-cold';
+
+                const html = `
+                    <div class="prospect-hero">
+                        <div class="prospect-header">
+                            <div class="prospect-title">
+                                <div class="prospect-name">${prospect.name}</div>
+                                <div class="prospect-subtitle">${prospect.description ? prospect.description.substring(0, 150) + '...' : 'AI-discovered prospect'}</div>
+                            </div>
+                            <div class="status-badge ${statusClass}">
+                                ${prospect.status}
+                            </div>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">WHO Score</div>
+                                <div class="metric-value">${prospect.who_score || 0}</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Signals Detected</div>
+                                <div class="metric-value">${prospect.signal_count || signals.length || 0}</div>
+                            </div>
+                            ${prospect.category ? `
+                                <div class="metric-card">
+                                    <div class="metric-label">Category</div>
+                                    <div class="metric-value">${prospect.category.charAt(0).toUpperCase() + prospect.category.slice(1)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="action-buttons">
+                            <a href="how-outreach.html?prospect_id=${prospectId}" class="btn btn-primary">
+                                ✉️ Generate Outreach
+                            </a>
+                            <a href="when-priorities.html" class="btn btn-secondary">
+                                📅 View WHEN Priorities
+                            </a>
+                        </div>
+                    </div>
+
+                    ${prospect.using_competitor ? `
+                        <div class="section">
+                            <div class="section-title">🎯 Competitive Context</div>
+                            <div class="description">
+                                Currently using <strong>${prospect.using_competitor}</strong>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${signals && signals.length > 0 ? `
+                        <div class="section">
+                            <div class="section-title">📊 Detected Signals</div>
+                            <div class="signal-list">
+                                ${signals.slice(0, 10).map(signal => `
+                                    <div class="signal-item">
+                                        <div class="signal-title">${signal.signal_type || signal.type || 'Signal'}</div>
+                                        <div class="signal-detail">
+                                            ${signal.description || signal.value || signal.title || 'Commercial signal detected'}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : `<div class="section"><div class="section-title">📊 No Signals Detected Yet</div></div>`}
+
+                    <div class="section">
+                        <div class="section-title">ℹ️ Company Information</div>
+                        <div class="info-grid">
+                            ${prospect.category ? `
+                                <div class="info-item">
+                                    <div class="info-label">Category</div>
+                                    <div class="info-value">${prospect.category}</div>
+                                </div>
+                            ` : ''}
+                            ${prospect.recommended_product ? `
+                                <div class="info-item">
+                                    <div class="info-label">Recommended Product</div>
+                                    <div class="info-value">${prospect.recommended_product}</div>
+                                </div>
+                            ` : ''}
+                            ${prospect.install_count ? `
+                                <div class="info-item">
+                                    <div class="info-label">App Install Count</div>
+                                    <div class="info-value">${prospect.install_count}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('content').innerHTML = html;
+            } catch (error) {
+                document.getElementById('content').innerHTML = `<p class="error">Error loading prospect: ${error.message}</p>`;
+            }
+        }
+
+        function generateOutreach(prospectId) {
+            window.location.href = `how-outreach.html?prospect_id=${prospectId}`;
+        }
+
+        function viewWhenPriorities() {
+            window.location.href = `when-priorities.html`;
+        }
+
+        loadDetail();
+    </script>
+</body>
+</html>

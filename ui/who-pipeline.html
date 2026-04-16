@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prospect Pipeline - Blostem Pragma</title>
+    <script src="api-client.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .nav-link {
+            color: #64748b;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .filter-bar select {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .pipeline-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .prospect-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .prospect-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
+
+        .prospect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .prospect-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .status-hot {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-warm {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-cold {
+            background: #dbeafe;
+            color: #0c2d6b;
+        }
+
+        .prospect-description {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .signal-list {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        .signal-item {
+            padding: 0.4rem 0;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .signal-icon {
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">🎯 Pragma WHO</div>
+            <nav>
+                <a href="index.html" class="nav-link">← Back to Home</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>🔍 Prospect Pipeline</h1>
+        <p class="subtitle">AI-discovered prospects ranked by commercial signal strength</p>
+
+        <div class="stats-grid" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-count">0</div>
+                <div class="stat-label">Total Prospects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="hot-count">0</div>
+                <div class="stat-label">🔴 HOT Leads</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="warm-count">0</div>
+                <div class="stat-label">🟠 WARM Leads</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="signal-count">0</div>
+                <div class="stat-label">Signals Detected</div>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <select id="statusFilter" onchange="loadProspects()">
+                <option value="">All Statuses</option>
+                <option value="HOT">🔴 HOT Only</option>
+                <option value="WARM">🟠 WARM Only</option>
+                <option value="COLD">🔵 COLD Only</option>
+            </select>
+            <select id="limitFilter" onchange="loadProspects()">
+                <option value="20">Top 20</option>
+                <option value="50">Top 50</option>
+                <option value="100">Top 100</option>
+            </select>
+        </div>
+
+        <div id="content">
+            <div class="loading">Discovering prospects...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadProspects() {
+            try {
+                const status = document.getElementById('statusFilter').value;
+                const limit = document.getElementById('limitFilter').value;
+                
+                let url = `/api/prospects?limit=${limit}`;
+                if (status) {
+                    url += `&status=${status}`;
+                }
+
+                const response = await fetch(url);
+                const prospects = await response.json();
+
+                // Get stats
+                const statsResponse = await fetch('/api/stats');
+                const stats = await statsResponse.json();
+                
+                document.getElementById('total-count').textContent = stats.total_prospects || 0;
+                document.getElementById('hot-count').textContent = stats.hot || 0;
+                document.getElementById('warm-count').textContent = stats.warm || 0;
+                
+                // Count total signals from stats
+                let signalTotal = 0;
+                if (stats.by_recommended_product) {
+                    signalTotal = stats.by_recommended_product.reduce((sum, item) => sum + item.count, 0);
+                }
+                document.getElementById('signal-count').textContent = signalTotal;
+
+                if (!prospects || prospects.length === 0) {
+                    document.getElementById('content').innerHTML = '<p style="padding: 2rem; color: #64748b;">No prospects found. Run discovery first.</p>';
+                    return;
+                }
+
+                const html = prospects.map(prospect => {
+                    const status = prospect.status || 'COLD';
+                    const statusClass = status === 'HOT' ? 'status-hot' : status === 'WARM' ? 'status-warm' : 'status-cold';
+                    const whoScore = prospect.who_score || 0;
+                    const signalCount = prospect.signal_count || 0;
+
+                    const signals = [];
+                    if (prospect.using_competitor) signals.push(`📊 Using ${prospect.using_competitor}`);
+                    if (prospect.recommended_product) signals.push(`💰 ${prospect.recommended_product}`);
+                    if (prospect.has_fd || prospect.has_rd || prospect.has_bonds) signals.push(`✅ Has products`);
+                    
+                    // Add category as a signal
+                    if (prospect.category) signals.push(`🏢 ${prospect.category.charAt(0).toUpperCase() + prospect.category.slice(1)}`);
+
+                    return `
+                        <div class="prospect-card">
+                            <div class="prospect-header">
+                                <div class="prospect-name">${prospect.name}</div>
+                                <div class="status-badge ${statusClass}">${status}</div>
+                            </div>
+
+                            <div class="prospect-description">
+                                ${prospect.description ? prospect.description.substring(0, 150) + '...' : 'AI-discovered financial services prospect'}
+                            </div>
+
+                            ${signals.length > 0 ? `
+                                <div class="signal-list">
+                                    ${signals.slice(0, 3).map(signal => `<div class="signal-item"><span class="signal-icon">→</span> ${signal}</div>`).join('')}
+                                </div>
+                            ` : ''}
+
+                            <div class="metrics">
+                                <div class="metric">
+                                    <div class="metric-label">WHO Score</div>
+                                    <div class="metric-value">${whoScore}</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-label">Signals</div>
+                                    <div class="metric-value">${signalCount}</div>
+                                </div>
+                            </div>
+
+                            <div class="action-buttons">
+                                <a href="how-outreach.html?prospect_id=${prospect.id}" class="btn btn-primary">Generate Outreach</a>
+                                <a href="who-detail.html?id=${prospect.id}" class="btn btn-secondary">View Detail</a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('content').innerHTML = `<div class="pipeline-container">${html}</div>`;
+            } catch (error) {
+                document.getElementById('content').innerHTML = `<div class="error">Error loading prospects: ${error.message}</div>`;
+            }
+        }
+
+        document.getElementById('statusFilter').addEventListener('change', loadProspects);
+        document.getElementById('limitFilter').addEventListener('change', loadProspects);
+
+        loadProspects();
+    </script>
+</body>
+</html>

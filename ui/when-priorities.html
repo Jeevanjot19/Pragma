@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>This Week's Priorities - Blostem Pragma</title>
+    <script src="api-client.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .nav-link {
+            color: #64748b;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .priority-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .priority-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #cbd5e1;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-call {
+            background: #dc2626;
+            color: white;
+        }
+
+        .badge-email {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .badge-intro {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .badge-nurture {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .badge-monitor {
+            background: #6b7280;
+            color: white;
+        }
+
+        .prospect-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .prospect-summary {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .metric-row:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .metric-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin: 0.5rem 0 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border-radius: 3px;
+        }
+
+        .action-button {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .summary-stats {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">🚀 Pragma WHEN</div>
+            <nav>
+                <a href="index.html" class="nav-link">← Back to Home</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>📅 This Week's Priorities</h1>
+        <p class="subtitle">Intelligent prospect sequencing based on timing signals and engagement readiness</p>
+
+        <div id="summary" class="summary-stats" style="display: none;">
+            <div class="stat-box">
+                <div class="stat-number" id="stat-call-count">0</div>
+                <div class="stat-label">🔴 CALL THIS WEEK</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="stat-email-count">0</div>
+                <div class="stat-label">🟠 EMAIL THIS WEEK</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="stat-intro-count">0</div>
+                <div class="stat-label">🔵 SEND INTRO</div>
+            </div>
+        </div>
+
+        <div id="content">
+            <div class="loading">Loading your weekly priorities...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadPriorities() {
+            try {
+                const response = await fetch('/api/when/priorities');
+                const data = await response.json();
+
+                // Extract prospects from all action categories
+                const allProspects = [
+                    ...(data.call_this_week || []),
+                    ...(data.email_this_week || []),
+                    ...(data.send_intro || []),
+                    ...(data.nurture || []),
+                    ...(data.monitor || [])
+                ];
+
+                if (allProspects.length === 0) {
+                    document.getElementById('content').innerHTML = '<p style="padding: 2rem; color: #64748b;">No priorities detected. Run discovery first.</p>';
+                    return;
+                }
+
+                // Calculate summary stats
+                const callCount = (data.call_this_week || []).length;
+                const emailCount = (data.email_this_week || []).length;
+                const introCount = (data.send_intro || []).length;
+
+                document.getElementById('stat-call-count').textContent = callCount;
+                document.getElementById('stat-email-count').textContent = emailCount;
+                document.getElementById('stat-intro-count').textContent = introCount;
+                document.getElementById('summary').style.display = 'grid';
+
+                // Build priority grid
+                const html = allProspects.map(prospect => {
+                    const badge = getBadgeClass(prospect.action);
+                    const score = prospect.when_score || 0;
+                    const eventInfo = prospect.best_recent_event || {};
+                    const daysSince = prospect.days_since_last_contact >= 0 ? prospect.days_since_last_contact : 0;
+                    
+                    return `
+                        <div class="priority-card">
+                            <div class="priority-badge ${badge.class}">${badge.text}</div>
+                            <div class="prospect-name">${prospect.prospect_name}</div>
+                            <div class="prospect-summary">${eventInfo.title || 'Timing signal detected'}</div>
+                            
+                            <div class="metric-row">
+                                <span class="metric-label">WHEN Score</span>
+                                <span class="metric-value">${score}/100</span>
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: ${score}%"></div>
+                            </div>
+
+                            <div class="metric-row">
+                                <span class="metric-label">Signal Type</span>
+                                <span class="metric-value">${eventInfo.type || 'Product signal'}</span>
+                            </div>
+
+                            <div class="metric-row">
+                                <span class="metric-label">Days Since Signal</span>
+                                <span class="metric-value">${daysSince} day${daysSince !== 1 ? 's' : ''}</span>
+                            </div>
+
+                            <button class="action-button" onclick="viewProspect(${prospect.prospect_id})">View Detail →</button>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('content').innerHTML = `<div class="priority-grid">${html}</div>`;
+            } catch (error) {
+                document.getElementById('content').innerHTML = `<div class="error">Error loading priorities: ${error.message}</div>`;
+            }
+        }
+
+        function getBadgeClass(action) {
+            const badges = {
+                'CALL THIS WEEK': { class: 'badge-call', text: '🔴 CALL THIS WEEK' },
+                'EMAIL THIS WEEK': { class: 'badge-email', text: '🟠 EMAIL THIS WEEK' },
+                'SEND INTRO': { class: 'badge-intro', text: '🔵 SEND INTRO' },
+                'NURTURE': { class: 'badge-nurture', text: '🟣 NURTURE' },
+                'MONITOR': { class: 'badge-monitor', text: '⚪ MONITOR' }
+            };
+            return badges[action] || { class: 'badge-monitor', text: '⚪ MONITOR' };
+        }
+
+        function viewProspect(prospectId) {
+            window.location.href = `who-detail.html?id=${prospectId}`;
+        }
+
+        // Load on page load
+        loadPriorities();
+    </script>
+
+        function viewProspect(prospectId) {
+            window.location.href = `who-detail.html?id=${prospectId}`;
+        }
+
+        // Load on page load
+        loadPriorities();
+    </script>
+</body>
+</html>
