@@ -1,9 +1,9 @@
 /**
- * Blostem ACTIVATE API Client
- * Handles all communication with the backend REST API
+ * Blostem Pragma API Client
+ * Handles all communication with the backend REST API for WHO/WHEN/HOW/ACTIVATE layers
  */
 
-class ActivateAPIClient {
+class PragmaAPIClient {
     constructor(baseURL = 'http://localhost:8000') {
         this.baseURL = baseURL;
     }
@@ -141,7 +141,118 @@ class ActivateAPIClient {
     async markRiskAlertSent(partnerId) {
         return this.request('POST', `/api/activate/political-risks/${partnerId}/alert-sent`, {});
     }
+
+    // ====== WHO LAYER: Prospect Discovery ======
+
+    /**
+     * GET /api/prospects
+     * Returns all prospects with optional filtering
+     */
+    async getProspects(status = null, limit = 50) {
+        let endpoint = `/api/prospects?limit=${limit}`;
+        if (status) {
+            endpoint += `&status=${status}`;
+        }
+        return this.request('GET', endpoint);
+    }
+
+    /**
+     * GET /api/prospects/{prospect_id}
+     * Returns full details for one prospect
+     */
+    async getProspectDetail(prospectId) {
+        return this.request('GET', `/api/prospects/${prospectId}`);
+    }
+
+    /**
+     * GET /api/stats
+     * Returns dashboard stats for WHO layer
+     */
+    async getStats() {
+        return this.request('GET', '/api/stats');
+    }
+
+    // ====== WHEN LAYER: Temporal Scoring ======
+
+    /**
+     * GET /api/when/priorities
+     * Returns this week's priority list with action items
+     */
+    async getWhenPriorities() {
+        return this.request('GET', '/api/when/priorities');
+    }
+
+    /**
+     * GET /api/when/scores
+     * Returns WHEN scores for all prospects
+     */
+    async getWhenScores() {
+        return this.request('GET', '/api/when/scores');
+    }
+
+    /**
+     * GET /api/when/{prospect_id}
+     * Returns detailed WHEN score for one prospect
+     */
+    async getProspectWhen(prospectId) {
+        return this.request('GET', `/api/when/${prospectId}`);
+    }
+
+    // ====== HOW LAYER: Outreach Generation ======
+
+    /**
+     * POST /api/how/generate/{prospect_id}
+     * Generates complete outreach package with 3 persona emails
+     */
+    async generateOutreachPackage(prospectId) {
+        return this.request('POST', `/api/how/generate/${prospectId}`);
+    }
+
+    /**
+     * GET /api/how/packages
+     * Lists all generated outreach packages
+     */
+    async getOutreachPackages() {
+        return this.request('GET', '/api/how/packages');
+    }
+
+    /**
+     * POST /api/prospects/{prospect_id}/mark-contacted
+     * Records outreach interaction for a prospect
+     */
+    async markProspectContacted(prospectId, interactionType = 'EMAIL', emailPersona = null) {
+        return this.request('POST', `/api/prospects/${prospectId}/mark-contacted`, {
+            interaction_type: interactionType,
+            email_persona: emailPersona,
+        });
+    }
+
+    /**
+     * GET /api/prospects/{prospect_id}/interaction-history
+     * Returns full interaction history for a prospect
+     */
+    async getProspectInteractionHistory(prospectId) {
+        return this.request('GET', `/api/prospects/${prospectId}/interaction-history`);
+    }
+
+    // ====== REVENUE PROOF ======
+
+    /**
+     * GET /api/activate/partners/{partner_id}/revenue-proof
+     * Calculates revenue proof for a partner
+     */
+    async getRevenueProof(partnerId) {
+        return this.request('GET', `/api/activate/partners/${partnerId}/revenue-proof`);
+    }
+
+    /**
+     * GET /api/activate/demo/revenue-proof
+     * Returns demo revenue calculation for Groww
+     */
+    async getDemoRevenueProof() {
+        return this.request('GET', '/api/activate/demo/revenue-proof');
+    }
 }
 
 // Export for use in pages
-const api = new ActivateAPIClient();
+const api = new PragmaAPIClient();
