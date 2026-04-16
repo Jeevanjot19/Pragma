@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db, remove_non_prospects, get_monitoring_events
 from discovery.news_monitor import run_news_monitor
@@ -8,6 +8,29 @@ from signals.scorer import recalculate_all_scores
 from signals.timing import calculate_when_score, get_all_when_scores, get_weekly_priorities
 from outreach.generator import generate_outreach_package
 from database import get_db
+from pydantic import BaseModel
+from typing import Optional
+
+# ============================================================================
+# Pydantic Models for API Request Bodies
+# ============================================================================
+
+class ApiCallLog(BaseModel):
+    """Webhook payload for logging partner API calls."""
+    partner_id: int
+    environment: str
+    endpoint: str
+    method: str
+    status_code: int
+    error_code: Optional[str] = None
+    error_message: Optional[str] = None
+    response_time_ms: Optional[int] = None
+    api_key_id: Optional[str] = None
+
+class StallPatternPayload(BaseModel):
+    """Payload for marking stall patterns."""
+    pattern: str
+    resolution: Optional[str] = None
 
 app = FastAPI(title="Pragma — Blostem GTM Intelligence")
 
@@ -924,9 +947,7 @@ def api_check_send_safety(buyer_id: int):
 # ============================================================================
 
 @app.post("/api/activate/api-call/log")
-def log_api_call(partner_id: int, environment: str, endpoint: str, method: str,
-                status_code: int, error_code: str = None, error_message: str = None,
-                response_time_ms: int = None, api_key_id: str = None):
+def log_api_call(api_call: ApiCallLog):
     """
     Log an API call made by a partner to Blostem's API.
     Called by Blostem's API gateway whenever a partner makes a request.
@@ -936,25 +957,24 @@ def log_api_call(partner_id: int, environment: str, endpoint: str, method: str,
     - Pattern 2: Stuck in Sandbox (calls then 7+ day silence)
     - Pattern 3: Sandbox Works, Production Stalled (successful sandbox, no prod)
     """
-    from intelligence.activation_patterns import log_stall_detected
-    
     with get_db() as conn:
         conn.execute("""
             INSERT INTO partner_api_calls 
             (partner_id, environment, endpoint, method, status_code, error_code, 
              error_message, response_time_ms, api_key_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (partner_id, environment, endpoint, method, status_code, error_code,
-              error_message, response_time_ms, api_key_id))
+        """, (api_call.partner_id, api_call.environment, api_call.endpoint, 
+              api_call.method, api_call.status_code, api_call.error_code,
+              api_call.error_message, api_call.response_time_ms, api_call.api_key_id))
         
         conn.commit()
     
     return {
         "status": "api_call_logged",
-        "partner_id": partner_id,
-        "environment": environment,
-        "endpoint": endpoint,
-        "response_time_ms": response_time_ms
+        "partner_id": api_call.partner_id,
+        "environment": api_call.environment,
+        "endpoint": api_call.endpoint,
+        "response_time_ms": api_call.response_time_ms
     }
 
 
@@ -1080,7 +1100,7 @@ def get_all_stall_patterns():
 
 
 @app.post("/api/activate/patterns/{partner_id}/mark-intervention-sent")
-def mark_intervention_sent(partner_id: int, pattern: str):
+def mark_intervention_sent(partner_id: int, payload: StallPatternPayload):
     """
     Record that an intervention email was sent for a detected stall pattern.
     Updates partner_activation_stalls table.
@@ -1091,19 +1111,19 @@ def mark_intervention_sent(partner_id: int, pattern: str):
             SET intervention_email_sent = 1,
                 intervention_sent_at = CURRENT_TIMESTAMP
             WHERE partner_id = ? AND stall_pattern = ? AND issue_resolved = 0
-        """, (partner_id, pattern))
+        """, (partner_id, payload.pattern))
         
         conn.commit()
     
     return {
         "status": "intervention_marked_sent",
         "partner_id": partner_id,
-        "pattern": pattern
+        "pattern": payload.pattern
     }
 
 
 @app.post("/api/activate/patterns/{partner_id}/mark-resolved")
-def mark_stall_resolved(partner_id: int, pattern: str, resolution: str = None):
+def mark_stall_resolved(partner_id: int, payload: StallPatternPayload):
     """
     Mark a stall pattern as resolved when partner makes progress.
     For example:
@@ -1117,15 +1137,15 @@ def mark_stall_resolved(partner_id: int, pattern: str, resolution: str = None):
             SET issue_resolved = 1,
                 resolved_at = CURRENT_TIMESTAMP
             WHERE partner_id = ? AND stall_pattern = ? 
-        """, (partner_id, pattern))
+        """, (partner_id, payload.pattern))
         
         conn.commit()
     
     return {
         "status": "stall_resolved",
         "partner_id": partner_id,
-        "pattern": pattern,
-        "resolution": resolution
+        "pattern": payload.pattern,
+        "resolution": payload.resolution
     }
 
 
