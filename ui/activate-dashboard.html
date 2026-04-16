@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blostem ACTIVATE - Partnership Activation Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e40af;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-buttons a {
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-buttons a.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .nav-buttons a:not(.active) {
+            color: #334155;
+        }
+
+        .nav-buttons a:not(.active):hover {
+            background: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-description {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .metric-card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .metric-change {
+            font-size: 0.9rem;
+            color: #10b981;
+            margin-top: 0.5rem;
+        }
+
+        .metric-change.negative {
+            color: #ef4444;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #2563eb;
+            border-radius: 2px;
+        }
+
+        .stall-patterns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .pattern-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .pattern-card:hover {
+            border-color: #2563eb;
+            background: #f0f9ff;
+        }
+
+        .pattern-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .pattern-count {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 1rem;
+        }
+
+        .pattern-description {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .pattern-sla {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #475569;
+            margin-bottom: 1rem;
+            border-left: 3px solid #2563eb;
+        }
+
+        .pattern-sla strong {
+            color: #0f172a;
+        }
+
+        .action-button {
+            background: #2563eb;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-button:hover {
+            background: #1d4ed8;
+        }
+
+        .action-button.secondary {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+
+        .action-button.secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .recent-stalls {
+            margin-top: 2rem;
+        }
+
+        .stall-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .stall-item:hover {
+            background: #f8fafc;
+        }
+
+        .stall-item:last-child {
+            border-bottom: none;
+        }
+
+        .stall-info {
+            flex: 1;
+        }
+
+        .stall-name {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+
+        .stall-pattern {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .stall-date {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-align: right;
+        }
+
+        .stall-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+
+        .icon-button {
+            padding: 0.5rem 0.75rem;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .icon-button:hover {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .metric-box {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .metric-box-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-box-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: #2563eb;
+        }
+
+        .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .contact-form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .success-message {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 6px;
+            padding: 1rem;
+            color: #166534;
+            margin-bottom: 1rem;
+        }
+
+        .warning-message {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 6px;
+            padding: 1rem;
+            color: #92400e;
+            margin-bottom: 1rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stall-patterns {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">Blostem ACTIVATE</div>
+            <nav class="nav-buttons">
+                <a href="#" class="active">Dashboard</a>
+                <a href="manage-interventions.html">Interventions</a>
+                <a href="contacts.html">Contacts</a>
+                <a href="metrics.html">Metrics</a>
+                <a href="settings.html">Settings</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-title">Partnership Activation Dashboard</div>
+        <div class="page-description">Real-time monitoring of partner activation health across all integration patterns</div>
+
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Active Partners</div>
+                <div class="metric-value">47</div>
+                <div class="metric-change">+3 this week</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Stalls Detected</div>
+                <div class="metric-value">6</div>
+                <div class="metric-change">2 resolved</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Interventions Sent</div>
+                <div class="metric-value">12</div>
+                <div class="metric-change">67% response rate</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">API Health</div>
+                <div class="metric-value">99.8%</div>
+                <div class="metric-change">All systems nominal</div>
+            </div>
+        </div>
+
+        <!-- Stall Patterns -->
+        <div class="section">
+            <div class="section-title">Activation Stall Patterns</div>
+            
+            <div class="stall-patterns">
+                <!-- Dead on Arrival -->
+                <div class="pattern-card">
+                    <div class="pattern-title">Dead on Arrival</div>
+                    <div class="pattern-count">3</div>
+                    <div class="pattern-description">Partners with zero API calls for 14+ days after signing. Likely cause: integration person doesn't match signatory.</div>
+                    <div class="pattern-sla">
+                        <strong>SLA:</strong> CSM sends within 2 days
+                    </div>
+                    <button class="action-button">View Details</button>
+                </div>
+
+                <!-- Stuck in Sandbox -->
+                <div class="pattern-card">
+                    <div class="pattern-title">Stuck in Sandbox</div>
+                    <div class="pattern-count">2</div>
+                    <div class="pattern-description">Successful sandbox testing followed by 7+ days of silence. Partner is testing but blocked by something.</div>
+                    <div class="pattern-sla">
+                        <strong>SLA:</strong> CSM sends within 1 day
+                    </div>
+                    <button class="action-button">View Details</button>
+                </div>
+
+                <!-- Production Blocked -->
+                <div class="pattern-card">
+                    <div class="pattern-title">Production Blocked</div>
+                    <div class="pattern-count">1</div>
+                    <div class="pattern-description">Successful sandbox tests but zero production calls for 14+ days. Approval or compliance blocker.</div>
+                    <div class="pattern-sla">
+                        <strong>SLA:</strong> Account Manager sends within 3 days
+                    </div>
+                    <button class="action-button">View Details</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Stalls -->
+        <div class="section">
+            <div class="section-title">Recent Stalls Detected</div>
+            
+            <div class="recent-stalls">
+                <div class="stall-item">
+                    <div class="stall-info">
+                        <div class="stall-name">Razorpay</div>
+                        <div class="stall-pattern">Dead on Arrival (14 days inactive)</div>
+                    </div>
+                    <div class="stall-date">April 15, 2026</div>
+                    <div class="stall-actions">
+                        <button class="icon-button">Generate Email</button>
+                        <button class="icon-button">Mark Resolved</button>
+                    </div>
+                </div>
+
+                <div class="stall-item">
+                    <div class="stall-info">
+                        <div class="stall-name">Jupiter Money</div>
+                        <div class="stall-pattern">Stuck in Sandbox (8 days since last call)</div>
+                    </div>
+                    <div class="stall-date">April 14, 2026</div>
+                    <div class="stall-actions">
+                        <button class="icon-button">Generate Email</button>
+                        <button class="icon-button">Mark Resolved</button>
+                    </div>
+                </div>
+
+                <div class="stall-item">
+                    <div class="stall-info">
+                        <div class="stall-name">Upstox</div>
+                        <div class="stall-pattern">Production Blocked (16 days since sandbox)</div>
+                    </div>
+                    <div class="stall-date">April 12, 2026</div>
+                    <div class="stall-actions">
+                        <button class="icon-button">Generate Email</button>
+                        <button class="icon-button">Mark Resolved</button>
+                    </div>
+                </div>
+
+                <div class="stall-item">
+                    <div class="stall-info">
+                        <div class="stall-name">MobiKwik</div>
+                        <div class="stall-pattern">Dead on Arrival (21 days inactive)</div>
+                    </div>
+                    <div class="stall-date">April 10, 2026</div>
+                    <div class="stall-actions">
+                        <button class="icon-button">Generate Email</button>
+                        <button class="icon-button">Mark Resolved</button>
+                    </div>
+                </div>
+
+                <div class="stall-item">
+                    <div class="stall-info">
+                        <div class="stall-name">Tide</div>
+                        <div class="stall-pattern">Stuck in Sandbox (6 days since last call)</div>
+                    </div>
+                    <div class="stall-date">April 8, 2026</div>
+                    <div class="stall-actions">
+                        <button class="icon-button">Generate Email</button>
+                        <button class="icon-button">Mark Resolved</button>
+                    </div>
+                </div>
+
+                <div class="stall-item">
+                    <div class="stall-info">
+                        <div class="stall-name">Zerodha</div>
+                        <div class="stall-pattern">Production Blocked (20 days since sandbox)</div>
+                    </div>
+                    <div class="stall-date">April 5, 2026</div>
+                    <div class="stall-actions">
+                        <button class="icon-button">Generate Email</button>
+                        <button class="icon-button">Mark Resolved</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Political Risks -->
+        <div class="section">
+            <div class="section-title">Political Risks Detected</div>
+            
+            <div class="warning-message">
+                1 high-confidence risk alert requires account team review.
+            </div>
+
+            <div style="display: grid; gap: 1rem;">
+                <div style="border: 1px solid #fed7aa; border-radius: 6px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <div>
+                            <div style="font-weight: 700; color: #0f172a;">Competitor Integration - Stripe</div>
+                            <div style="font-size: 0.9rem; color: #64748b; margin-top: 0.25rem;">Jupiter Money mentioned integration with Stripe in recent news</div>
+                        </div>
+                        <div style="background: #fed7aa; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; color: #92400e;">HIGH</div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #fed7aa;">
+                        Confidence: 85% | Detected: April 14, 2026 | Evidence: 3 news mentions in past 30 days
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="section">
+            <div class="section-title">System Status</div>
+            
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <div class="metric-box-label">API Calls Logged</div>
+                    <div class="metric-box-value">2,847</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-box-label">Webhook Uptime</div>
+                    <div class="metric-box-value">99.8%</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-box-label">Detection Accuracy</div>
+                    <div class="metric-box-value">98%</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-box-label">Avg Response Time</div>
+                    <div class="metric-box-value">245ms</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Blostem ACTIVATE v1.0 | Last updated April 16, 2026 | ISO 27001 Certified Bank-Grade Security
+        </div>
+    </div>
+</body>
+</html>

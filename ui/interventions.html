@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interventions - Blostem ACTIVATE</title>
+    <script src="api-client.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e40af;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-buttons a {
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-buttons a.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .nav-buttons a:not(.active) {
+            color: #334155;
+        }
+
+        .nav-buttons a:not(.active):hover {
+            background: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-description {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #2563eb;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .action-button {
+            background: #2563eb;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-button:hover {
+            background: #1d4ed8;
+        }
+
+        .action-button.secondary {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+
+        .action-button.secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .intervention-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+
+        .intervention-item:hover {
+            border-color: #2563eb;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+        }
+
+        .intervention-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .intervention-partner {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .intervention-pattern {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .outcome-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .outcome-badge.generated {
+            background: #dbeafe;
+            color: #0c4a6e;
+        }
+
+        .outcome-badge.sent {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .outcome-badge.responded {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .outcome-badge.bounced {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .success-message {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .intervention-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">Blostem ACTIVATE</div>
+            <nav class="nav-buttons">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="#" class="active">Interventions</a>
+                <a href="contacts.html">Contacts</a>
+                <a href="metrics.html">Metrics</a>
+                <a href="settings.html">Settings</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-title">Generate & Track Interventions</div>
+        <div class="page-description">Create targeted intervention emails based on detected stall patterns</div>
+
+        <div id="message-area"></div>
+
+        <!-- Generate New Intervention -->
+        <div class="section">
+            <div class="section-title">Generate New Intervention</div>
+
+            <form id="generate-form" onsubmit="handleGenerateIntervention(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Partner</label>
+                        <select id="partner-select" required>
+                            <option value="">Select a partner...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stall Pattern</label>
+                        <select id="pattern-select" required>
+                            <option value="">Select a pattern...</option>
+                            <option value="DEAD_ON_ARRIVAL">Dead on Arrival</option>
+                            <option value="STUCK_IN_SANDBOX">Stuck in Sandbox</option>
+                            <option value="PRODUCTION_BLOCKED">Production Blocked</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Persona</label>
+                    <select id="persona-select" required>
+                        <option value="CTO">CTO / Head of Engineering</option>
+                        <option value="Business Contact">Business Contact</option>
+                        <option value="CFO">CFO / Finance</option>
+                        <option value="CPO">CPO / Product</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Preview</label>
+                    <textarea id="email-preview" readonly style="height: 250px; background: #f1f5f9; color: #475569;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Send To (Contact)</label>
+                    <input type="email" id="contact-email" placeholder="contact@company.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Assigned Owner</label>
+                    <select id="owner-select" required>
+                        <option value="CSM">CSM (Customer Success Manager)</option>
+                        <option value="Account Manager">Account Manager</option>
+                        <option value="Solutions Engineer">Solutions Engineer</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="action-button">Generate & Send</button>
+                <button type="button" class="action-button secondary" style="margin-left: 0.5rem;" onclick="resetForm()">Clear</button>
+            </form>
+        </div>
+
+        <!-- Recent Interventions -->
+        <div class="section">
+            <div class="section-title">Recent Interventions</div>
+            <div id="interventions-list">
+                <div class="loading"><div class="spinner"></div> Loading interventions...</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Blostem ACTIVATE v1.0 | Last updated April 16, 2026 | ISO 27001 Certified Bank-Grade Security
+        </div>
+    </div>
+
+    <script>
+        let allPartners = [];
+
+        async function loadPage() {
+            try {
+                // Load dashboard summary to get partners
+                const summary = await api.getDashboardSummary();
+                
+                if (summary.recent_stalls) {
+                    const partnerSet = new Set();
+                    summary.recent_stalls.forEach(stall => {
+                        partnerSet.add(JSON.stringify({
+                            id: stall.partner_id,
+                            name: stall.partner_name
+                        }));
+                    });
+                    
+                    allPartners = Array.from(partnerSet).map(p => JSON.parse(p));
+                    populatePartnerSelect();
+                }
+                
+                loadInterventions();
+            } catch (error) {
+                showMessage(`Failed to load page: ${error.message}`, 'error');
+            }
+        }
+
+        function populatePartnerSelect() {
+            const select = document.getElementById('partner-select');
+            select.innerHTML = '<option value="">Select a partner...</option>';
+            
+            allPartners.forEach(partner => {
+                const option = document.createElement('option');
+                option.value = partner.id;
+                option.textContent = partner.name;
+                select.appendChild(option);
+            });
+        }
+
+        document.getElementById('pattern-select').addEventListener('change', loadEmailPreview);
+        document.getElementById('partner-select').addEventListener('change', loadEmailPreview);
+
+        async function loadEmailPreview() {
+            const partnerId = document.getElementById('partner-select').value;
+            const pattern = document.getElementById('pattern-select').value;
+            const preview = document.getElementById('email-preview');
+
+            if (!partnerId || !pattern) {
+                preview.value = 'Select a partner and pattern to see email preview...';
+                return;
+            }
+
+            try {
+                const result = await api.generateIntervention(partnerId, pattern);
+                preview.value = `Subject: ${result.subject}\n\n${result.body}\n\nCTA: ${result.call_to_action}`;
+                
+                if (result.contact_info && result.contact_info.email) {
+                    document.getElementById('contact-email').value = result.contact_info.email;
+                }
+                if (result.recommended_owner) {
+                    document.getElementById('owner-select').value = result.recommended_owner;
+                }
+            } catch (error) {
+                preview.value = `Error generating preview: ${error.message}`;
+            }
+        }
+
+        async function handleGenerateIntervention(e) {
+            e.preventDefault();
+
+            const partnerId = document.getElementById('partner-select').value;
+            const pattern = document.getElementById('pattern-select').value;
+            const email = document.getElementById('contact-email').value;
+
+            try {
+                await api.markInterventionSent(partnerId);
+                await api.recordInterventionOutcome(partnerId, pattern, 'sent', email);
+                
+                showMessage('Intervention sent successfully!', 'success');
+                resetForm();
+                loadInterventions();
+            } catch (error) {
+                showMessage(`Failed to send intervention: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadInterventions() {
+            const list = document.getElementById('interventions-list');
+            
+            try {
+                const summary = await api.getDashboardSummary();
+                const stalls = summary.recent_stalls || [];
+
+                if (stalls.length === 0) {
+                    list.innerHTML = '<p style="text-align: center; color: #64748b;">No recent interventions</p>';
+                    return;
+                }
+
+                let html = '';
+                stalls.forEach(stall => {
+                    const patternDisplay = stall.pattern.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+                    
+                    html += `
+                        <div class="intervention-item">
+                            <div class="intervention-header">
+                                <div>
+                                    <div class="intervention-partner">${stall.partner_name}</div>
+                                    <div class="intervention-pattern">${patternDisplay}</div>
+                                </div>
+                                <span class="outcome-badge generated">Generated</span>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <button class="action-button secondary" onclick="recordOutcome(${stall.partner_id}, '${stall.pattern}', 'responded')">Mark Responded</button>
+                                <button class="action-button secondary" onclick="recordOutcome(${stall.partner_id}, '${stall.pattern}', 'resolved')">Mark Resolved</button>
+                                <button class="action-button secondary" onclick="recordOutcome(${stall.partner_id}, '${stall.pattern}', 'bounced')">Mark Bounced</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                list.innerHTML = html;
+            } catch (error) {
+                list.innerHTML = `<div class="error-message">Failed to load interventions: ${error.message}</div>`;
+            }
+        }
+
+        async function recordOutcome(partnerId, pattern, outcome) {
+            try {
+                await api.recordInterventionOutcome(partnerId, pattern, outcome);
+                showMessage(`Outcome recorded: ${outcome}`, 'success');
+                loadInterventions();
+            } catch (error) {
+                showMessage(`Failed to record outcome: ${error.message}`, 'error');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('generate-form').reset();
+            document.getElementById('email-preview').value = '';
+        }
+
+        function showMessage(message, type) {
+            const area = document.getElementById('message-area');
+            const className = type === 'success' ? 'success-message' : 'error-message';
+            area.innerHTML = `<div class="${className}">${message}</div>`;
+            
+            setTimeout(() => {
+                area.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load on page init
+        document.addEventListener('DOMContentLoaded', loadPage);
+    </script>
+</body>
+</html>

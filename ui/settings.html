@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Blostem ACTIVATE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e40af;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-buttons a {
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-buttons a.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .nav-buttons a:not(.active) {
+            color: #334155;
+        }
+
+        .nav-buttons a:not(.active):hover {
+            background: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-description {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #2563eb;
+            border-radius: 2px;
+        }
+
+        .settings-group {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .settings-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .setting-title {
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+        }
+
+        .setting-description {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: all 0.3s;
+            border-radius: 28px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: '';
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: all 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2563eb;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .action-button {
+            background: #2563eb;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-button:hover {
+            background: #1d4ed8;
+        }
+
+        .action-button.secondary {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+
+        .action-button.secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .action-button.danger {
+            background: #ef4444;
+        }
+
+        .action-button.danger:hover {
+            background: #dc2626;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border-left: 4px solid #0284c7;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            color: #0c4a6e;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box-text {
+            font-size: 0.9rem;
+            color: #0c4a6e;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">Blostem ACTIVATE</div>
+            <nav class="nav-buttons">
+                <a href="activate-dashboard.html">Dashboard</a>
+                <a href="manage-interventions.html">Interventions</a>
+                <a href="contacts.html">Contacts</a>
+                <a href="metrics.html">Metrics</a>
+                <a href="#" class="active">Settings</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-title">Settings</div>
+        <div class="page-description">Configure system behavior, webhook endpoints, and team preferences</div>
+
+        <!-- Webhook Configuration -->
+        <div class="section">
+            <div class="section-title">Webhook Configuration</div>
+
+            <div class="settings-group">
+                <div class="setting-title">Webhook Endpoint URL</div>
+                <div class="setting-description">The endpoint where Blostem API gateway sends partner API call logs</div>
+                
+                <div class="info-box">
+                    <div class="info-box-title">Your Webhook URL</div>
+                    <div class="code-block">https://api.pragma-gtm.com/api/activate/api-call/log</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Webhook Status</label>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 10px; height: 10px; background: #10b981; border-radius: 50%;"></div>
+                        <span style="color: #10b981; font-weight: 600;">Active (Last call: 2 min ago)</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="password" value="sk_live_abc123def456xyz789" readonly style="background: #f1f5f9;">
+                </div>
+
+                <div class="button-group">
+                    <button class="action-button secondary">Rotate API Key</button>
+                    <button class="action-button secondary">View Logs</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="setting-title">Webhook Events</div>
+                <div class="setting-description">Configure which events trigger webhook calls</div>
+
+                <div class="toggle-switch" style="margin-bottom: 1rem;">
+                    <label for="api-call" style="margin: 0; flex: 1;">
+                        <strong>Log API Calls</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">All partner API calls to Blostem</div>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="api-call" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-switch" style="margin-bottom: 1rem;">
+                    <label for="errors-only" style="margin: 0; flex: 1;">
+                        <strong>Log Errors Only</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">Only failed API calls (4xx, 5xx responses)</div>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="errors-only">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-switch">
+                    <label for="production-only" style="margin: 0; flex: 1;">
+                        <strong>Production Calls Only</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">Exclude sandbox and test environment calls</div>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="production-only">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stall Detection Settings -->
+        <div class="section">
+            <div class="section-title">Stall Detection Parameters</div>
+
+            <div class="settings-group">
+                <div class="setting-title">Dead on Arrival Threshold</div>
+                <div class="setting-description">Flag partners with zero API calls after this many days</div>
+                
+                <div class="form-group">
+                    <label>Days of Inactivity</label>
+                    <input type="number" value="14" min="7" max="30">
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">Recommended: 14 days</div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="setting-title">Stuck in Sandbox Threshold</div>
+                <div class="setting-description">Flag partners with sandbox success but then silence for this many days</div>
+                
+                <div class="form-group">
+                    <label>Days of Silence After Sandbox</label>
+                    <input type="number" value="7" min="3" max="21">
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">Recommended: 7 days</div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="setting-title">Production Blocked Threshold</div>
+                <div class="setting-description">Flag partners with sandbox success but no production calls for this many days</div>
+                
+                <div class="form-group">
+                    <label>Days Without Production Calls</label>
+                    <input type="number" value="14" min="7" max="30">
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">Recommended: 14 days</div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="action-button">Save Changes</button>
+                <button class="action-button secondary">Reset to Default</button>
+            </div>
+        </div>
+
+        <!-- Intervention Settings -->
+        <div class="section">
+            <div class="section-title">Intervention Settings</div>
+
+            <div class="settings-group">
+                <div class="setting-title">Auto-Generate Interventions</div>
+                <div class="setting-description">Automatically generate emails when stalls are detected</div>
+
+                <div class="toggle-switch">
+                    <label for="auto-generate" style="margin: 0; flex: 1;">
+                        <strong>Enabled</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">Generate emails automatically (manual review still required before sending)</div>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-generate" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="setting-title">Default Email Template Language</div>
+                <div class="setting-description">Select the default language for generated intervention emails</div>
+
+                <div class="form-group">
+                    <select>
+                        <option selected>English (US)</option>
+                        <option>English (UK)</option>
+                        <option>Hindi</option>
+                        <option>Spanish</option>
+                        <option>French</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="setting-title">Notification Preferences</div>
+                <div class="setting-description">When should the team be notified about stalls and interventions</div>
+
+                <div class="toggle-switch" style="margin-bottom: 1rem;">
+                    <label for="email-alerts" style="margin: 0; flex: 1;">
+                        <strong>Email Alerts</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">Send email when stalls are detected</div>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="email-alerts" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-switch" style="margin-bottom: 1rem;">
+                    <label for="slack-alerts" style="margin: 0; flex: 1;">
+                        <strong>Slack Notifications</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">Send Slack message for urgent stalls (Production Blocked)</div>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="slack-alerts" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-switch">
+                    <label for="daily-digest" style="margin: 0; flex: 1;">
+                        <strong>Daily Digest</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">Send daily summary of all stalls and interventions</div>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="daily-digest" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="action-button">Save Preferences</button>
+            </div>
+        </div>
+
+        <!-- Team & Access -->
+        <div class="section">
+            <div class="section-title">Team & Access</div>
+
+            <div class="settings-group">
+                <div class="setting-title">Team Members</div>
+                <div class="setting-description">Manage who has access to Blostem ACTIVATE</div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="display: grid; gap: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: #0f172a;">Sarah Johnson</div>
+                                <div style="font-size: 0.85rem; color: #64748b;">CSM | Admin</div>
+                            </div>
+                            <button class="action-button secondary">Remove</button>
+                        </div>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 0.75rem; margin-top: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: #0f172a;">Mike Chen</div>
+                                <div style="font-size: 0.85rem; color: #64748b;">CSM | Editor</div>
+                            </div>
+                            <button class="action-button secondary">Remove</button>
+                        </div>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 0.75rem; margin-top: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: #0f172a;">Lisa Wong</div>
+                                <div style="font-size: 0.85rem; color: #64748b;">Account Manager | Viewer</div>
+                            </div>
+                            <button class="action-button secondary">Remove</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Add Team Member</label>
+                    <input type="email" placeholder="email@blostem.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Role</label>
+                    <select>
+                        <option>Admin (Full access)</option>
+                        <option>Editor (Can manage interventions)</option>
+                        <option>Viewer (Read-only access)</option>
+                    </select>
+                </div>
+
+                <button class="action-button">Add Member</button>
+            </div>
+        </div>
+
+        <!-- System Info -->
+        <div class="section">
+            <div class="section-title">System Information</div>
+
+            <div style="display: grid; gap: 1rem; background: #f8fafc; padding: 1rem; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">System Version</span>
+                    <span style="font-weight: 600; color: #0f172a;">1.0.0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Database Status</span>
+                    <span style="font-weight: 600; color: #10b981;">Healthy</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Last Updated</span>
+                    <span style="font-weight: 600; color: #0f172a;">April 16, 2026 - 2:30 PM IST</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Uptime</span>
+                    <span style="font-weight: 600; color: #10b981;">99.8%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Certification</span>
+                    <span style="font-weight: 600; color: #0f172a;">ISO 27001 Certified</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Blostem ACTIVATE v1.0 | Last updated April 16, 2026 | ISO 27001 Certified Bank-Grade Security
+        </div>
+    </div>
+</body>
+</html>
