@@ -319,6 +319,31 @@ def init_db():
             detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             alert_sent INTEGER DEFAULT 0
         );
+
+        CREATE TABLE IF NOT EXISTS partner_contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            name TEXT,
+            email TEXT,
+            persona TEXT NOT NULL,
+            confidence TEXT DEFAULT 'manual',
+            added_by TEXT,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            verified INTEGER DEFAULT 0,
+            verified_at TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS intervention_outcomes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER REFERENCES partners_activated(id),
+            stall_pattern TEXT NOT NULL,
+            intervention_email_generated TIMESTAMP,
+            intervention_email_sent TIMESTAMP,
+            intervention_sent_to_email TEXT,
+            outcome TEXT,
+            outcome_recorded_at TIMESTAMP,
+            notes TEXT
+        );
     """)
     
     conn.commit()

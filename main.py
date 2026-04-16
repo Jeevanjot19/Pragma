@@ -1016,11 +1016,12 @@ def generate_intervention_email(partner_id: int):
     """
     Generate a targeted intervention email based on detected stall pattern.
     
-    Returns appropriate email template:
+    Returns appropriate email template + contact availability info:
     - DEAD_ON_ARRIVAL: Engineering getting-started guide (target: CTO)
     - STUCK_IN_SANDBOX: Debug-specific email (target: CTO) with error code context
     - PRODUCTION_BLOCKED: Business blocker discussion (target: business contact)
     
+    Also checks if we have contact info for the target persona.
     No LLM — rule-based templates tailored to each pattern.
     """
     from intelligence.activation_patterns import detect_all_stalls
@@ -1029,6 +1030,7 @@ def generate_intervention_email(partner_id: int):
         generate_stuck_in_sandbox_email,
         generate_production_blocked_email
     )
+    from intelligence.contact_manager import check_contact_available
     
     stall_data = detect_all_stalls(partner_id)
     
@@ -1046,11 +1048,17 @@ def generate_intervention_email(partner_id: int):
     else:
         return {"error": "Unknown stall pattern"}
     
+    # Check contact availability for target persona
+    target_persona = email.get("target_persona")
+    contact_info = check_contact_available(partner_id, target_persona)
+    
     return {
         "partner_id": partner_id,
         "stall_pattern": pattern,
         "intervention": email,
-        "action_required": True
+        "contact_info": contact_info,
+        "action_required": True,
+        "next_step": f"Send email to {contact_info['email']}" if contact_info['has_contact'] else "Obtain contact info before sending"
     }
 
 
@@ -1062,7 +1070,10 @@ def get_all_stall_patterns():
     - Count by pattern (Dead on Arrival, Stuck in Sandbox, Production Blocked)
     - Partners requiring urgent intervention
     - Political risks detected
+    - Intervention success metrics
     """
+    from intelligence.contact_manager import get_intervention_metrics
+    
     with get_db() as conn:
         # Get stalls by pattern
         stalls_by_pattern = conn.execute("""
@@ -1091,11 +1102,16 @@ def get_all_stall_patterns():
             LIMIT 20
         """).fetchall()
     
+    # Get intervention effectiveness metrics
+    metrics = get_intervention_metrics()
+    
     return {
         "stalls_by_pattern": [dict(r) for r in stalls_by_pattern],
         "political_risks_by_type": [dict(r) for r in political_risks],
         "recent_stalls": [dict(r) for r in recent_stalls],
-        "requires_urgent_action": bool(stalls_by_pattern)
+        "intervention_metrics": metrics,
+        "requires_urgent_action": bool(stalls_by_pattern),
+        "message": "Dashboard for marketing team - shows stalls + intervention effectiveness"
     }
 
 
@@ -1191,4 +1207,118 @@ def mark_political_risk_alert_sent(partner_id: int):
     return {
         "status": "political_risk_alerts_marked_sent",
         "partner_id": partner_id
+    }
+
+
+# ===========================
+# Contact Management Endpoints
+# ===========================
+
+class AddContactPayload(BaseModel):
+    name: str
+    email: str
+    persona: str  # CTO, Business Contact, CFO, CPO, CEO
+    added_by: str = "system"
+
+
+@app.post("/api/activate/partners/{partner_id}/contacts")
+def add_partner_contact(partner_id: int, payload: AddContactPayload):
+    """
+    Add a known contact for a partner by persona type.
+    Used to track who we can reach for interventions.
+    
+    Personas: CTO, Business Contact, CFO, CPO, CEO
+    """
+    from intelligence.contact_manager import add_partner_contact
+    
+    try:
+        contact_id = add_partner_contact(
+            partner_id,
+            payload.name,
+            payload.email,
+            payload.persona,
+            payload.added_by
+        )
+        return {
+            "status": "contact_added",
+            "contact_id": contact_id,
+            "partner_id": partner_id,
+            "persona": payload.persona,
+            "email": payload.email
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/activate/partners/{partner_id}/contacts")
+def list_partner_contacts(partner_id: int):
+    """
+    Get all known contacts for a partner, grouped by persona.
+    """
+    from intelligence.contact_manager import get_contacts_for_partner
+    
+    contacts = get_contacts_for_partner(partner_id)
+    
+    return {
+        "partner_id": partner_id,
+        "contacts": contacts,
+        "contact_count": sum(len(c) for c in contacts.values()),
+        "message": "Use these contacts to target interventions by persona"
+    }
+
+
+# ================================
+# Intervention Outcome Endpoints
+# ================================
+
+class RecordOutcomePayload(BaseModel):
+    stall_pattern: str  # DEAD_ON_ARRIVAL, STUCK_IN_SANDBOX, PRODUCTION_BLOCKED
+    outcome: str  # responded, resolved, no_response, bounced, sent
+    sent_to_email: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@app.post("/api/activate/partners/{partner_id}/intervention-outcome")
+def record_intervention_outcome(partner_id: int, payload: RecordOutcomePayload):
+    """
+    Record the outcome of an intervention (email sent, response, resolution, etc).
+    Tracks: responded, resolved, no_response, bounced, sent
+    
+    Used to measure intervention effectiveness by pattern.
+    """
+    from intelligence.contact_manager import record_intervention_outcome
+    
+    try:
+        outcome_id = record_intervention_outcome(
+            partner_id,
+            payload.stall_pattern,
+            payload.outcome,
+            payload.notes or "",
+            payload.sent_to_email
+        )
+        return {
+            "status": "outcome_recorded",
+            "outcome_id": outcome_id,
+            "partner_id": partner_id,
+            "stall_pattern": payload.stall_pattern,
+            "outcome": payload.outcome
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/activate/interventions/metrics")
+def get_intervention_metrics():
+    """
+    Get aggregate metrics on intervention effectiveness.
+    Shows: response rate and resolution rate by stall pattern.
+    """
+    from intelligence.contact_manager import get_intervention_metrics
+    
+    metrics = get_intervention_metrics()
+    
+    return {
+        "message": "Intervention effectiveness metrics by stall pattern",
+        "metrics": metrics,
+        "recommendation": "Patterns with low resolution_rate may need better email content or follow-up process"
     }
