@@ -167,11 +167,151 @@ Pragma's redesigned **ACTIVATE layer** is now connected to Blostem's API gateway
 
 ---
 
+## Contact Management Endpoints
+
+### POST `/api/activate/partners/{partner_id}/contacts`
+
+**Purpose**: Add a known contact for a partner (by persona type)
+
+**Request Body** (JSON):
+```json
+{
+  "name": "Jane Smith",
+  "email": "jane.smith@razorpay.com",
+  "persona": "CTO",
+  "added_by": "account_manager_alice"
+}
+```
+
+**Fields**:
+- `name` (required, str): Contact name
+- `email` (required, str): Contact email address
+- `persona` (required, str): Contact role - one of: CTO, Business Contact, CFO, CPO, CEO
+- `added_by` (optional, str, default="system"): Who added this contact
+
+**Response** (200 OK):
+```json
+{
+  "status": "contact_added",
+  "contact_id": 1,
+  "partner_id": 1,
+  "persona": "CTO",
+  "email": "jane.smith@razorpay.com"
+}
+```
+
+---
+
+### GET `/api/activate/partners/{partner_id}/contacts`
+
+**Purpose**: List all known contacts for a partner, grouped by persona
+
+**Response** (200 OK):
+```json
+{
+  "partner_id": 1,
+  "contacts": {
+    "CTO": [
+      {
+        "id": 1,
+        "name": "Jane Smith",
+        "email": "jane.smith@razorpay.com",
+        "confidence": 0.95
+      }
+    ],
+    "Business Contact": [
+      {
+        "id": 2,
+        "name": "John Doe",
+        "email": "john@razorpay.com",
+        "confidence": 0.85
+      }
+    ]
+  },
+  "contact_count": 2,
+  "message": "Use these contacts to target interventions by persona"
+}
+```
+
+---
+
+## Intervention Outcome Tracking
+
+### POST `/api/activate/partners/{partner_id}/intervention-outcome`
+
+**Purpose**: Record the outcome of an intervention email (sent, responded, resolved, bounced, etc.)
+
+**Request Body** (JSON):
+```json
+{
+  "stall_pattern": "DEAD_ON_ARRIVAL",
+  "outcome": "responded",
+  "sent_to_email": "jane.smith@razorpay.com",
+  "notes": "Partner responded within 2 hours, scheduled engineering call"
+}
+```
+
+**Fields**:
+- `stall_pattern` (required, str): Pattern type - DEAD_ON_ARRIVAL, STUCK_IN_SANDBOX, or PRODUCTION_BLOCKED
+- `outcome` (required, str): One of: responded, resolved, no_response, bounced, sent
+- `sent_to_email` (optional, str): Email address the intervention was sent to
+- `notes` (optional, str): Additional notes about the outcome
+
+**Response** (200 OK):
+```json
+{
+  "status": "outcome_recorded",
+  "outcome_id": 1,
+  "partner_id": 1,
+  "stall_pattern": "DEAD_ON_ARRIVAL",
+  "outcome": "responded"
+}
+```
+
+---
+
+### GET `/api/activate/interventions/metrics`
+
+**Purpose**: Get aggregate metrics on intervention effectiveness by stall pattern
+
+**Response** (200 OK):
+```json
+{
+  "message": "Intervention effectiveness metrics by stall pattern",
+  "metrics": {
+    "DEAD_ON_ARRIVAL": {
+      "total_sent": 10,
+      "responded": 8,
+      "response_rate": 0.8,
+      "resolved": 6,
+      "resolution_rate": 0.6
+    },
+    "STUCK_IN_SANDBOX": {
+      "total_sent": 5,
+      "responded": 4,
+      "response_rate": 0.8,
+      "resolved": 3,
+      "resolution_rate": 0.6
+    },
+    "PRODUCTION_BLOCKED": {
+      "total_sent": 3,
+      "responded": 3,
+      "response_rate": 1.0,
+      "resolved": 2,
+      "resolution_rate": 0.67
+    }
+  },
+  "recommendation": "Patterns with low resolution_rate may need better email content or follow-up process"
+}
+```
+
+---
+
 ## Dashboard / Monitoring
 
 ### GET `/api/activate/patterns/all/summary`
 
-**Purpose**: Dashboard view of all activation stalls
+**Purpose**: Dashboard view of all activation stalls + intervention effectiveness
 
 **Response** (200 OK):
 ```json
@@ -204,9 +344,24 @@ Pragma's redesigned **ACTIVATE layer** is now connected to Blostem's API gateway
       "detected_at": "2026-04-16T10:30:00"
     }
   ],
-  "requires_urgent_action": true
+  "intervention_metrics": {
+    "DEAD_ON_ARRIVAL": {
+      "total_sent": 10,
+      "responded": 8,
+      "response_rate": 0.8,
+      "resolved": 6,
+      "resolution_rate": 0.6
+    }
+  },
+  "requires_urgent_action": true,
+  "message": "Dashboard for marketing team - shows stalls + intervention effectiveness"
 }
 ```
+
+**Key Fields**:
+- `stalls_by_pattern`: Count of unresolved stalls grouped by pattern
+- `intervention_metrics`: Effectiveness of interventions by pattern (response rate, resolution rate)
+- `recent_stalls`: Last 20 detected stalls for quick review
 
 ---
 
@@ -229,10 +384,17 @@ Pragma's redesigned **ACTIVATE layer** is now connected to Blostem's API gateway
 - [ ] Test end-to-end: API call → stall detection → email generation
 - [ ] Set up account manager alerts for political risks
 
-### Phase 4: Go Live (Week 4)
+### Phase 4: Contact & Outcome Tracking (Week 4)
+- [ ] Populate known contacts for key partners via `/api/activate/partners/{partner_id}/contacts`
+- [ ] Send intervention emails and record outcomes via `/api/activate/partners/{partner_id}/intervention-outcome`
+- [ ] Monitor intervention metrics via `/api/activate/interventions/metrics`
+- [ ] Identify patterns with low resolution rate and iterate on email content
+
+### Phase 5: Go Live (Week 5)
 - [ ] Enable automatic intervention email sending
-- [ ] Train account team on dashboard
+- [ ] Train account team on dashboard and contact management
 - [ ] Monitor stall detection accuracy
+- [ ] Track intervention effectiveness by pattern
 - [ ] Iterate on email templates based on partner response
 
 ---
@@ -254,13 +416,21 @@ python -m pytest test_blostem_api_integration.py -v
 3. Verify logs appear in database: `SELECT * FROM partner_api_calls`
 4. Test detection: `GET /api/activate/patterns/1`
 5. Test email generation: `POST /api/activate/patterns/1/generate-intervention`
+6. Test contact management: 
+   - `POST /api/activate/partners/1/contacts` - add test contact
+   - `GET /api/activate/partners/1/contacts` - verify contact stored
+7. Test outcome tracking:
+   - `POST /api/activate/partners/1/intervention-outcome` - record outcome
+   - `GET /api/activate/interventions/metrics` - verify metrics calculated
 
 ### Production Testing
 
 1. Start with 5-10 test partners on separate API keys
 2. Monitor webhook logs for 48 hours
 3. Verify stall detection accuracy
-4. Gradually roll out to all partners
+4. Send test intervention emails to pilot account managers
+5. Collect feedback on email quality and usefulness
+6. Gradually roll out to all partners
 
 ---
 
