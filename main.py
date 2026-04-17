@@ -940,3 +940,56 @@ def create_demo_stalls():
         "count": len(demo_stalls),
         "message": f"✓ Created demo stalls for {len(demo_stalls)} partners with realistic stall patterns. Refresh the dashboard to see them."
     }
+
+
+@app.post("/api/activate/demo/intervention-outcomes")
+def create_demo_intervention_outcomes():
+    """
+    Create sample intervention outcome records to demonstrate effectiveness metrics.
+    Shows response rates and resolution rates for each stall pattern.
+    """
+    with get_db() as conn:
+        # Get the demo stalls we just created
+        stalls = conn.execute("""
+            SELECT DISTINCT stall_pattern FROM partner_activation_stalls
+            WHERE issue_resolved = 0
+            LIMIT 10
+        """).fetchall()
+        
+        if not stalls:
+            return {"message": "No stalls found - create demo stalls first"}
+        
+        # Create sample outcomes for each pattern
+        sample_outcomes = {
+            "DEAD_ON_ARRIVAL": ["sent", "responded", "responded", "resolved", "no_response"],
+            "STUCK_IN_SANDBOX": ["sent", "responded", "resolved", "resolved", "bounced"],
+            "PRODUCTION_BLOCKED": ["sent", "responded", "responded", "resolved", "no_response"]
+        }
+        
+        created = 0
+        for stall in stalls:
+            pattern = stall['stall_pattern']
+            outcomes = sample_outcomes.get(pattern, ["sent", "responded"])
+            
+            # Delete existing demo outcomes for this pattern
+            conn.execute("""
+                DELETE FROM intervention_outcomes 
+                WHERE stall_pattern = ? AND outcome_recorded_at > datetime('now', '-7 days')
+            """, (pattern,))
+            
+            # Insert sample outcomes
+            for i, outcome in enumerate(outcomes):
+                conn.execute("""
+                    INSERT INTO intervention_outcomes 
+                    (stall_pattern, outcome, outcome_recorded_at)
+                    VALUES (?, ?, DATETIME('now', '-' || ? || ' hours'))
+                """, (pattern, outcome, i * 6))
+                created += 1
+        
+        conn.commit()
+    
+    return {
+        "status": "demo_outcomes_created",
+        "outcomes_created": created,
+        "message": f"Created {created} sample intervention outcomes. Refresh to see effectiveness metrics."
+    }

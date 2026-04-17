@@ -1730,42 +1730,49 @@ async function recordOutcome(partnerId, pattern, outcome) {
 }
 
 function renderActivateMetrics(data) {
-  const metrics = data.metrics || {};
+  const metrics = data || {};
   if (!Object.keys(metrics).length) {
     document.getElementById('activate-metrics').innerHTML = `
-      <div class="empty-state">No intervention data yet. Generate interventions to see effectiveness metrics.</div>
+      <div class="empty-state" style="padding:20px;text-align:center;color:var(--text2)">
+        No intervention outcomes recorded yet. Generate and send interventions to track effectiveness.
+      </div>
     `;
     return;
   }
 
   const rows = Object.entries(metrics).map(([pattern, m]) => `
     <tr>
-      <td><code>${pattern.replace(/_/g,' ')}</code></td>
-      <td class="mono">${m.total_sent||0}</td>
+      <td><code style="font-size:11px">${pattern.replace(/_/g,' ')}</code></td>
+      <td class="mono" style="text-align:center">${m.total||0}</td>
       <td>
         <div class="score-bar-wrap">
-          <div class="score-bar" style="width:90px">
-            <div class="score-bar-fill" style="width:${Math.round((m.response_rate||0)*100)}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div>
+          <div class="score-bar" style="width:80px;height:16px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden">
+            <div class="score-bar-fill" style="width:${Math.round((m.response_rate||0))}%;background:linear-gradient(90deg,var(--accent),var(--green));height:100%"></div>
           </div>
-          <div class="score-num">${Math.round((m.response_rate||0)*100)}%</div>
+          <div class="score-num" style="font-size:11px">${Math.round((m.response_rate||0))}%</div>
         </div>
       </td>
       <td>
         <div class="score-bar-wrap">
-          <div class="score-bar" style="width:90px">
-            <div class="score-bar-fill" style="width:${Math.round((m.resolution_rate||0)*100)}%;background:linear-gradient(90deg,var(--green),var(--accent))"></div>
+          <div class="score-bar" style="width:80px;height:16px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden">
+            <div class="score-bar-fill" style="width:${Math.round((m.resolution_rate||0))}%;background:linear-gradient(90deg,var(--green),var(--accent));height:100%"></div>
           </div>
-          <div class="score-num">${Math.round((m.resolution_rate||0)*100)}%</div>
+          <div class="score-num" style="font-size:11px">${Math.round((m.resolution_rate||0))}%</div>
         </div>
       </td>
-      <td class="mono text-muted">${m.responded||0} / ${m.resolved||0}</td>
+      <td class="mono" style="font-size:11px;color:var(--text2)">${m.responded||0} resp / ${m.resolved||0} resolved</td>
     </tr>
   `).join('');
 
   document.getElementById('activate-metrics').innerHTML = `
-    <table>
-      <thead><tr>
-        <th>Pattern</th><th>Total Sent</th><th>Response Rate</th><th>Resolution Rate</th><th>Responded / Resolved</th>
+    <div style="overflow-x:auto">
+      <table style="width:100%;font-size:12px">
+        <thead><tr>
+          <th style="text-align:left">Pattern</th>
+          <th style="text-align:center">Total</th>
+          <th style="text-align:center">Response Rate</th>
+          <th style="text-align:center">Resolution Rate</th>
+          <th style="text-align:left">Outcomes</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -1777,7 +1784,9 @@ async function simulateStall() {
   const result = await apiFetch('/api/activate/demo/stalls', { method: 'POST' });
   
   if (result && result.status === 'demo_stalls_created') {
-    toast(`Demo stalls created! Showing ${result.stalls_created.length} stall patterns.`, 'green');
+    // Also create sample intervention outcomes
+    const outcomes = await apiFetch('/api/activate/demo/intervention-outcomes', { method: 'POST' });
+    toast(`Demo stalls created! Showing ${result.stalls_created.length} stall patterns with sample outcomes.`, 'green');
     setTimeout(loadActivation, 500);
   } else {
     toast('Failed to create demo stalls', 'red');
