@@ -543,21 +543,30 @@ def enhance_email_with_llm(partner_id: int, subject: str, body: str, pattern: st
     """
     Enhance email using Claude for more polished, compelling version.
     Makes emails longer, more persuasive, and better structured.
+    Falls back to local enhancement if Claude is unavailable.
     """
     import anthropic
+    import os
     
-    with get_db() as conn:
-        partner = conn.execute(
-            """SELECT p.name, p.category, p.recommended_product
-               FROM partners_activated pa
-               JOIN prospects p ON pa.prospect_id = p.id
-               WHERE pa.prospect_id = ?""",
-            (partner_id,)
-        ).fetchone()
+    # Try to get partner context, but don't fail if not available
+    company = "Partner"
+    product = "Platform"
+    category = "fintech"
     
-    company = partner['name']
-    product = partner['recommended_product']
-    category = partner.get('category', 'fintech')
+    if partner_id and partner_id > 0:
+        with get_db() as conn:
+            partner = conn.execute(
+                """SELECT p.name, p.category, p.recommended_product
+                   FROM partners_activated pa
+                   JOIN prospects p ON pa.prospect_id = p.id
+                   WHERE pa.prospect_id = ?""",
+                (partner_id,)
+            ).fetchone()
+        
+        if partner:
+            company = partner['name']
+            product = partner['recommended_product']
+            category = partner.get('category', 'fintech')
     
     prompt = f"""You are an expert partnership manager at Blostem writing professional, compelling intervention emails.
 
@@ -588,6 +597,11 @@ BODY:
 Do not include any other text or explanations."""
 
     try:
+        # Try Claude enhancement first
+        api_key = os.getenv('ANTHROPIC_API_KEY')
+        if not api_key:
+            raise ValueError("Claude API key not configured")
+            
         client = anthropic.Anthropic()
         response = client.messages.create(
             model="claude-3-5-sonnet-20241022",
@@ -614,8 +628,68 @@ Do not include any other text or explanations."""
             "enhancement_note": "Powered by Claude AI - makes email more compelling and professional"
         }
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "enhancement_note": "Enhancement failed - using original email"
-        }
+        # Fallback to local enhancement if Claude fails
+        return _enhance_email_locally(subject, body, pattern, company, product, category)
+
+
+def _enhance_email_locally(subject: str, body: str, pattern: str, company: str, product: str, category: str) -> dict:
+    """
+    Local email enhancement without Claude API.
+    Expands emails to be more detailed and persuasive.
+    """
+    # Expand body with structured sections and more detail
+    enhanced_body = body
+    
+    # If body is very short, add structured sections
+    if len(body) < 300:
+        sections = []
+        
+        # Opening
+        if not any(word in enhanced_body.lower() for word in ['hello', 'hi', 'dear']):
+            sections.append(f"Hello {company} team,\n\n")
+        
+        sections.append(enhanced_body)
+        
+        # Add context section if missing
+        if 'why' not in enhanced_body.lower() and 'important' not in enhanced_body.lower():
+            sections.append(f"\n\n**Why This Matters**\n{product} enables {company} to:")
+            if category == 'fintech':
+                sections.append("- Improve compliance and regulatory visibility")
+                sections.append("- Reduce fraud detection latency")
+                sections.append("- Enhance customer risk assessment")
+            sections.append("- Make data-driven decisions faster")
+        
+        # Add engagement options if missing
+        if 'option' not in enhanced_body.lower() and 'would' not in enhanced_body.lower():
+            sections.append("\n\n**Next Steps - Pick What Works Best**\n")
+            sections.append("Option 1: Let's discuss this week\n[calendar link]\n")
+            sections.append("Option 2: Send me your questions and I'll respond with answers\n")
+            sections.append("Option 3: Let's schedule a detailed walkthrough\n")
+        
+        # Add closing if missing
+        if not any(word in enhanced_body.lower() for word in ['best', 'regards', 'sincerely']):
+            sections.append("\n\nLooking forward to helping you succeed.\n\nBest regards")
+        
+        enhanced_body = "\n".join(sections)
+    else:
+        # Body is already substantial, just clean it up
+        if not enhanced_body.endswith('.') and not enhanced_body.endswith('?') and not enhanced_body.endswith('!'):
+            enhanced_body += '.'
+    
+    # Enhance subject if it's too generic
+    enhanced_subject = subject
+    if len(subject) < 30:
+        # Add more specific framing
+        if 'question' in subject.lower():
+            enhanced_subject = f"{company} — {subject.lower()} regarding {product}"
+        elif 'quick' in subject.lower():
+            enhanced_subject = f"Quick {product} integration discussion for {company}"
+        else:
+            enhanced_subject = f"{company} — {subject} ({product})"
+    
+    return {
+        "success": True,
+        "subject": enhanced_subject,
+        "body": enhanced_body,
+        "enhancement_note": "Local enhancement - expanded with structure and detail (Claude AI unavailable)"
+    }
