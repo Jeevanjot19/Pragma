@@ -1610,6 +1610,41 @@ function renderActivateSummary(s) {
     const patternLabel = (stall.stall_pattern||'').replace(/_/g,' ');
     const isRed = (stall.days_of_inactivity||0) >= 14;
     const cardClass = isRed ? 'red-card' : 'yellow-card';
+    const det = stall.detection_details || {};
+    
+    // Build detection method explanation based on pattern
+    let methodHtml = '';
+    if (det.pattern === 'DEAD_ON_ARRIVAL') {
+      methodHtml = `
+        <div style="font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-top:8px;padding:8px;background:rgba(255,255,255,0.02);border-radius:4px">
+          <div style="color:var(--text3);font-size:10px;margin-bottom:4px">🔍 Detection Method:</div>
+          <div>0 API calls made · ${det.days_of_inactivity || '14+'} days since signing</div>
+          <div style="color:var(--text3);font-size:10px;margin-top:6px">The person who signed isn't making integration calls.</div>
+        </div>
+      `;
+    } else if (det.pattern === 'STUCK_IN_SANDBOX') {
+      const callCount = det.total_sandbox_calls || 0;
+      const errorInfo = det.recent_errors?.length ? ` (${det.recent_errors.map(e => e.error_code).join(', ')})` : '';
+      methodHtml = `
+        <div style="font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-top:8px;padding:8px;background:rgba(255,255,255,0.02);border-radius:4px">
+          <div style="color:var(--text3);font-size:10px;margin-bottom:4px">🔍 Detection Method:</div>
+          <div>${callCount} sandbox API calls · ${det.days_of_inactivity || '7+'} days silent ${errorInfo ? errorInfo : ''}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">Last attempt: ${det.last_endpoint || 'sandbox'} · ${det.last_status_code || '?'}</div>
+          <div style="color:var(--text3);font-size:10px;margin-top:6px">Technical blocker preventing sandbox → production progression.</div>
+        </div>
+      `;
+    } else if (det.pattern === 'PRODUCTION_BLOCKED') {
+      const successCount = det.sandbox_success_count || 1;
+      methodHtml = `
+        <div style="font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-top:8px;padding:8px;background:rgba(255,255,255,0.02);border-radius:4px">
+          <div style="color:var(--text3);font-size:10px;margin-bottom:4px">🔍 Detection Method:</div>
+          <div>Successful sandbox tests · 0 production calls for ${det.days_of_inactivity || '14+'} days</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">Sandbox working since ${det.last_sandbox_success?.split('T')[0] || 'recently'}</div>
+          <div style="color:var(--text3);font-size:10px;margin-top:6px">Approval/procurement blocker. Contact business stakeholder.</div>
+        </div>
+      `;
+    }
+    
     return `
       <div class="activation-card ${cardClass}">
         <div class="ac-header">
@@ -1618,7 +1653,8 @@ function renderActivateSummary(s) {
         </div>
         <div class="ac-body">
           ${stall.days_of_inactivity ? `Silent for ${stall.days_of_inactivity} days · ` : ''}
-          ${stall.evidence || stall.likely_cause || 'Activation stall detected'}
+          ${det.likely_cause || stall.evidence || 'Activation stall detected'}
+          ${methodHtml}
         </div>
         <div class="ac-footer">
           <button class="btn btn-primary" style="font-size:11px;padding:6px 12px"

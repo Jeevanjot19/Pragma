@@ -550,11 +550,13 @@ def get_all_stall_patterns():
     Get summary of all partners with detected stall patterns.
     Shows:
     - Count by pattern (Dead on Arrival, Stuck in Sandbox, Production Blocked)
+    - Detection details (how we detected it: API calls, error codes, etc.)
     - Partners requiring urgent intervention
     - Political risks detected
     - Intervention success metrics
     """
     from intelligence.contact_manager import get_intervention_metrics
+    from intelligence.activation_patterns import detect_all_stalls
     from datetime import datetime
     
     with get_db() as conn:
@@ -586,13 +588,22 @@ def get_all_stall_patterns():
             LIMIT 20
         """).fetchall()
     
+    # Enrich recent_stalls with detection details
+    enriched_stalls = []
+    for stall in recent_stalls:
+        stall_dict = dict(stall)
+        # Get detailed detection info
+        detection_details = detect_all_stalls(stall_dict['id'])
+        stall_dict['detection_details'] = detection_details
+        enriched_stalls.append(stall_dict)
+    
     # Get intervention effectiveness metrics
     metrics = get_intervention_metrics()
     
     return {
         "stalls_by_pattern": [dict(r) for r in stalls_by_pattern],
         "political_risks_by_type": [dict(r) for r in political_risks],
-        "recent_stalls": [dict(r) for r in recent_stalls],
+        "recent_stalls": enriched_stalls,
         "intervention_metrics": metrics,
         "requires_urgent_action": bool(stalls_by_pattern),
         "message": "Dashboard for marketing team - shows stalls + intervention effectiveness"
