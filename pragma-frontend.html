@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pragma — Blostem GTM Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #0a0c0f;
+    --bg2:       #0f1218;
+    --bg3:       #141820;
+    --border:    #1e2530;
+    --border2:   #252d3a;
+    --text:      #e8edf5;
+    --text2:     #8892a4;
+    --text3:     #4a5568;
+    --accent:    #00d4ff;
+    --accent2:   #0099cc;
+    --green:     #00e599;
+    --yellow:    #f5c842;
+    --red:       #ff4d6a;
+    --orange:    #ff8c42;
+    --purple:    #9d6eff;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── LAYOUT ─────────────────────────────────────────── */
+  .shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo .wordmark {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .sidebar-logo .wordmark span { color: var(--accent); }
+  .sidebar-logo .tagline {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text3);
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .nav { padding: 12px 10px; flex: 1; }
+  .nav-section-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    padding: 10px 10px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    margin-bottom: 1px;
+    border: 1px solid transparent;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active {
+    background: rgba(0,212,255,0.08);
+    color: var(--accent);
+    border-color: rgba(0,212,255,0.15);
+  }
+  .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+  .nav-item .badge {
+    margin-left: auto;
+    background: var(--red);
+    color: white;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    padding: 1px 5px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .nav-item .badge.green { background: var(--green); color: #000; }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-footer .run-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 9px;
+    border-radius: 8px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+  }
+  .sidebar-footer .run-btn:hover { background: #33ddff; transform: translateY(-1px); }
+
+  .main { margin-left: 220px; flex: 1; min-width: 0; }
+
+  .topbar {
+    height: 56px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topbar .page-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+  .topbar .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .topbar .status-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .content { padding: 28px; }
+
+  /* ─── SCREENS ─────────────────────────────────────────── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ─── STAT CARDS ─────────────────────────────────────── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:2px;
+  }
+  .stat-card.blue::before  { background: var(--accent); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.yellow::before{ background: var(--yellow); }
+  .stat-card.red::before   { background: var(--red); }
+  .stat-card.purple::before{ background: var(--purple); }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: var(--font-mono);
+  }
+
+  /* ─── TABLE ───────────────────────────────────────────── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card-title {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+  .card-action {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    cursor: pointer;
+    padding: 4px 10px;
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .card-action:hover { background: rgba(0,212,255,0.1); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    padding: 10px 16px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text2);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .clickable-row { cursor: pointer; }
+  .clickable-row:hover td { background: rgba(0,212,255,0.04); }
+
+  .company-cell { display: flex; align-items: center; gap: 10px; }
+  .company-avatar {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .company-name { font-weight: 600; color: var(--text); font-size: 13px; }
+  .company-meta { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
+
+  /* ─── BADGES ──────────────────────────────────────────── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge.hot    { background: rgba(255,77,106,0.15); color: var(--red); border: 1px solid rgba(255,77,106,0.3); }
+  .badge.warm   { background: rgba(245,200,66,0.12); color: var(--yellow); border: 1px solid rgba(245,200,66,0.3); }
+  .badge.watch  { background: rgba(74,85,104,0.2); color: var(--text3); border: 1px solid var(--border2); }
+  .badge.live   { background: rgba(0,229,153,0.12); color: var(--green); border: 1px solid rgba(0,229,153,0.3); }
+  .badge.stalled{ background: rgba(255,140,66,0.15); color: var(--orange); border: 1px solid rgba(255,140,66,0.3); }
+  .badge.call   { background: rgba(255,77,106,0.15); color: var(--red); border: 1px solid rgba(255,77,106,0.3); }
+  .badge.email  { background: rgba(0,212,255,0.12); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .badge.nurture{ background: rgba(157,110,255,0.12); color: var(--purple); border: 1px solid rgba(157,110,255,0.3); }
+  .badge.clear  { background: rgba(0,229,153,0.12); color: var(--green); border: 1px solid rgba(0,229,153,0.3); }
+  .badge.blocked{ background: rgba(255,77,106,0.15); color: var(--red); border: 1px solid rgba(255,77,106,0.3); }
+  .badge.warning{ background: rgba(245,200,66,0.12); color: var(--yellow); border: 1px solid rgba(245,200,66,0.3); }
+
+  /* ─── SCORE BAR ───────────────────────────────────────── */
+  .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .score-bar {
+    width: 70px; height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+  }
+  .score-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+    min-width: 28px;
+  }
+
+  /* ─── BUTTONS ─────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: #33ddff; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,212,255,0.3); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+  .btn-danger {
+    background: rgba(255,77,106,0.15);
+    color: var(--red);
+    border: 1px solid rgba(255,77,106,0.3);
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  /* ─── LOADING ─────────────────────────────────────────── */
+  .loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    gap: 14px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    padding: 60px;
+    text-align: center;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  /* ─── MODAL / PANEL ───────────────────────────────────── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+  .overlay.open { display: flex; align-items: flex-start; justify-content: flex-end; }
+
+  .drawer {
+    width: 620px;
+    max-width: 95vw;
+    height: 100vh;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn { from { transform: translateX(40px); opacity:0; } to { transform: none; opacity:1; } }
+
+  .drawer-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    background: var(--bg2);
+    z-index: 10;
+  }
+  .drawer-title {
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 800;
+    flex: 1;
+  }
+  .drawer-close {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+  .drawer-close:hover { color: var(--text); background: var(--border2); }
+
+  .drawer-body { padding: 24px; }
+
+  /* ─── DETAIL SECTIONS ─────────────────────────────────── */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .detail-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .detail-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+  .detail-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .section-title {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── TABS ────────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg3);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 7px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text3);
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .tab-btn.active {
+    background: var(--bg2);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── EMAIL BOX ───────────────────────────────────────── */
+  .email-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .email-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .email-subject {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 13px;
+    flex: 1;
+  }
+  .email-body-text {
+    padding: 16px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    font-family: var(--font-body);
+  }
+  .email-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.01);
+  }
+
+  /* ─── REVENUE PROOF ───────────────────────────────────── */
+  .revenue-box {
+    background: linear-gradient(135deg, rgba(0,212,255,0.06) 0%, rgba(0,229,153,0.04) 100%);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .revenue-title {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .revenue-number {
+    font-family: var(--font-head);
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .revenue-sub {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    margin-bottom: 16px;
+  }
+  .revenue-calc {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .revenue-calc-item {
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .revenue-calc-label { font-size: 9px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; }
+  .revenue-calc-value { font-size: 13px; font-weight: 600; color: var(--text); font-family: var(--font-mono); margin-top: 2px; }
+
+  /* ─── WHEN PRIORITY COLS ──────────────────────────────── */
+  .priority-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .priority-col {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .priority-col-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .priority-col-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .priority-col-title {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex: 1;
+  }
+  .priority-count {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+  }
+  .priority-cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
+  .priority-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .priority-card:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); }
+  .priority-card-name { font-weight: 600; color: var(--text); font-size: 13px; margin-bottom: 4px; }
+  .priority-card-event { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-bottom: 6px; line-height: 1.4; }
+  .priority-card-score { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+
+  /* ─── ACTIVATION CARDS ────────────────────────────────── */
+  .activation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .activation-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    transition: all 0.15s;
+  }
+  .activation-card:hover { border-color: var(--border2); }
+  .activation-card.red-card   { border-left: 3px solid var(--red); }
+  .activation-card.yellow-card{ border-left: 3px solid var(--yellow); }
+  .activation-card.green-card { border-left: 3px solid var(--green); }
+  .ac-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .ac-name { font-family: var(--font-head); font-size: 14px; font-weight: 700; flex: 1; }
+  .ac-body { font-size: 12px; color: var(--text3); margin-bottom: 12px; line-height: 1.5; font-family: var(--font-mono); }
+  .ac-footer { display: flex; align-items: center; gap: 8px; }
+
+  /* ─── EVENT TIMELINE ──────────────────────────────────── */
+  .event-list { display: flex; flex-direction: column; gap: 8px; }
+  .event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    background: var(--bg3);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .event-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .event-type { font-size: 10px; font-family: var(--font-mono); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .event-title { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .event-date { font-size: 10px; color: var(--text3); font-family: var(--font-mono); margin-top: 3px; }
+
+  /* ─── COMPLIANCE ──────────────────────────────────────── */
+  .compliance-item {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .compliance-item.violation {
+    background: rgba(255,77,106,0.06);
+    border-color: rgba(255,77,106,0.25);
+    color: var(--red);
+  }
+  .compliance-item.warning {
+    background: rgba(245,200,66,0.06);
+    border-color: rgba(245,200,66,0.25);
+    color: var(--yellow);
+  }
+  .compliance-item.ok {
+    background: rgba(0,229,153,0.06);
+    border-color: rgba(0,229,153,0.25);
+    color: var(--green);
+  }
+  .compliance-rule { font-weight: 600; margin-bottom: 2px; }
+  .compliance-fix { font-family: var(--font-mono); font-size: 11px; opacity: 0.8; margin-top: 4px; }
+
+  /* ─── TOAST ───────────────────────────────────────────── */
+  .toast-wrap {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text);
+    max-width: 300px;
+    animation: toastIn 0.2s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  @keyframes toastIn { from { transform: translateX(20px); opacity:0; } }
+
+  /* ─── MISC ────────────────────────────────────────────── */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+  .mono { font-family: var(--font-mono); }
+  .text-accent { color: var(--accent); }
+  .text-green  { color: var(--green); }
+  .text-red    { color: var(--red); }
+  .text-yellow { color: var(--yellow); }
+  .text-muted  { color: var(--text3); }
+  .font-head   { font-family: var(--font-head); }
+
+  code {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  input, select, textarea {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  .filter-row { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .filter-row input { max-width: 240px; }
+  .filter-row select { max-width: 160px; }
+  .filter-label { font-family: var(--font-mono); font-size: 11px; color: var(--text3); white-space: nowrap; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  @media(max-width:900px){
+    .sidebar{ display:none; }
+    .main{ margin-left:0; }
+    .priority-grid{ grid-template-columns:1fr; }
+    .detail-grid{ grid-template-columns:1fr; }
+    .revenue-calc{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="wordmark">prag<span>ma</span></div>
+      <div class="tagline">Blostem GTM Intelligence</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section-label">Intelligence</div>
+      <a class="nav-item active" onclick="showScreen('who')">
+        <span class="icon">◉</span> Prospect Pipeline
+      </a>
+      <a class="nav-item" onclick="showScreen('when')">
+        <span class="icon">◎</span> This Week
+      </a>
+      <a class="nav-section-label" style="margin-top:12px">Outreach</a>
+      <a class="nav-item" onclick="showScreen('how')">
+        <span class="icon">✦</span> Generate Outreach
+      </a>
+      <div class="nav-section-label" style="margin-top:12px">Partners</div>
+      <a class="nav-item" onclick="showScreen('activate')" id="nav-activate">
+        <span class="icon">⬡</span> Activation
+        <span class="badge" id="stall-badge" style="display:none">!</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="run-btn" onclick="runDiscovery()">⚡ Run Discovery</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title" id="page-title">Prospect Pipeline</div>
+      <div class="status-dot"></div>
+      <div class="status-text">API Connected · localhost:8000</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══ SCREEN 1: WHO ═══ -->
+      <div class="screen active" id="screen-who">
+        <div class="stat-row" id="who-stats">
+          <div class="loading-wrap"><div class="spinner"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">All Prospects</span>
+            <div class="filter-row" style="margin:0">
+              <input id="who-search" placeholder="Search company…" oninput="filterProspects()" style="max-width:180px" />
+              <select id="who-filter" onchange="filterProspects()">
+                <option value="">All Status</option>
+                <option value="HOT">HOT</option>
+                <option value="WARM">WARM</option>
+                <option value="WATCH">WATCH</option>
+              </select>
+            </div>
+          </div>
+          <div id="who-table"><div class="loading-wrap"><div class="spinner"></div><span>Loading prospects…</span></div></div>
+        </div>
+      </div>
+
+      <!-- ═══ SCREEN 2: WHEN ═══ -->
+      <div class="screen" id="screen-when">
+        <div class="stat-row" id="when-stats">
+          <div class="loading-wrap"><div class="spinner"></div></div>
+        </div>
+        <div class="priority-grid" id="when-cols">
+          <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div><span>Loading priorities…</span></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Full WHEN Score Table</span></div>
+          <div id="when-table"></div>
+        </div>
+      </div>
+
+      <!-- ═══ SCREEN 3: HOW ═══ -->
+      <div class="screen" id="screen-how">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Generate Outreach Package</span>
+          </div>
+          <div style="padding:20px">
+            <div class="filter-row">
+              <span class="filter-label">Prospect:</span>
+              <select id="how-prospect-select" style="max-width:260px">
+                <option value="">Select a prospect…</option>
+              </select>
+              <button class="btn btn-primary" onclick="generateOutreach()" id="gen-btn">
+                ⚡ Generate
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="how-result" style="display:none">
+          <!-- filled dynamically -->
+        </div>
+      </div>
+
+      <!-- ═══ SCREEN 4: ACTIVATE ═══ -->
+      <div class="screen" id="screen-activate">
+        <div class="stat-row" id="activate-stats">
+          <div class="loading-wrap"><div class="spinner"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Partner Activation Health</span>
+            <span class="card-action" onclick="loadActivation()">↻ Refresh</span>
+          </div>
+          <div id="activate-stalls"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Intervention Effectiveness</span></div>
+          <div id="activate-metrics"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- DRAWER OVERLAY -->
+<div class="overlay" id="drawer-overlay" onclick="closeDrawer(event)">
+  <div class="drawer" id="drawer" onclick="event.stopPropagation()">
+    <div class="drawer-header">
+      <div class="drawer-title" id="drawer-title">Prospect Detail</div>
+      <div class="drawer-close" onclick="closeDrawerDirect()">✕</div>
+    </div>
+    <div class="drawer-body" id="drawer-body">
+      <div class="loading-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+const API = 'http://localhost:8000';
+let allProspects = [];
+let prospectCache = {};
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+const PAGE_TITLES = {
+  who: 'Prospect Pipeline',
+  when: 'This Week\'s Priorities',
+  how: 'Generate Outreach',
+  activate: 'Partner Activation',
+};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.getElementById('page-title').textContent = PAGE_TITLES[id];
+
+  if (id === 'who' && !allProspects.length)   loadWho();
+  if (id === 'when')   loadWhen();
+  if (id === 'how')    loadHowSelect();
+  if (id === 'activate') loadActivation();
+}
+
+/* ═══════════════════════════════════════════════
+   API HELPERS
+═══════════════════════════════════════════════ */
+async function apiFetch(path, opts={}) {
+  try {
+    const r = await fetch(API + path, opts);
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch(e) {
+    toast('API error: ' + e.message, 'red');
+    return null;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   WHO SCREEN
+═══════════════════════════════════════════════ */
+async function loadWho() {
+  const [stats, prospects] = await Promise.all([
+    apiFetch('/api/stats'),
+    apiFetch('/api/prospects?limit=100')
+  ]);
+
+  if (stats) renderWhoStats(stats);
+  if (prospects) {
+    allProspects = prospects;
+    renderWhoTable(prospects);
+    populateHowSelect(prospects);
+  }
+}
+
+function renderWhoStats(s) {
+  document.getElementById('who-stats').innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-label">Total Prospects</div>
+      <div class="stat-value">${s.total_prospects ?? 0}</div>
+      <div class="stat-sub">in universe</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">HOT</div>
+      <div class="stat-value">${s.hot ?? 0}</div>
+      <div class="stat-sub">score ≥ 65</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">WARM</div>
+      <div class="stat-value">${s.warm ?? 0}</div>
+      <div class="stat-sub">score 30–64</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Displacement</div>
+      <div class="stat-value">${s.displacement_targets ?? 0}</div>
+      <div class="stat-sub">using competitor</div>
+    </div>
+  `;
+}
+
+function renderWhoTable(list) {
+  if (!list || !list.length) {
+    document.getElementById('who-table').innerHTML = '<div class="empty-state">No prospects found. Run discovery first.</div>';
+    return;
+  }
+  const rows = list.map(p => `
+    <tr class="clickable-row" onclick="openProspectDrawer(${p.id})">
+      <td>
+        <div class="company-cell">
+          <div class="company-avatar">${(p.name||'?')[0]}</div>
+          <div>
+            <div class="company-name">${p.name}</div>
+            <div class="company-meta">${p.category || '—'} · ${p.install_count || '—'}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge ${(p.status||'watch').toLowerCase()}">${p.status||'WATCH'}</span></td>
+      <td>
+        <div class="score-bar-wrap">
+          <div class="score-bar"><div class="score-bar-fill" style="width:${p.who_score||0}%"></div></div>
+          <div class="score-num">${p.who_score||0}</div>
+        </div>
+      </td>
+      <td><code>${p.recommended_product || '—'}</code></td>
+      <td class="mono text-muted">${p.using_competitor ? '⚠ '+p.using_competitor : '—'}</td>
+      <td>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();openProspectDrawer(${p.id})">
+          Detail →
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  document.getElementById('who-table').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Company</th><th>Status</th><th>WHO Score</th>
+        <th>Recommended</th><th>Competitor Risk</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function filterProspects() {
+  const q = document.getElementById('who-search').value.toLowerCase();
+  const st = document.getElementById('who-filter').value;
+  const filtered = allProspects.filter(p =>
+    (!q || (p.name||'').toLowerCase().includes(q)) &&
+    (!st || p.status === st)
+  );
+  renderWhoTable(filtered);
+}
+
+async function openProspectDrawer(id) {
+  document.getElementById('drawer-title').textContent = 'Loading…';
+  document.getElementById('drawer-body').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  document.getElementById('drawer-overlay').classList.add('open');
+
+  const [detail, when] = await Promise.all([
+    apiFetch('/api/prospects/' + id),
+    apiFetch('/api/when/' + id)
+  ]);
+
+  if (!detail) return;
+  const p = detail.prospect || detail;
+  const sigs = detail.signals || [];
+  prospectCache[id] = p;
+
+  document.getElementById('drawer-title').textContent = p.name;
+
+  // Revenue proof calculation (inline since endpoint may not be ready)
+  const rev = calcRevenue(p);
+
+  const products = ['has_fd','has_rd','has_bonds','has_upi_credit','has_mutual_funds','has_stocks','has_insurance'];
+  const productFlags = products.map(k => `
+    <span style="
+      display:inline-flex;align-items:center;gap:3px;
+      padding:2px 8px;border-radius:4px;font-size:10px;
+      font-family:var(--font-mono);margin:2px;
+      background:${p[k]?'rgba(0,229,153,0.12)':'rgba(255,255,255,0.04)'};
+      color:${p[k]?'var(--green)':'var(--text3)'};
+      border:1px solid ${p[k]?'rgba(0,229,153,0.3)':'var(--border)'};
+    ">
+      ${p[k]?'✓':'✗'} ${k.replace('has_','').replace('_',' ').toUpperCase()}
+    </span>
+  `).join('');
+
+  const whenHtml = when ? `
+    <div class="section-title" style="margin-top:20px">WHEN Analysis</div>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">WHEN Score</div>
+        <div class="detail-value text-accent" style="font-size:22px;font-family:var(--font-head);font-weight:800">${when.when_score}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Action</div>
+        <div class="detail-value">${when.action}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Event Boost</div>
+        <div class="detail-value">${when.score_breakdown?.event_boost ?? 0} pts</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Days Since Contact</div>
+        <div class="detail-value">${when.days_since_last_contact === -1 ? 'Never' : when.days_since_last_contact + 'd'}</div>
+      </div>
+    </div>
+    ${when.best_recent_event ? `
+      <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:8px;padding:12px;margin-bottom:16px">
+        <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:4px">Best Signal</div>
+        <div style="font-size:13px;color:var(--text)">${when.best_recent_event.title}</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-top:3px">${when.best_recent_event.type} · ${when.best_recent_event.date} · ${when.best_recent_event.urgency}</div>
+      </div>
+    ` : ''}
+  ` : '';
+
+  const sigsHtml = sigs.length ? `
+    <div class="section-title" style="margin-top:20px">Signals (${sigs.length})</div>
+    <div class="event-list">
+      ${sigs.slice(0,6).map(s => `
+        <div class="event-item">
+          <div class="event-dot" style="background:${s.signal_strength==='HIGH'?'var(--red)':s.signal_strength==='MEDIUM'?'var(--yellow)':'var(--text3)'}"></div>
+          <div>
+            <div class="event-type" style="color:${s.signal_strength==='HIGH'?'var(--red)':s.signal_strength==='MEDIUM'?'var(--yellow)':'var(--text3)'}">${s.signal_type}</div>
+            <div class="event-title">${s.title||'—'}</div>
+            <div class="event-date">${(s.detected_at||'').slice(0,10)}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  document.getElementById('drawer-body').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">Category</div>
+        <div class="detail-value">${p.category||'—'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Install Count</div>
+        <div class="detail-value">${p.install_count||'—'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">WHO Score</div>
+        <div class="detail-value text-accent" style="font-size:22px;font-family:var(--font-head);font-weight:800">${p.who_score||0}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Status</div>
+        <div class="detail-value"><span class="badge ${(p.status||'watch').toLowerCase()}">${p.status||'WATCH'}</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">Product Flags</div>
+    <div style="margin-bottom:16px">${productFlags}</div>
+
+    ${rev ? `
+      <div class="revenue-box">
+        <div class="revenue-title">💰 Revenue Proof — Year 1 Projection</div>
+        <div class="revenue-number">₹${rev.year1_cr} Cr</div>
+        <div class="revenue-sub">Estimated commission revenue in Year 1</div>
+        <div class="revenue-calc">
+          <div class="revenue-calc-item">
+            <div class="revenue-calc-label">Estimated Users</div>
+            <div class="revenue-calc-value">${fmtNum(rev.est_users)}</div>
+          </div>
+          <div class="revenue-calc-item">
+            <div class="revenue-calc-label">FD Adopters (${(rev.adoption_rate*100).toFixed(0)}%)</div>
+            <div class="revenue-calc-value">${fmtNum(rev.adopters)}</div>
+          </div>
+          <div class="revenue-calc-item">
+            <div class="revenue-calc-label">Avg Ticket</div>
+            <div class="revenue-calc-value">₹${fmtNum(rev.avg_ticket)}</div>
+          </div>
+          <div class="revenue-calc-item">
+            <div class="revenue-calc-label">Commission Rate</div>
+            <div class="revenue-calc-value">0.5%</div>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+
+    ${whenHtml}
+    ${sigsHtml}
+
+    <div class="divider"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="closeDrawerDirect();showScreen('how');setHowProspect(${p.id})">
+      ⚡ Generate Outreach Package →
+    </button>
+  `;
+}
+
+/* ═══════════════════════════════════════════════
+   REVENUE PROOF (inline calculation)
+═══════════════════════════════════════════════ */
+const ADOPTION_RATES = {wealth:0.08,broker:0.06,neobank:0.04,payment:0.02,savings:0.10,lending:0.03,other:0.03};
+const AVG_TICKETS    = {wealth:200000,broker:150000,neobank:50000,payment:25000,savings:30000,lending:20000,other:40000};
+
+function parseInstallCount(s) {
+  if (!s) return 100000;
+  const n = s.replace(/[^0-9]/g,'');
+  return parseInt(n) || 100000;
+}
+
+function calcRevenue(p) {
+  if (!p.install_count) return null;
+  const cat = (p.category||'other').toLowerCase();
+  const est_users = parseInstallCount(p.install_count);
+  const adoption_rate = ADOPTION_RATES[cat] || 0.03;
+  const avg_ticket = AVG_TICKETS[cat] || 40000;
+  const adopters = Math.round(est_users * adoption_rate);
+  const year1 = adopters * avg_ticket * 0.005;
+  const year1_cr = (year1 / 1e7).toFixed(1);
+  return { est_users, adoption_rate, avg_ticket, adopters, year1, year1_cr };
+}
+
+function fmtNum(n) {
+  if (n >= 1e7) return (n/1e7).toFixed(1)+'Cr';
+  if (n >= 1e5) return (n/1e5).toFixed(1)+'L';
+  if (n >= 1000) return (n/1000).toFixed(0)+'K';
+  return String(n);
+}
+
+/* ═══════════════════════════════════════════════
+   WHEN SCREEN
+═══════════════════════════════════════════════ */
+async function loadWhen() {
+  const [prio, scores] = await Promise.all([
+    apiFetch('/api/when/priorities'),
+    apiFetch('/api/when/scores')
+  ]);
+
+  if (prio) {
+    const call = prio.call_this_week || [];
+    const email = prio.email_this_week || [];
+    const intro = prio.send_intro || [];
+    const nurture = prio.nurture || [];
+    const monitor = prio.monitor || [];
+
+    document.getElementById('when-stats').innerHTML = `
+      <div class="stat-card red">
+        <div class="stat-label">Call This Week</div>
+        <div class="stat-value">${call.length}</div>
+        <div class="stat-sub">score ≥ 65 + event</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Email This Week</div>
+        <div class="stat-value">${email.length}</div>
+        <div class="stat-sub">score 50–65 + event</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-label">Send Intro</div>
+        <div class="stat-value">${intro.length}</div>
+        <div class="stat-sub">score ≥ 50, no event</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Nurture</div>
+        <div class="stat-value">${nurture.length}</div>
+        <div class="stat-sub">score 30–50</div>
+      </div>
+    `;
+
+    const mkCards = (arr) => arr.length
+      ? arr.map(p => `
+          <div class="priority-card" onclick="openProspectDrawer(${p.prospect_id})">
+            <div class="priority-card-name">${p.prospect_name}</div>
+            <div class="priority-card-event">${p.best_recent_event?.title || 'Product gap signal'}</div>
+            <div class="priority-card-score">WHEN ${p.when_score} · WHO ${p.who_score}</div>
+          </div>
+        `).join('')
+      : '<div style="padding:16px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">—</div>';
+
+    document.getElementById('when-cols').innerHTML = `
+      <div class="priority-col">
+        <div class="priority-col-header">
+          <div class="priority-col-dot" style="background:var(--red)"></div>
+          <div class="priority-col-title" style="color:var(--red)">Call This Week</div>
+          <div class="priority-count">${call.length}</div>
+        </div>
+        <div class="priority-cards">${mkCards(call)}</div>
+      </div>
+      <div class="priority-col">
+        <div class="priority-col-header">
+          <div class="priority-col-dot" style="background:var(--accent)"></div>
+          <div class="priority-col-title" style="color:var(--accent)">Email This Week</div>
+          <div class="priority-count">${email.length}</div>
+        </div>
+        <div class="priority-cards">${mkCards(email)}</div>
+      </div>
+      <div class="priority-col">
+        <div class="priority-col-header">
+          <div class="priority-col-dot" style="background:var(--yellow)"></div>
+          <div class="priority-col-title" style="color:var(--yellow)">Send Intro</div>
+          <div class="priority-count">${intro.length}</div>
+        </div>
+        <div class="priority-cards">${mkCards(intro)}</div>
+      </div>
+    `;
+  }
+
+  if (scores && scores.scores) {
+    const rows = scores.scores.map(p => `
+      <tr class="clickable-row" onclick="openProspectDrawer(${p.prospect_id})">
+        <td><div class="company-name">${p.prospect_name}</div></td>
+        <td>${actionBadge(p.action)}</td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar"><div class="score-bar-fill" style="width:${p.when_score}%"></div></div>
+            <div class="score-num">${p.when_score}</div>
+          </div>
+        </td>
+        <td class="mono text-muted" style="font-size:11px">${p.best_recent_event?.type || '—'}</td>
+        <td class="mono text-muted" style="font-size:11px">${p.days_since_last_contact === -1 ? 'never' : p.days_since_last_contact + 'd ago'}</td>
+        <td class="mono" style="font-size:11px;color:var(--text3)">${(p.contact_factor * 100).toFixed(0)}%</td>
+      </tr>
+    `).join('');
+    document.getElementById('when-table').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Company</th><th>Action</th><th>WHEN Score</th>
+          <th>Best Signal</th><th>Last Contact</th><th>Contact Factor</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+}
+
+function actionBadge(a) {
+  if (!a) return '<span class="badge watch">—</span>';
+  const m = {
+    'CALL THIS WEEK': 'call', 'EMAIL THIS WEEK': 'email',
+    'SEND INTRO EMAIL': 'email', 'NURTURE': 'nurture',
+    'MONITOR': 'watch',
+  };
+  return `<span class="badge ${m[a]||'watch'}">${a}</span>`;
+}
+
+/* ═══════════════════════════════════════════════
+   HOW SCREEN
+═══════════════════════════════════════════════ */
+function populateHowSelect(prospects) {
+  const sel = document.getElementById('how-prospect-select');
+  sel.innerHTML = '<option value="">Select a prospect…</option>';
+  prospects.filter(p => p.status !== 'WATCH').forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = `${p.name} (${p.status} · ${p.who_score})`;
+    sel.appendChild(o);
+  });
+}
+
+async function loadHowSelect() {
+  if (allProspects.length) return; // already loaded
+  const prospects = await apiFetch('/api/prospects?limit=100');
+  if (prospects) { allProspects = prospects; populateHowSelect(prospects); }
+}
+
+function setHowProspect(id) {
+  document.getElementById('how-prospect-select').value = id;
+}
+
+async function generateOutreach() {
+  const id = document.getElementById('how-prospect-select').value;
+  if (!id) { toast('Select a prospect first', 'yellow'); return; }
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+  document.getElementById('how-result').style.display = 'none';
+
+  const data = await apiFetch('/api/how/generate/' + id, { method: 'POST' });
+  btn.disabled = false;
+  btn.textContent = '⚡ Generate';
+
+  if (!data) return;
+  renderHowResult(data);
+}
+
+function renderHowResult(data) {
+  const p = allProspects.find(x => x.id == document.getElementById('how-prospect-select').value) || {};
+  const rev = calcRevenue(p);
+
+  const emails = data.emails || {};
+  const personas = ['CPO','CTO','CFO'];
+  const labels = { CPO:'CPO / Product', CTO:'CTO / Engineering', CFO:'CFO / Finance' };
+
+  const complianceSummary = data.compliance_summary || {};
+
+  const tabBtns = personas.map((k,i) => `
+    <button class="tab-btn ${i===0?'active':''}" onclick="switchHowTab('${k}',this)">${labels[k]}</button>
+  `).join('');
+
+  const tabPanels = personas.map((k,i) => {
+    const e = emails[k] || {};
+    const comp = e.compliance || {};
+    const compBadge = comp.status === 'BLOCKED' ? 'blocked' : comp.status === 'WARNING' ? 'warning' : 'clear';
+
+    const violations = (comp.violations || []).map(v => `
+      <div class="compliance-item violation">
+        <div class="compliance-rule">⛔ ${v.rule} (${v.rule_id})</div>
+        <div class="compliance-fix">Triggered by: "${v.triggered_by?.join(', ')}"</div>
+        <div class="compliance-fix">→ Replace with: ${v.replacement}</div>
+      </div>
+    `).join('');
+    const warnings = (comp.warnings || []).map(v => `
+      <div class="compliance-item warning">
+        <div class="compliance-rule">⚠ ${v.rule} (${v.rule_id})</div>
+        <div class="compliance-fix">→ ${v.replacement}</div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="tab-panel ${i===0?'active':''}" id="how-tab-${k}">
+        <div class="email-box">
+          <div class="email-header">
+            <div class="email-subject">${e.subject || '(No subject)'}</div>
+            <span class="badge ${compBadge}">${comp.status || 'CLEAR'}</span>
+          </div>
+          <div class="email-body-text">${e.body || '(Empty)'}</div>
+          <div class="email-footer">
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="copyText(\`${(e.subject||'').replace(/`/g,'\\`')}\n\n${(e.body||'').replace(/`/g,'\\`')}\`)">
+              ⧉ Copy
+            </button>
+            ${violations || warnings ? '<div style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Compliance issues below ↓</div>' : ''}
+          </div>
+        </div>
+        ${violations}${warnings}
+        ${!violations && !warnings ? '<div class="compliance-item ok"><div class="compliance-rule">✓ All compliance checks passed</div></div>' : ''}
+      </div>
+    `;
+  }).join('');
+
+  const revHtml = rev ? `
+    <div class="revenue-box" style="margin-bottom:20px">
+      <div class="revenue-title">💰 Revenue Proof — Year 1 Projection</div>
+      <div class="revenue-number">₹${rev.year1_cr} Cr</div>
+      <div class="revenue-sub">${fmtNum(rev.est_users)} users × ${(rev.adoption_rate*100).toFixed(0)}% FD adoption × ₹${fmtNum(rev.avg_ticket)} avg ticket × 0.5% commission</div>
+      <div class="revenue-calc">
+        <div class="revenue-calc-item">
+          <div class="revenue-calc-label">Estimated Users</div>
+          <div class="revenue-calc-value">${fmtNum(rev.est_users)}</div>
+        </div>
+        <div class="revenue-calc-item">
+          <div class="revenue-calc-label">FD Adopters</div>
+          <div class="revenue-calc-value">${fmtNum(rev.adopters)}</div>
+        </div>
+        <div class="revenue-calc-item">
+          <div class="revenue-calc-label">Year 1 Volume</div>
+          <div class="revenue-calc-value">₹${fmtNum(rev.adopters * rev.avg_ticket)}</div>
+        </div>
+        <div class="revenue-calc-item">
+          <div class="revenue-calc-label">Commission (0.5%)</div>
+          <div class="revenue-calc-value text-green">₹${rev.year1_cr} Cr</div>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  const seqReason = data.sequence_reason || '';
+
+  document.getElementById('how-result').style.display = 'block';
+  document.getElementById('how-result').innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">${data.prospect_name} — Outreach Package</span>
+        <span class="badge ${data.compliance_summary?.all_clear ? 'clear' : 'warning'}">
+          ${data.compliance_summary?.all_clear ? '✓ Compliance Clear' : '⚠ Compliance Issues'}
+        </span>
+        <span class="badge ${(data.action||'').replace(/ /g,'-').toLowerCase()}">${data.action||''}</span>
+      </div>
+      <div style="padding:20px">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-bottom:16px">
+          Why now: ${data.why_now || '—'} · WHEN Score: ${data.when_score || '—'}
+          ${seqReason ? ' · ' + seqReason : ''}
+        </div>
+        ${revHtml}
+        <div class="tabs" style="margin-bottom:0">
+          ${tabBtns}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="padding:20px">
+        ${tabPanels}
+      </div>
+    </div>
+  `;
+}
+
+function switchHowTab(k, btn) {
+  document.querySelectorAll('#how-result .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#how-result .tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('how-tab-' + k)?.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════
+   ACTIVATE SCREEN
+═══════════════════════════════════════════════ */
+async function loadActivation() {
+  document.getElementById('activate-stalls').innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Loading activation data…</span></div>';
+  document.getElementById('activate-metrics').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  document.getElementById('activate-stats').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+
+  const [summary, metrics] = await Promise.all([
+    apiFetch('/api/activate/patterns/all/summary'),
+    apiFetch('/api/activate/interventions/metrics')
+  ]);
+
+  if (summary) renderActivateSummary(summary);
+  if (metrics) renderActivateMetrics(metrics);
+}
+
+function renderActivateSummary(s) {
+  const byPattern = s.stalls_by_pattern || [];
+  const recentStalls = s.recent_stalls || [];
+
+  const totalStalls = byPattern.reduce((acc, x) => acc + (x.count||0), 0);
+  const politicalRisks = (s.political_risks_by_type || []).reduce((acc, x) => acc + (x.count||0), 0);
+
+  // Update badge
+  if (totalStalls > 0) {
+    const badge = document.getElementById('stall-badge');
+    badge.style.display = 'inline';
+    badge.textContent = totalStalls;
+  }
+
+  document.getElementById('activate-stats').innerHTML = `
+    <div class="stat-card red">
+      <div class="stat-label">Active Stalls</div>
+      <div class="stat-value">${totalStalls}</div>
+      <div class="stat-sub">need intervention</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">Political Risks</div>
+      <div class="stat-value">${politicalRisks}</div>
+      <div class="stat-sub">build-vs-buy signals</div>
+    </div>
+    ${byPattern.map(bp => `
+      <div class="stat-card orange">
+        <div class="stat-label">${bp.stall_pattern?.replace(/_/g,' ')}</div>
+        <div class="stat-value">${bp.count}</div>
+        <div class="stat-sub">partners</div>
+      </div>
+    `).join('')}
+  `;
+
+  if (!recentStalls.length) {
+    document.getElementById('activate-stalls').innerHTML = `
+      <div class="empty-state">
+        <div style="font-size:24px;margin-bottom:8px">✓</div>
+        No active stalls. All partners progressing normally.
+        <br><br>
+        <button class="btn btn-ghost" onclick="simulateStall()">Simulate a stall for demo</button>
+      </div>
+    `;
+    return;
+  }
+
+  const cards = recentStalls.map(stall => {
+    const patternLabel = (stall.stall_pattern||'').replace(/_/g,' ');
+    const isRed = (stall.days_of_inactivity||0) >= 14;
+    const cardClass = isRed ? 'red-card' : 'yellow-card';
+    return `
+      <div class="activation-card ${cardClass}">
+        <div class="ac-header">
+          <div class="ac-name">${stall.name || 'Partner #'+stall.partner_id}</div>
+          <span class="badge stalled">${patternLabel}</span>
+        </div>
+        <div class="ac-body">
+          ${stall.days_of_inactivity ? `Silent for ${stall.days_of_inactivity} days · ` : ''}
+          ${stall.evidence || stall.likely_cause || 'Activation stall detected'}
+        </div>
+        <div class="ac-footer">
+          <button class="btn btn-primary" style="font-size:11px;padding:6px 12px"
+            onclick="generateIntervention(${stall.partner_id}, '${stall.stall_pattern}', this)">
+            ⚡ Generate Intervention
+          </button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px"
+            onclick="markResolved(${stall.partner_id}, '${stall.stall_pattern}', this)">
+            ✓ Mark Resolved
+          </button>
+        </div>
+        <div class="intervention-result" id="ir-${stall.partner_id}" style="display:none;margin-top:14px"></div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('activate-stalls').innerHTML = `<div class="activation-grid">${cards}</div>`;
+}
+
+async function generateIntervention(partnerId, pattern, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+
+  const data = await apiFetch('/api/activate/patterns/' + partnerId + '/generate-intervention', { method: 'POST' });
+  btn.disabled = false;
+  btn.textContent = '⚡ Generate Intervention';
+
+  if (!data) return;
+  const interv = data.intervention || {};
+  const contactInfo = data.contact_info || {};
+
+  const el = document.getElementById('ir-' + partnerId);
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="email-box">
+      <div class="email-header">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">
+          → ${interv.target_persona || 'CTO'} · ${interv.recommended_owner || 'CSM'} · ${interv.cta || ''}
+        </div>
+        ${contactInfo.has_contact ? `<code style="margin-left:auto">${contactInfo.email}</code>` : ''}
+      </div>
+      <div style="padding:10px 14px">
+        <div style="font-weight:600;color:var(--text);margin-bottom:8px;font-size:13px">${interv.subject || ''}</div>
+        <div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6">${(interv.body||'').slice(0,500)}${(interv.body||'').length>500?'…':''}</div>
+      </div>
+      <div class="email-footer">
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="copyText(\`${(interv.subject||'').replace(/`/g,'\\`')}\n\n${(interv.body||'').replace(/`/g,'\\`')}\`)">⧉ Copy</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;margin-left:auto" onclick="recordOutcome(${partnerId},'${pattern}','sent')">Mark Sent</button>
+      </div>
+    </div>
+  `;
+  toast('Intervention generated for ' + pattern.replace(/_/g,' '), 'green');
+}
+
+async function markResolved(partnerId, pattern, btn) {
+  btn.disabled = true;
+  const data = await apiFetch('/api/activate/patterns/' + partnerId + '/mark-resolved', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ pattern, resolution: 'Marked resolved via dashboard' })
+  });
+  if (data) { toast('Stall marked as resolved', 'green'); loadActivation(); }
+  else btn.disabled = false;
+}
+
+async function recordOutcome(partnerId, pattern, outcome) {
+  await apiFetch('/api/activate/partners/' + partnerId + '/intervention-outcome', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ stall_pattern: pattern, outcome })
+  });
+  toast('Outcome recorded: ' + outcome, 'green');
+}
+
+function renderActivateMetrics(data) {
+  const metrics = data.metrics || {};
+  if (!Object.keys(metrics).length) {
+    document.getElementById('activate-metrics').innerHTML = `
+      <div class="empty-state">No intervention data yet. Generate interventions to see effectiveness metrics.</div>
+    `;
+    return;
+  }
+
+  const rows = Object.entries(metrics).map(([pattern, m]) => `
+    <tr>
+      <td><code>${pattern.replace(/_/g,' ')}</code></td>
+      <td class="mono">${m.total_sent||0}</td>
+      <td>
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width:90px">
+            <div class="score-bar-fill" style="width:${Math.round((m.response_rate||0)*100)}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div>
+          </div>
+          <div class="score-num">${Math.round((m.response_rate||0)*100)}%</div>
+        </div>
+      </td>
+      <td>
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width:90px">
+            <div class="score-bar-fill" style="width:${Math.round((m.resolution_rate||0)*100)}%;background:linear-gradient(90deg,var(--green),var(--accent))"></div>
+          </div>
+          <div class="score-num">${Math.round((m.resolution_rate||0)*100)}%</div>
+        </div>
+      </td>
+      <td class="mono text-muted">${m.responded||0} / ${m.resolved||0}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('activate-metrics').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Pattern</th><th>Total Sent</th><th>Response Rate</th><th>Resolution Rate</th><th>Responded / Resolved</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+async function simulateStall() {
+  toast('Creating demo stalls…', 'blue');
+  const result = await apiFetch('/api/activate/demo/stalls', { method: 'POST' });
+  
+  if (result && result.status === 'demo_stalls_created') {
+    toast(`Demo stalls created! Showing ${result.stalls_created.length} stall patterns.`, 'green');
+    setTimeout(loadActivation, 500);
+  } else {
+    toast('Failed to create demo stalls', 'red');
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   DISCOVERY
+═══════════════════════════════════════════════ */
+async function runDiscovery() {
+  toast('Running discovery… this may take 30s', 'blue');
+  const r = await apiFetch('/api/discover', { method: 'POST' });
+  if (r) {
+    toast(`Discovery complete: ${r.new_prospects||0} new prospects`, 'green');
+    allProspects = [];
+    loadWho();
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   DRAWER HELPERS
+═══════════════════════════════════════════════ */
+function closeDrawer(e) {
+  if (e.target === document.getElementById('drawer-overlay')) closeDrawerDirect();
+}
+function closeDrawerDirect() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════ */
+function copyText(t) {
+  navigator.clipboard.writeText(t).then(() => toast('Copied to clipboard', 'green'));
+}
+
+function toast(msg, color = 'green') {
+  const colors = {
+    green: 'var(--green)', blue: 'var(--accent)',
+    red: 'var(--red)', yellow: 'var(--yellow)'
+  };
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.borderLeftColor = colors[color] || colors.green;
+  el.style.borderLeftWidth = '3px';
+  el.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  loadWho();
+});
+</script>
+</body>
+</html>

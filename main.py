@@ -555,6 +555,7 @@ def get_all_stall_patterns():
     - Intervention success metrics
     """
     from intelligence.contact_manager import get_intervention_metrics
+    from datetime import datetime
     
     with get_db() as conn:
         # Get stalls by pattern
@@ -573,9 +574,10 @@ def get_all_stall_patterns():
             GROUP BY risk_type
         """).fetchall()
         
-        # Get recently detected stalls
+        # Get recently detected stalls WITH days_of_inactivity calculated
         recent_stalls = conn.execute("""
-            SELECT pa.id, p.name, pas.stall_pattern, pas.detected_at
+            SELECT pa.id, p.name, pas.stall_pattern, pas.detected_at, pas.days_of_inactivity,
+                   CAST((julianday('now') - julianday(pas.detected_at)) AS INTEGER) as days_since_detection
             FROM partner_activation_stalls pas
             JOIN partners_activated pa ON pas.partner_id = pa.id
             JOIN prospects p ON pa.prospect_id = p.id
@@ -852,4 +854,78 @@ def get_demo_revenue_proof():
         "message": "Revenue proof calculation for demo partner (Groww)",
         "demo_data": get_revenue_for_demo(),
         "note": "Use /api/activate/partners/{partner_id}/revenue-proof for actual partner calculations"
+    }
+
+
+@app.post("/api/activate/demo/stalls")
+def create_demo_stalls():
+    """
+    Create realistic demo stall records for visualization during demo.
+    Shows up to 3 different stall patterns:
+    1. DEAD_ON_ARRIVAL - Partner signed but never integrated
+    2. STUCK_IN_SANDBOX - Partner tested but hit technical blocker
+    3. PRODUCTION_BLOCKED - Sandbox works but production approval pending
+    """
+    with get_db() as conn:
+        # First, ensure we have at least 3 activated partners to demo
+        prospects = conn.execute("SELECT id FROM prospects LIMIT 3").fetchall()
+        
+        if not prospects:
+            return {"error": "No prospects found to create demo stalls"}
+        
+        # Create activated partner records if they don't exist
+        for p in prospects:
+            conn.execute("""
+                INSERT OR IGNORE INTO partners_activated 
+                (prospect_id, signed_at, activation_status)
+                VALUES (?, DATETIME('now', '-20 days'), 'INTEGRATION_PENDING')
+            """, (p['id'],))
+        conn.commit()
+        
+        # Get the activated partners
+        partners = conn.execute("""
+            SELECT pa.id, pa.prospect_id, p.name 
+            FROM partners_activated pa
+            JOIN prospects p ON pa.prospect_id = p.id
+            LIMIT 3
+        """).fetchall()
+        
+        demo_stalls = []
+        patterns = [
+            ("DEAD_ON_ARRIVAL", 7),
+            ("STUCK_IN_SANDBOX", 10),
+            ("PRODUCTION_BLOCKED", 15)
+        ]
+        
+        for idx, partner in enumerate(partners):
+            pattern, days_inactive = patterns[idx % len(patterns)]
+            
+            # Delete any existing stalls for this partner-pattern combo
+            # to allow re-running the demo
+            conn.execute("""
+                DELETE FROM partner_activation_stalls 
+                WHERE partner_id = ? AND stall_pattern = ?
+            """, (partner['id'], pattern))
+            
+            # Create new stall
+            conn.execute("""
+                INSERT INTO partner_activation_stalls 
+                (partner_id, stall_pattern, detected_at, days_of_inactivity, issue_resolved)
+                VALUES (?, ?, DATETIME('now', '-' || ? || ' days'), ?, 0)
+            """, (partner['id'], pattern, days_inactive, days_inactive))
+            
+            demo_stalls.append({
+                "partner_id": partner['id'],
+                "partner_name": partner['name'],
+                "pattern": pattern,
+                "days_inactive": days_inactive
+            })
+        
+        conn.commit()
+    
+    return {
+        "status": "demo_stalls_created",
+        "stalls_created": demo_stalls,
+        "count": len(demo_stalls),
+        "message": f"✓ Created demo stalls for {len(demo_stalls)} partners with realistic stall patterns. Refresh the dashboard to see them."
     }
