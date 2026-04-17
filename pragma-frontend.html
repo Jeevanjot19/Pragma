@@ -1476,23 +1476,54 @@ function renderHowResult(data) {
       </div>
     `).join('');
 
+    const prospectId = document.getElementById('how-prospect-select').value;
     return `
       <div class="tab-panel ${i===0?'active':''}" id="how-tab-${k}">
-        <div class="email-box">
-          <div class="email-header">
-            <div class="email-subject">${e.subject || '(No subject)'}</div>
-            <span class="badge ${compBadge}">${comp.status || 'CLEAR'}</span>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden">
+          <div style="padding:16px;border-bottom:1px solid var(--border);background:var(--bg3)">
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">
+              📧 Email Editor — ${k}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Recipient Name</div>
+                <input type="text" id="how-email-name-${k}" placeholder="e.g., ${k} Lead" value="" style="font-size:13px;padding:8px 12px;width:100%"/>
+              </div>
+              <div>
+                <div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Recipient Email</div>
+                <input type="email" id="how-email-addr-${k}" placeholder="e.g., ${k.toLowerCase()}@company.com" value="" style="font-size:13px;padding:8px 12px;width:100%"/>
+              </div>
+            </div>
           </div>
-          <div class="email-body-text">${e.body || '(Empty)'}</div>
-          <div class="email-footer">
-            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="copyText(\`${(e.subject||'').replace(/`/g,'\\`')}\n\n${(e.body||'').replace(/`/g,'\\`')}\`)">
-              ⧉ Copy
+
+          <div style="padding:16px;border-bottom:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Subject Line</div>
+            <textarea id="how-subject-${k}" style="font-size:14px;padding:12px;font-family:var(--font-body);font-weight:600;min-height:50px;resize:vertical;width:100%;border:1px solid var(--border);border-radius:6px" placeholder="Email subject">${e.subject || ''}</textarea>
+          </div>
+
+          <div style="padding:16px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;flex:1">Email Body</div>
+              <span id="how-compliance-badge-${k}" style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:rgba(0,229,153,0.15);color:var(--green);font-family:var(--font-mono);font-size:10px;font-weight:600">✓ Compliant</span>
+            </div>
+            <textarea id="how-body-${k}" style="font-size:14px;padding:12px;font-family:var(--font-body);min-height:250px;resize:vertical;width:100%;border:1px solid var(--border);border-radius:6px;line-height:1.6" placeholder="Email body" oninput="checkHowEmailCompliance('${k}')">${e.body || ''}</textarea>
+            <div id="how-compliance-warnings-${k}" style="margin-top:12px;font-size:12px"></div>
+          </div>
+
+          <div style="padding:16px;display:flex;gap:8px;align-items:center;border-top:1px solid var(--border);background:var(--bg3)">
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="enhanceHowEmail('${k}')">
+              ✨ Enhance with AI
             </button>
-            ${violations || warnings ? '<div style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Compliance issues below ↓</div>' : ''}
+            <button class="btn btn-primary" style="font-size:11px;padding:6px 14px;margin-left:auto" onclick="sendHowEmail('${k}')">
+              📤 Send Email
+            </button>
           </div>
         </div>
-        ${violations}${warnings}
-        ${!violations && !warnings ? '<div class="compliance-item ok"><div class="compliance-rule">✓ All compliance checks passed</div></div>' : ''}
+
+        <div style="margin-top:16px">
+          ${violations}${warnings}
+          ${!violations && !warnings ? '<div class="compliance-item ok"><div class="compliance-rule">✓ All compliance checks passed</div></div>' : ''}
+        </div>
       </div>
     `;
   }).join('');
@@ -1559,6 +1590,139 @@ function switchHowTab(k, btn) {
   document.querySelectorAll('#how-result .tab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('how-tab-' + k)?.classList.add('active');
+}
+
+async function checkHowEmailCompliance(persona) {
+  const subject = document.getElementById(`how-subject-${persona}`).value;
+  const body = document.getElementById(`how-body-${persona}`).value;
+  const recipientName = document.getElementById(`how-email-name-${persona}`).value;
+  const recipientEmail = document.getElementById(`how-email-addr-${persona}`).value;
+
+  const result = await apiFetch('/api/activate/email/check-compliance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subject, body, recipient_name: recipientName, recipient_email: recipientEmail })
+  });
+
+  if (!result) return;
+
+  // Update badge
+  const badge = document.getElementById(`how-compliance-badge-${persona}`);
+  const score = result.compliance_score || 0;
+  
+  if (result.is_compliant) {
+    badge.innerHTML = `✓ Compliant (${score}/100)`;
+    badge.style.background = 'rgba(0,229,153,0.15)';
+    badge.style.color = 'var(--green)';
+  } else if (score >= 70) {
+    badge.innerHTML = `⚠ Minor Issues (${score}/100)`;
+    badge.style.background = 'rgba(245,200,66,0.15)';
+    badge.style.color = 'var(--yellow)';
+  } else {
+    badge.innerHTML = `✗ Needs Work (${score}/100)`;
+    badge.style.background = 'rgba(255,77,106,0.15)';
+    badge.style.color = 'var(--red)';
+  }
+
+  // Show warnings
+  const warningsEl = document.getElementById(`how-compliance-warnings-${persona}`);
+  let warningsHtml = '';
+  
+  if (result.warnings && result.warnings.length > 0) {
+    warningsHtml = '<div style="margin-bottom:12px"><strong>Compliance Feedback:</strong></div>';
+    result.warnings.forEach(w => {
+      const bgColor = w.severity === 'warning' ? 'rgba(255,77,106,0.08)' : w.severity === 'info' ? 'rgba(245,200,66,0.08)' : 'rgba(0,212,255,0.08)';
+      const borderColor = w.severity === 'warning' ? 'rgba(255,77,106,0.2)' : w.severity === 'info' ? 'rgba(245,200,66,0.2)' : 'rgba(0,212,255,0.2)';
+      const icon = w.severity === 'warning' ? '⚠️' : w.severity === 'info' ? 'ℹ️' : '💡';
+      warningsHtml += `
+        <div style="background:${bgColor};border:1px solid ${borderColor};border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.5">
+          <strong>${icon} ${w.type.replace(/_/g, ' ')}</strong><br/>${w.message}
+        </div>
+      `;
+    });
+  }
+
+  if (result.suggestions && result.suggestions.length > 0) {
+    warningsHtml += '<div style="margin-top:12px;margin-bottom:12px"><strong>💡 Suggestions:</strong></div>';
+    result.suggestions.forEach(s => {
+      warningsHtml += `
+        <div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.5;color:var(--accent)">
+          ${s}
+        </div>
+      `;
+    });
+  }
+
+  warningsEl.innerHTML = warningsHtml;
+}
+
+async function enhanceHowEmail(persona) {
+  const subject = document.getElementById(`how-subject-${persona}`).value;
+  const body = document.getElementById(`how-body-${persona}`).value;
+  
+  if (!subject || !body) {
+    toast('Please enter a subject and body first', 'yellow');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ Enhancing…';
+
+  const result = await apiFetch('/api/activate/email/enhance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subject, body }),
+    params: { partner_id: 0 }
+  });
+
+  btn.disabled = false;
+  btn.textContent = '✨ Enhance with AI';
+
+  if (!result) return;
+
+  if (result.success) {
+    document.getElementById(`how-subject-${persona}`).value = result.subject;
+    document.getElementById(`how-body-${persona}`).value = result.body;
+    checkHowEmailCompliance(persona);
+    toast('Email enhanced! Review and adjust as needed', 'green');
+  } else {
+    toast('Enhancement failed: ' + (result.error || 'Unknown error'), 'red');
+  }
+}
+
+async function sendHowEmail(persona) {
+  const subject = document.getElementById(`how-subject-${persona}`).value;
+  const body = document.getElementById(`how-body-${persona}`).value;
+  const recipientName = document.getElementById(`how-email-name-${persona}`).value;
+  const recipientEmail = document.getElementById(`how-email-addr-${persona}`).value;
+
+  if (!subject || !body) {
+    toast('Subject and body are required', 'red');
+    return;
+  }
+
+  if (!recipientEmail) {
+    toast('Recipient email is required', 'red');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ Sending…';
+
+  const result = await apiFetch('/api/activate/email/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subject, body, recipient_name: recipientName, recipient_email: recipientEmail })
+  });
+
+  btn.disabled = false;
+  btn.textContent = '📤 Send Email';
+
+  if (result && result.status === 'sent') {
+    toast(`Email sent to ${recipientEmail}!`, 'green');
+  }
 }
 
 /* ═══════════════════════════════════════════════
