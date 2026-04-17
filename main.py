@@ -826,22 +826,24 @@ def get_intervention_metrics():
 @app.get("/api/activate/partners/{partner_id}/revenue-proof")
 def get_revenue_proof(partner_id: int):
     """
-    Calculate revenue proof for a partner.
+    Calculate revenue proof for a partner (realistic estimates).
+    
     Shows potential annual commission based on:
-    - Company size (estimated users/employees)
-    - Adoption rate (% who use Blostem)
-    - Average transaction value
-    - Commission rate (0.5% of transaction volume)
+    - Company size (estimated employees)
+    - Adoption rate (30% month 1 → 50% month 6 → 60% mature)
+    - Average transaction value (₹1,200 for payments, based on India Stack 2026 data)
+    - Commission rate (0.5% of transaction volume - standard for APIs)
+    - Transaction frequency (10-12/month realistic for payments, 1-3/year for lending)
     
-    Formula: year1_commission = estimated_users × adoption_rate × avg_ticket × 0.005
+    Realistic Formula: year1_commission = employees × adoption_rate × transactions × avg_ticket × 0.005
     
-    Example: Groww
-    - 400 employees × 60% adoption × ₹5000/transaction × 0.5%
-    - = 240 active users × 12 months × ₹5000 × 0.5%
-    - = ₹1.44 crore in Year 1 (conservative)
-    - = ₹3.6 crore in Year 2 (with 150% growth)
+    Example: Groww (400 employees)
+    - Conservative: 120 users × 10 txns/month × ₹1,200 × 0.5% = ₹86,400 (0.086 crore)
+    - Realistic: 200 users × mixed products (60% payment + 40% lending) = ₹1.66 lakh
+    - Optimistic: 240 users × 60% adoption × high engagement = ₹4.5 lakh
     
-    For high-volume fintech: Can reach ₹40 crore with scaled assumptions.
+    Note: Previous ₹40 crore estimate was unrealistic (20 txns/month at ₹50k avg).
+    Realistic range is ₹1-50 lakh depending on product mix and adoption.
     """
     from intelligence.revenue_proof import calculate_revenue_proof
     
@@ -856,13 +858,25 @@ def get_revenue_proof(partner_id: int):
 @app.get("/api/activate/demo/revenue-proof")
 def get_demo_revenue_proof():
     """
-    Get revenue proof calculation for demo (Groww example).
-    Shows how ₹40 crore revenue opportunity is justified.
+    Get revenue proof calculation for demo (Groww example with 3 scenarios).
+    
+    Returns Conservative, Realistic, and Optimistic scenarios based on:
+    - Indian fintech research (2026 RBI/India Stack data)
+    - Payment APIs: 8-15 transactions/month at ₹1,200 average
+    - Lending: 1-3 loans/year at ₹100K average
+    - Investments: 1-2 transactions/month at ₹100K average
+    
+    Conservative: 30% adoption = ₹86,400 (0.086 crore)
+    Realistic: 50% adoption, mixed products = ₹1.66 lakh
+    Optimistic: 60% adoption, all products = ₹4.5 lakh
+    
+    Note: These are realistic ranges. The previous ₹40 crore was inflated with
+    unrealistic assumptions (20 txns/month at ₹50k avg).
     """
     from intelligence.revenue_proof import get_revenue_for_demo
     
     return {
-        "message": "Revenue proof calculation for demo partner (Groww)",
+        "message": "Revenue proof calculation for demo partner (Groww) - 3 realistic scenarios",
         "demo_data": get_revenue_for_demo(),
         "note": "Use /api/activate/partners/{partner_id}/revenue-proof for actual partner calculations"
     }
