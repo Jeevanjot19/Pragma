@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Email Editor</title>
+    <style>
+        body { font-family: monospace; background: #0a0c0f; color: #e0e0e0; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #333; border-radius: 8px; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        textarea { width: 100%; height: 200px; padding: 10px; margin: 10px 0; background: #1a1a1a; color: #fff; border: 1px solid #444; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>🐛 Pragma Email Editor Debug</h1>
+    
+    <div class="test-section">
+        <h2>1. Check if stalls exist:</h2>
+        <button onclick="testStalls()">Get Stalls</button>
+        <div id="stalls-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Generate Intervention Email:</h2>
+        <button onclick="testGenerateIntervention()">Generate Email</button>
+        <div id="intervention-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test Email Editor Visibility:</h2>
+        <div id="editor-container" style="border: 2px solid yellow; padding: 20px; background: rgba(255,255,0,0.05);">
+            <textarea id="test-editor" placeholder="Type here to test if editor is clickable..."></textarea>
+            <p>If you can click and type in the textarea above, the editor works.</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Email Templates (for inspection):</h2>
+        <button onclick="showTemplates()">Load Templates</button>
+        <div id="templates-result"></div>
+    </div>
+
+    <script>
+        async function testStalls() {
+            const res = document.getElementById('stalls-result');
+            try {
+                const r = await fetch('http://localhost:8000/api/activate/patterns/all/summary');
+                const data = await r.json();
+                const stalls = data.recent_stalls || [];
+                res.innerHTML = `<p class="success">✓ Found ${stalls.length} stalls:</p><pre>${JSON.stringify(stalls.slice(0, 2), null, 2)}</pre>`;
+            } catch (e) {
+                res.innerHTML = `<p class="error">✗ Error: ${e.message}</p>`;
+            }
+        }
+
+        async function testGenerateIntervention() {
+            const res = document.getElementById('intervention-result');
+            try {
+                const r1 = await fetch('http://localhost:8000/api/activate/patterns/all/summary');
+                const data1 = await r1.json();
+                const stalls = data1.recent_stalls || [];
+                if (!stalls.length) {
+                    res.innerHTML = '<p class="error">No stalls found</p>';
+                    return;
+                }
+                
+                const partnerId = stalls[0].id;
+                const r2 = await fetch(`http://localhost:8000/api/activate/patterns/${partnerId}/generate-intervention`, {method: 'POST'});
+                const interv = await r2.json();
+                
+                const subject = interv.intervention?.subject || 'N/A';
+                const body = interv.intervention?.body || '';
+                const bodyLen = body.length;
+                
+                res.innerHTML = `
+                    <p class="success">✓ Email Generated for Partner ${partnerId}</p>
+                    <p><strong>Subject:</strong> ${subject}</p>
+                    <p><strong>Body Length:</strong> ${bodyLen} chars</p>
+                    <textarea readonly>${body}</textarea>
+                `;
+            } catch (e) {
+                res.innerHTML = `<p class="error">✗ Error: ${e.message}</p>`;
+            }
+        }
+
+        function showTemplates() {
+            const res = document.getElementById('templates-result');
+            res.innerHTML = `
+                <p>Email templates are generated server-side using:</p>
+                <pre>intelligence/activation_interventions.py</pre>
+                <p>Three patterns:</p>
+                <ul>
+                    <li>DEAD_ON_ARRIVAL: 0 API calls → offer engineering support</li>
+                    <li>STUCK_IN_SANDBOX: Sandbox errors → offer technical support</li>
+                    <li>PRODUCTION_BLOCKED: Sandbox OK, no prod calls → contact business stakeholder</li>
+                </ul>
+                <p>Templates are company-specific using partner name + product type.</p>
+            `;
+        }
+    </script>
+</body>
+</html>
