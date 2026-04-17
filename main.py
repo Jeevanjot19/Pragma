@@ -576,7 +576,7 @@ def get_all_stall_patterns():
         
         # Get recently detected stalls WITH days_of_inactivity calculated
         recent_stalls = conn.execute("""
-            SELECT pa.id, p.name, pas.stall_pattern, pas.detected_at, pas.days_of_inactivity,
+            SELECT pa.prospect_id as id, p.name, pas.stall_pattern, pas.detected_at, pas.days_of_inactivity,
                    CAST((julianday('now') - julianday(pas.detected_at)) AS INTEGER) as days_since_detection
             FROM partner_activation_stalls pas
             JOIN partners_activated pa ON pas.partner_id = pa.id

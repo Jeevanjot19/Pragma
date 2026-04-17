@@ -1613,7 +1613,7 @@ function renderActivateSummary(s) {
     return `
       <div class="activation-card ${cardClass}">
         <div class="ac-header">
-          <div class="ac-name">${stall.name || 'Partner #'+stall.partner_id}</div>
+          <div class="ac-name">${stall.name || 'Partner #'+stall.id}</div>
           <span class="badge stalled">${patternLabel}</span>
         </div>
         <div class="ac-body">
@@ -1622,15 +1622,15 @@ function renderActivateSummary(s) {
         </div>
         <div class="ac-footer">
           <button class="btn btn-primary" style="font-size:11px;padding:6px 12px"
-            onclick="generateIntervention(${stall.partner_id}, '${stall.stall_pattern}', this)">
+            onclick="generateIntervention(${stall.id}, '${stall.stall_pattern}', this)">
             ⚡ Generate Intervention
           </button>
           <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px"
-            onclick="markResolved(${stall.partner_id}, '${stall.stall_pattern}', this)">
+            onclick="markResolved(${stall.id}, '${stall.stall_pattern}', this)">
             ✓ Mark Resolved
           </button>
         </div>
-        <div class="intervention-result" id="ir-${stall.partner_id}" style="display:none;margin-top:14px"></div>
+        <div class="intervention-result" id="ir-${stall.id}" style="display:none;margin-top:14px"></div>
       </div>
     `;
   }).join('');
