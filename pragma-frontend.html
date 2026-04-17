@@ -1551,13 +1551,15 @@ async function loadActivation() {
   document.getElementById('activate-metrics').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   document.getElementById('activate-stats').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
 
-  const [summary, metrics] = await Promise.all([
+  const [summary, metricsResponse] = await Promise.all([
     apiFetch('/api/activate/patterns/all/summary'),
     apiFetch('/api/activate/interventions/metrics')
   ]);
 
   if (summary) renderActivateSummary(summary);
-  if (metrics) renderActivateMetrics(metrics);
+  if (metricsResponse && metricsResponse.metrics) {
+    renderActivateMetrics(metricsResponse.metrics);
+  }
 }
 
 function renderActivateSummary(s) {
