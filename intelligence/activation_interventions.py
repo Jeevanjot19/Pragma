@@ -14,7 +14,7 @@ def generate_dead_on_arrival_email(partner_id: int) -> dict:
     """
     Pattern 1: Dead on Arrival
     Partner never started integration.
-    Email target: CTO (not the person who signed)
+    Engagement model: CSM reaches out to main contact to facilitate team support
     Goal: Offer hands-on help to get started
     """
     with get_db() as conn:
@@ -31,49 +31,48 @@ def generate_dead_on_arrival_email(partner_id: int) -> dict:
     signed_date = datetime.fromisoformat(partner['signed_at'])
     days_since = (datetime.now() - signed_date).days
     
-    subject = f"Getting started with {product} at {company} — 30-min setup call?"
+    subject = f"Getting your team unblocked with {product} — quick support offer"
     
-    body = f"""Hi [CTO Name at {company}],
+    body = f"""Hi there,
 
-I wanted to check in on the {product} integration that {company} signed up for on {signed_date.strftime('%B %d')}.
+I wanted to reach out regarding the {product} integration {company} signed up for on {signed_date.strftime('%B %d')}.
 
-I noticed you haven't made any sandbox API calls yet, which is totally normal — first integrations can seem overwhelming.
+I know sometimes getting started on integrations takes a bit of momentum. First integrations can involve a few technical steps, and it's totally normal if your engineering team needs a bit of support.
 
-Here's what we typically see:
-- First API call: 15 minutes (just need your API key and endpoint)
+Here's what we typically see from other partners:
+- First API call: 15 minutes (just need credentials and endpoint setup)
 - First successful response: 30 minutes more
 - Full integration: 2-4 hours
 
-To de-risk this, I'd like to offer a 30-minute engineering pairing session. We'll:
-1. Get your sandbox credentials set up (10 min)
-2. Make your first successful API call together (10 min)
-3. Answer any architecture questions (10 min)
+To make this smooth, we'd love to offer a 30-minute engineering support session. We can:
+1. Help your engineering team get sandbox credentials set up (10 min)
+2. Make the first successful API call together (10 min)
+3. Answer any architecture or integration questions (10 min)
 
-You'll walk away with a working integration and no mystery. No sales pitch, just engineering help.
+No pressure, no sales pitch—just hands-on engineering support to get you moving.
 
-Available this week:
+Would your team find that helpful? Available this week:
 - Tuesday 2-4 PM IST
 - Wednesday 10 AM-12 PM IST  
 - Thursday 3-5 PM IST
 
-Let me know what works.
+Let me know what works best.
 
 Best,
 [Your Name]
-Blostem Engineering
+Blostem Partnerships
 """
     
     return {
         "partner_id": partner_id,
         "pattern": StallPattern.DEAD_ON_ARRIVAL,
-        "target_persona": "CTO",
-        "target_note": "NOT the person who signed — the person actually integrating",
+        "engagement_model": "CSM facilitates engineering support",
         "recommended_owner": "CSM",
-        "owner_note": "CSM should send within 2 days of detecting DEAD_ON_ARRIVAL",
+        "owner_note": "CSM should send within 2 days - offer support to get engineering team started",
         "subject": subject,
         "body": body,
-        "cta": "30-minute engineering call to get started",
-        "tone": "friendly_engineering",
+        "cta": "30-minute engineering support session",
+        "tone": "collaborative_support",
         "generated_at": datetime.now().isoformat()
     }
 
@@ -81,9 +80,9 @@ Blostem Engineering
 def generate_stuck_in_sandbox_email(partner_id: int, stall_data: dict) -> dict:
     """
     Pattern 2: Stuck in Sandbox
-    Partner made sandbox calls but hit an error and stopped for 7+ days.
-    Email target: CTO (the person making API calls)
-    Goal: Unblock specific technical issue
+    Partner made sandbox calls but hit a technical error and paused.
+    Engagement model: CSM reaches out to main contact to offer technical support
+    Goal: Help unblock the engineering team's technical issue
     """
     with get_db() as conn:
         partner = conn.execute(
@@ -101,53 +100,53 @@ def generate_stuck_in_sandbox_email(partner_id: int, stall_data: dict) -> dict:
     
     # Tailor subject based on error
     error_map = {
-        "AUTH_FAILED": "Auth issue with sandbox API?",
-        "MISSING_FIELD": "Missing a required field?",
-        "RATE_LIMIT": "Hit rate limit on sandbox?",
-        "INVALID_REQUEST": "Request format issue?",
+        "AUTH_FAILED": "auth issue",
+        "MISSING_FIELD": "field validation issue",
+        "RATE_LIMIT": "rate limiting",
+        "INVALID_REQUEST": "request format issue",
     }
     
-    error_subject = error_map.get(error_code, f"Error code {error_code}")
+    error_subject = error_map.get(error_code, f"technical issue")
     
-    subject = f"Let's debug this {error_subject} — {company} sandbox integration"
+    subject = f"Quick technical support for {company} — {error_subject} in {product}"
     
-    body = f"""Hi [CTO Name at {company}],
+    body = f"""Hi there,
 
-I noticed your {product} sandbox integration hit an error on {stall_data.get('last_api_call', 'recently')} and hasn't recovered.
+I wanted to check in on {company}'s {product} integration. I see your team was working through sandbox testing recently and encountered a {error_subject}.
 
-Last error: {error_code}
-
-**This is totally fixable.** Most sandbox blockers are one of:
-- API key permission issue (2 min fix)
+These kinds of blockers are usually pretty straightforward to resolve—we've seen similar ones dozens of times, and they typically fall into a few categories:
+- API credential or permission setup (2 min fix)
 - Endpoint URL formatting (2 min fix)
-- Missing required header (5 min fix)
+- Missing or incorrect request headers (5 min fix)
 - Request body structure (10 min fix)
 
-Rather than email debugging back-and-forth, let's just jump on a 15-minute call. I can either:
-1. Debug it live with you (we'll have a working call within 5 minutes)
-2. Walk you through the exact fix in your code
+Rather than troubleshoot via email, I'd prefer to set up a quick 15-minute call with your team. We can either:
+1. Debug it together live (we'll have it working within 5 minutes)
+2. Walk through the exact fix needed for your setup
 
-→ Hit reply with your availability, or grab 15 min here: [calendar link]
+This would be much faster than back-and-forth email debugging.
 
-I know these things are annoying — let's just knock it out.
+Do you have 15 minutes this week to help get your engineering team unblocked? 
+→ [calendar link for 15-min slot]
+
+Just reply if that timing doesn't work and we'll find something.
 
 Best,
 [Your Name]
-Blostem Engineering
+Blostem Support
 """
     
     return {
         "partner_id": partner_id,
         "pattern": StallPattern.STUCK_IN_SANDBOX,
-        "target_persona": "CTO",
-        "target_note": "The person making the API calls",
+        "engagement_model": "CSM offers technical support to partner team",
         "recommended_owner": "CSM",
-        "owner_note": "CSM should send within 1 day and include error details",
+        "owner_note": "CSM should send within 1 day - offer to help partner's engineering team get unblocked",
         "error_code": error_code,
         "subject": subject,
         "body": body,
-        "cta": "15-minute debug call",
-        "tone": "technical_debug",
+        "cta": "15-minute technical support call",
+        "tone": "technical_support",
         "generated_at": datetime.now().isoformat()
     }
 
@@ -155,9 +154,9 @@ Blostem Engineering
 def generate_production_blocked_email(partner_id: int, stall_data: dict) -> dict:
     """
     Pattern 3: Sandbox → Production Gap
-    Partner successfully tested in sandbox but never moved to production.
-    Email target: Business contact (not engineering)
-    Goal: Unblock approval/procurement
+    Partner successfully tested in sandbox but hasn't moved to production yet.
+    Engagement model: Account Manager partners with contact to understand and resolve any blockers
+    Goal: Understand what's needed to move forward
     """
     with get_db() as conn:
         partner = conn.execute(
@@ -172,30 +171,28 @@ def generate_production_blocked_email(partner_id: int, stall_data: dict) -> dict
     product = partner['recommended_product']
     days = stall_data.get('days_since_signed', 0)
     
-    subject = f"Unblocking {company} — {product} production launch"
+    subject = f"{company} — next steps with {product} production launch"
     
-    body = f"""Hi [Business Contact at {company}],
+    body = f"""Hi there,
 
-Your team has successfully tested {product} in sandbox for the past few weeks. Sandbox tests show 100% success.
+I wanted to check in on {company}'s {product} journey. Your team's sandbox testing looked great—full success on all integration tests.
 
-But production hasn't been activated yet. We're at day {days} post-signature.
+I'm noticing the move to production hasn't happened yet. Typically at this stage, there's usually something we can help with—it might be a process question, data setup, compliance review, or something else entirely.
 
-**Typical blockers at this stage:**
-- Procurement still approving contract terms (we can adjust)
-- Legal review needed (we have pre-approved docs for fintech)
-- Internal stakeholder sign-off (we can present benefits)
-- Data security audit (we have compliance certifications)
+What I've found works best is just having a quick conversation to understand what the next step looks like from your perspective. Sometimes it's a simple question we can answer in a 15-minute call. Sometimes there's a process we can help streamline.
 
-Rather than guess, let's just talk. What's the actual blocker?
+Would you have 20 minutes this week to chat about getting from sandbox to live? I can bring whoever would be helpful on our side depending on what you need:
+- Integration questions → our engineering team
+- Compliance/security questions → our compliance team
+- Scope or contract questions → our partnership team
 
-I'll schedule a 20-minute call with whoever owns this decision:
-- Product: [Your Name, Product Lead]
-- Engineering: [Your Name, Tech Lead]
-- Finance: [Your Name, Business Lead]
+Just let me know what would be most useful, and I'll get the right person involved.
 
-→ Pick a time: [calendar link]
+→ [calendar link for 20-min slot]
 
-If it's something we can solve, we solve it this week. If it needs time, we get aligned on next steps.
+Or if you'd prefer, just reply with what the blockers are and I can work on solutions on our end.
+
+Looking forward to getting you live.
 
 Best,
 [Your Name]
@@ -205,15 +202,14 @@ Blostem Partnerships
     return {
         "partner_id": partner_id,
         "pattern": StallPattern.PRODUCTION_BLOCKED,
-        "target_persona": "Business Contact",
-        "target_note": "NOT engineering — the person who can approve production launch",
+        "engagement_model": "Account Manager partners with contact to understand needs",
         "recommended_owner": "Account Manager",
-        "owner_note": "Account Manager should send within 3 days - this is a relationship/trust conversation",
+        "owner_note": "Account Manager should send within 3 days - collaborative conversation to understand next steps",
         "days_pending": days,
         "subject": subject,
         "body": body,
-        "cta": "20-minute blocker resolution call",
-        "tone": "procurement_blocker_discussion",
+        "cta": "20-minute conversation about production launch",
+        "tone": "collaborative_partnership",
         "generated_at": datetime.now().isoformat()
     }
 
