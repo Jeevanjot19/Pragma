@@ -993,3 +993,99 @@ def create_demo_intervention_outcomes():
         "outcomes_created": created,
         "message": f"Created {created} sample intervention outcomes. Refresh to see effectiveness metrics."
     }
+
+# ============================================================================
+# EMAIL EDITOR & COMPLIANCE LAYER
+# ============================================================================
+
+class EmailEditorPayload(BaseModel):
+    """Payload for email editor (edit subject/body + check compliance)."""
+    subject: str
+    body: str
+    recipient_name: Optional[str] = None
+    recipient_email: Optional[str] = None
+
+
+@app.post("/api/activate/email/check-compliance")
+def check_email_compliance(payload: EmailEditorPayload):
+    """
+    Real-time compliance checking for edited emails.
+    Checks for: tone, length, vague claims, CTAs, etc.
+    Returns: compliance score, warnings, and suggestions.
+    """
+    from intelligence.activation_interventions import check_email_compliance
+    
+    result = check_email_compliance(payload.subject, payload.body)
+    
+    # Add helpful suggestions based on warnings
+    suggestions = []
+    for warning in result.get('warnings', []):
+        wtype = warning.get('type')
+        if wtype == "TOO_SHORT":
+            suggestions.append("Expand the email with more context about why they should act now")
+        elif wtype == "TONE":
+            suggestions.append("Replace aggressive language with collaborative tone (e.g., 'help' instead of 'must')")
+        elif wtype == "MISSING_CTA":
+            suggestions.append("Add a clear call-to-action: suggest a meeting time, calendar link, or next step")
+        elif wtype == "VAGUE_CLAIMS":
+            suggestions.append("Back up claims with specific metrics or examples (e.g., '40% faster integration')")
+        elif wtype == "WEAK_SUBJECT":
+            suggestions.append("Make subject more specific: include company name or benefit (e.g., 'Quick wins for Groww')")
+    
+    return {
+        **result,
+        "suggestions": suggestions,
+        "recipient": {
+            "name": payload.recipient_name,
+            "email": payload.recipient_email
+        }
+    }
+
+
+@app.post("/api/activate/email/enhance")
+def enhance_email(payload: EmailEditorPayload, partner_id: int = None):
+    """
+    Enhance email using Claude AI for more professional, compelling version.
+    Makes email longer, better structured, more persuasive.
+    """
+    from intelligence.activation_interventions import enhance_email_with_llm
+    
+    # Detect pattern from context if available
+    pattern = "GENERAL"
+    if partner_id:
+        from intelligence.activation_patterns import detect_all_stalls
+        stall_data = detect_all_stalls(partner_id)
+        pattern = stall_data.get("pattern", "GENERAL")
+    
+    result = enhance_email_with_llm(partner_id or 0, payload.subject, payload.body, pattern)
+    
+    return result
+
+
+@app.post("/api/activate/email/send")
+def send_intervention_email(payload: EmailEditorPayload, partner_id: int = None):
+    """
+    Record that an email was sent (with customizations).
+    For now, just records it. Could be extended to integrate with email service.
+    """
+    from datetime import datetime
+    
+    with get_db() as conn:
+        # Record the sent email in intervention_outcomes
+        conn.execute("""
+            INSERT INTO intervention_outcomes (stall_pattern, outcome, outcome_recorded_at)
+            VALUES ('CUSTOM_SEND', 'sent', DATETIME('now'))
+        """)
+        conn.commit()
+    
+    return {
+        "status": "sent",
+        "recipient": {
+            "name": payload.recipient_name,
+            "email": payload.recipient_email
+        },
+        "subject": payload.subject,
+        "body_length": len(payload.body),
+        "sent_at": datetime.now().isoformat(),
+        "note": "Email recorded as sent. In production, integrate with your email service (SendGrid, etc.)"
+    }

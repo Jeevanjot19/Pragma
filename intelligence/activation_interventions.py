@@ -244,3 +244,149 @@ This is intelligence, not panic. But worth a conversation with the partner soon.
         "action_required": True,
         "generated_at": datetime.now().isoformat()
     }
+
+
+def check_email_compliance(subject: str, body: str) -> dict:
+    """
+    Check email for compliance issues.
+    Returns compliance status with warnings and suggestions.
+    """
+    warnings = []
+    is_compliant = True
+    score = 100
+    
+    # Check length
+    if len(body) < 150:
+        warnings.append({"type": "TOO_SHORT", "message": "Email body is quite short (~150 chars minimum recommended)", "severity": "warning"})
+        score -= 10
+    
+    if len(body) > 2000:
+        warnings.append({"type": "TOO_LONG", "message": "Email exceeds 2000 characters (aim for 300-1500)", "severity": "info"})
+        score -= 5
+    
+    # Check tone - flag aggressive language
+    aggressive_words = ['must', 'demand', 'required', 'immediately', 'urgent', 'critical']
+    aggressive_found = [w for w in aggressive_words if f' {w} ' in f' {body.lower()} ']
+    if aggressive_found:
+        warnings.append({"type": "TONE", "message": f"Aggressive language detected: {', '.join(aggressive_found)}", "severity": "warning"})
+        score -= 15
+        is_compliant = False
+    
+    # Check for vague claims
+    vague_words = ['revolutionary', 'game-changing', 'best-in-class', 'industry-leading']
+    vague_found = [w for w in vague_words if w in body.lower()]
+    if vague_found:
+        warnings.append({"type": "VAGUE_CLAIMS", "message": f"Unsubstantiated claims: {', '.join(vague_found)}. Use concrete facts instead.", "severity": "warning"})
+        score -= 10
+        is_compliant = False
+    
+    # Check for compliance language
+    if 'compliance' in body.lower() or 'regulatory' in body.lower():
+        if 'please' not in body.lower() or 'help' not in body.lower():
+            warnings.append({"type": "COMPLIANCE_TONE", "message": "Compliance emails should use 'help' and 'support' language, not mandates", "severity": "info"})
+    
+    # Check for subject line quality
+    if len(subject) < 20:
+        warnings.append({"type": "WEAK_SUBJECT", "message": "Subject line could be more specific (20+ chars)", "severity": "info"})
+        score -= 5
+    
+    if '???' in subject or '!!!' in subject:
+        warnings.append({"type": "UNPROFESSIONAL", "message": "Avoid excessive punctuation in subject", "severity": "warning"})
+        score -= 10
+        is_compliant = False
+    
+    # Check for CTA clarity
+    cta_words = ['help', 'support', 'discuss', 'chat', 'call', 'meeting', 'session', 'available']
+    has_cta = any(word in body.lower() for word in cta_words)
+    if not has_cta:
+        warnings.append({"type": "MISSING_CTA", "message": "No clear call-to-action detected. Add what you want them to do.", "severity": "warning"})
+        score -= 20
+        is_compliant = False
+    
+    return {
+        "is_compliant": is_compliant,
+        "compliance_score": max(0, score),
+        "warnings": warnings
+    }
+
+
+def enhance_email_with_llm(partner_id: int, subject: str, body: str, pattern: str) -> dict:
+    """
+    Enhance email using Claude for more polished, compelling version.
+    Makes emails longer, more persuasive, and better structured.
+    """
+    import anthropic
+    
+    with get_db() as conn:
+        partner = conn.execute(
+            """SELECT p.name, p.category, p.recommended_product
+               FROM partners_activated pa
+               JOIN prospects p ON pa.prospect_id = p.id
+               WHERE pa.prospect_id = ?""",
+            (partner_id,)
+        ).fetchone()
+    
+    company = partner['name']
+    product = partner['recommended_product']
+    category = partner.get('category', 'fintech')
+    
+    prompt = f"""You are an expert partnership manager at Blostem writing professional, compelling intervention emails.
+
+Context:
+- Partner: {company} ({category})
+- Product: {product}
+- Pattern: {pattern}
+
+Current email:
+Subject: {subject}
+Body: {body}
+
+Please enhance this email to be:
+1. More compelling and persuasive (add specific benefits)
+2. Longer and more detailed (400-600 words)
+3. Better structured with clear sections
+4. More personalized to their situation
+5. Include specific value propositions
+6. Better CTA framing
+
+Keep the original tone and engagement model, but make it more professional and persuasive.
+
+Return ONLY the enhanced email in this format:
+SUBJECT: [new subject]
+BODY:
+[new body text]
+
+Do not include any other text or explanations."""
+
+    try:
+        client = anthropic.Anthropic()
+        response = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1024,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        enhanced_text = response.content[0].text
+        parts = enhanced_text.split('BODY:', 1)
+        
+        if len(parts) == 2:
+            enhanced_subject = parts[0].replace('SUBJECT:', '').strip()
+            enhanced_body = parts[1].strip()
+        else:
+            enhanced_subject = subject
+            enhanced_body = body
+        
+        return {
+            "success": True,
+            "subject": enhanced_subject,
+            "body": enhanced_body,
+            "enhancement_note": "Powered by Claude AI - makes email more compelling and professional"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "enhancement_note": "Enhancement failed - using original email"
+        }
