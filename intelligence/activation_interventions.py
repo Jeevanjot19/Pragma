@@ -30,118 +30,53 @@ def generate_dead_on_arrival_email(partner_id: int) -> dict:
     signed_date = datetime.fromisoformat(partner['signed_at'])
     days_since = (datetime.now() - signed_date).days
     
-    subject = f"Let's get {company} launched with {product} — hands-on onboarding support"
+    subject = f"{company} integration ready — hands-on onboarding support available"
     
-    body = f"""{company} Engineering Team,
+    body = f"""Hi {company} team,
 
-I wanted to personally reach out regarding the {product} integration {company} signed up for on {signed_date.strftime('%B %d, %Y')}.
+I wanted to help you get started with {product}. I see your team signed up recently, and I'm here to help support your integration.
 
-I noticed your team hasn't yet started the integration phase, and I wanted to check in. Getting a new integration live can sometimes feel like a lot, especially alongside ongoing product development work. But here's what I want you to know: we've gotten hundreds of {category} companies live in just a few hours, and the process is straightforward when you have the right support.
+**Why This Matters**
+Integrating {product} helps your {category} business with:
+- Real-time compliance data for regulatory reporting
+- Reduced fraud detection latency (60-70% improvement typical)
+- Elimination of manual data pipeline maintenance
+- Direct access to fintech APIs without custom connectors
 
-**Why Integration Matters**
-For {company}, integrating {product} unlocks:
-- Direct access to fintech data APIs without building custom connectors
-- Real-time transaction monitoring and risk signals
-- Reduced fraud detection latency by 60-70%
-- Compliance data for regulatory reporting (all pre-formatted)
+Most {category} companies complete this integration in 2-4 hours with our support.
 
-Most importantly, it means your product team can focus on building features instead of maintaining data pipelines.
-
-**The Integration Reality (Spoiler: It's Fast)**
-Your engineering team typically needs 2-4 hours total from start to live. Here's the breakdown:
-
-Phase 1: Setup (30 minutes)
-- Create sandbox API credentials in dashboard
-- Download SDK for your tech stack (Python, Go, Node.js, Java)
-- Configure environment variables
-- First sandbox test call (we walk through this together)
-
-Phase 2: Integration (1-2 hours)
-- Integrate API calls into your existing data pipeline
-- Test with real sandbox data
-- Validate response formats match your schema
-- Set up error handling and retry logic
-
-Phase 3: Go Live (30 minutes)
-- Switch credentials to production
-- Test with 1-2 live transactions
-- Deploy to production
-- Set up monitoring/alerting
-
-**What We'll Handle**
-We don't expect your team to figure this out alone. Here's exactly what I can offer:
-
-Option 1: Live Onboarding Session (Most Common - 2-3 hours)
-We jump on a screen share with your engineering team. I walk through:
-- Architecture overview (how our APIs fit into your stack)
+**How We Help**
+I can support your engineering team through:
+- Architecture review and setup guidance
 - Step-by-step integration walkthrough
-- Common integration patterns for {category} companies
-- Best practices for production reliability
-- Q&A for any architecture questions
+- SDK and credential setup assistance
+- Sandbox testing and validation
+- Production launch support
 
-Timeline: Pick a slot this week (Mon-Fri, flexible on time zones)
-Outcome: Your team deploys production code same day
+**Your Options**
+We offer three engagement approaches—pick what works for {company}:
 
-Option 2: Self-Service + Async Support (For Teams with Limited Time)
-You follow our documentation, we answer questions as they come up:
-- Slack channel for real-time questions
-- Video walkthroughs for each integration phase
-- Example code in your tech stack
-- Pre-built error handling templates
+1. **Live Onboarding** (2-3 hours this week)
+Screen share with your team, I walk through the entire integration, you deploy same day.
+→ Schedule: [calendar link]
 
-Timeline: 3-5 business days at your pace
-Outcome: Full integration without taking your whole team's time
+2. **Self-Service + Support**
+Your team uses our docs, I answer questions in real-time via Slack/email.
+→ Access docs: [link]
 
-Option 3: Hybrid (Documentation + One Deep Dive)
-Your team reviews documentation, we do one 1-hour call to cover architecture and answer hard questions:
-- Pre-call documentation review
-- 1-hour architectural design session
-- Post-call async support as needed
+3. **Hybrid** (1 architectural call + async support)
+One 1-hour call to cover design, then I support async questions.
+→ Schedule: [calendar link]
 
-Timeline: This week's call + 2-3 days completion
-Outcome: Full confidence + faster time to launch
+I'm confident we can get {company} live quickly. We've successfully supported hundreds of {category} companies through exactly this integration.
 
-**Why Now Matters**
-Every week you delay integration:
-- Your product team is doing manual data work that APIs could handle
-- You're missing out on compliance signals that reduce risk
-- Competitors are potentially integrating faster
-
-But honestly, the main thing is just getting started. First conversation is always the hardest part.
-
-**Next Steps**
-I'd love to get your team unblocked this week. Here are a few options:
-
-1. **Schedule a 30-minute quick call** (my calendar): {{CALENDAR_LINK}}
-   - Just us chatting about your architecture and concerns
-   - No pressure, no sales pitch—just engineering talk
-
-2. **Grab the docs and I'll answer questions**: 
-   - I'll send over step-by-step guides
-   - Slack me when you hit blockers
-   - Usually resolves in 2-3 async rounds
-
-3. **Let me know what works for {company}**:
-   - Reply with your timeline and team size
-   - I'll propose the best approach
-
-Whatever you choose, I'm confident we can get {company} live this week. I've done this 200+ times with teams just like yours, and the integration is genuinely straightforward when you have support.
-
-Looking forward to working with your team. Feel free to reach out if you have any initial questions.
+Would you like to get started this week? I'm available and ready to help.
 
 Best regards,
 
 [Your Name]
-Senior Customer Success Manager
-Blostem Partnerships
-
-P.S. If you want to read ahead, here are the docs for {company}'s tech stack (we detect most stacks automatically, but happy to send specific ones):
-- Python/FastAPI: [link]
-- Node.js/Express: [link]
-- Go: [link]
-- Java/Spring: [link]
-
-P.P.S. If right now is bad timing, that's totally fine. Just let me know when your team will have bandwidth and I'll check back in. We're here when you're ready."""
+Customer Success Manager
+Blostem"""
     
     return {
         "partner_id": partner_id,
@@ -175,10 +110,9 @@ def generate_stuck_in_sandbox_email(partner_id: int, stall_data: dict) -> dict:
     category = partner['category']
     error_code = stall_data.get('last_error_code', 'UNKNOWN')
     
-    # Map error codes to detailed explanations
     error_details = {
         "AUTH_FAILED": "authentication/authorization error (invalid API key or insufficient permissions)",
-        "MISSING_FIELD": "missing required field in request payload",
+        "MISSING_FIELD": "missing field in request payload",
         "RATE_LIMIT": "API rate limiting (hitting quota thresholds)",
         "INVALID_REQUEST": "malformed request (wrong format or structure)",
         "TIMEOUT": "request timeout (taking too long to respond)",
@@ -186,109 +120,65 @@ def generate_stuck_in_sandbox_email(partner_id: int, stall_data: dict) -> dict:
     }
     
     error_desc = error_details.get(error_code, "technical integration issue")
-    subject = f"{company} — urgent {product} integration support needed"
+    subject = f"{company} — {product} sandbox debugging support"
     
-    body = f"""Hello {company} Engineering Team,
+    body = f"""Hi {company} Engineering Team,
 
-I wanted to reach out because I noticed your {product} integration hit a technical blocker in sandbox testing. Looking at the logs, it appears to be a {error_desc}.
+I noticed your {product} integration hit a technical blocker in sandbox testing ({error_code}). The good news: this type of issue is usually a quick fix (typically 5-15 minutes) once we identify it together.
 
-I want to be straightforward: this is exactly the kind of thing we see all the time, and it's almost always a 5-15 minute fix once we've got eyes on it together. I've helped dozens of {category} companies resolve the same issue, and I'm confident we can get you unblocked today.
+**What We're Seeing**
+- Error code: {error_code}
+- Status: Sandbox integration started, but blocked
+- Pattern: {error_desc}
 
-**What I'm Seeing**
-Error code: {error_code}
-Status: Sandbox integration attempted, but not progressing
-Likely cause: {error_desc}
+**Common Causes & Fixes**
+These errors typically fall into 4 categories:
 
-**Why This Matters**
-Every day your integration is blocked:
-- Your team is context-switching away from the integration work
-- Product roadmap features dependent on this integration are delayed
-- Time-sensitive compliance signals are being missed
+1. **Credentials/Auth** (2 min fix)
+   API key not properly configured or permissions too narrow
 
-**The Reality of This Fix**
-I want to set expectations correctly. Technical blockers like this are usually one of these:
+2. **Request Format** (10 min fix)
+   Field names misspelled, data types wrong, missing fields
 
-1. **Credential Issue (Most Common - 2 min fix)**
-   - API key not properly passed in headers
-   - Token expired or incorrectly formatted
-   - Permission scope too narrow
-   - Fix: Regenerate credentials, update config, test
+3. **Endpoint Setup** (5 min fix)
+   Wrong environment URL, missing parameters, or wrong method
 
-2. **Request Format Issue (10 min fix)**
-   - Field names misspelled (case sensitivity)
-   - Required fields missing from payload
-   - Wrong data type (string vs. int, etc.)
-   - Fix: Validate against schema, adjust payload
+4. **Version Mismatch** (5 min fix)
+   SDK or dependency version conflicts
 
-3. **Endpoint Configuration Issue (5 min fix)**
-   - Wrong environment URL (sandbox vs. prod)
-   - Missing query parameters
-   - Incorrect HTTP method
-   - Fix: Validate endpoint config, test
+None require architecture changes—they're all straightforward once identified.
 
-4. **Version Mismatch (5 min fix)**
-   - SDK version incompatible with API version
-   - Dependency conflicts in your environment
-   - Fix: Update SDK or pin older version
+**How We Help**
+I can support your team through a 20-minute debugging session where we:
+- Review your error logs and stack trace
+- Walk through your API configuration together
+- Test the fix with a successful API call
+- Document the solution so your team knows what changed
 
-None of these require architectural changes. They're all straightforward once we identify which one it is.
+**Your Options**
 
-**What I'll Do**
-I'm going to schedule a 20-minute call where we:
+1. **Live Debugging Session** (20 minutes)
+   → Schedule this week: [calendar link]
+   → Result: You deploy the fix same day
 
-1. **Screen Share Review (5 min)**
-   - Look at your actual error message + stack trace
-   - Check your API key configuration
-   - Review your request payload
+2. **Async Support**
+   → Reply with error details and code
+   → I'll provide the exact fix and explanation
+   → Usually resolves in 1-2 async rounds
 
-2. **Live Debugging (10 min)**
-   - I'll help you identify the exact issue
-   - We'll implement the fix together
-   - Test with a successful API call
+3. **Documentation + Questions**
+   → Access our {category}-specific troubleshooting guide: [link]
+   → Ask questions as you work through it
 
-3. **Prevention (5 min)**
-   - Document what you did so team members know
-   - Set up proper error logging going forward
-   - Identify any other potential blockers ahead of time
+I've helped dozens of {category} companies resolve exactly this type of blocker. Let's get your team unblocked quickly.
 
-**Next Steps - Pick One**
-
-Option 1: Let's Go Right Now (Fastest)
-Available for an immediate 20-minute call:
-- [calendar link for 20-min slots this afternoon]
-
-Option 2: Schedule for This Week
-I've got slots throughout the week:
-- Tuesday 11 AM - 2 PM IST
-- Wednesday 2 PM - 4 PM IST
-- Thursday 10 AM - 12 PM IST
-- Friday 1 PM - 3 PM IST
-
-Option 3: Send Me Your Error Details + Code
-If you prefer, reply with:
-- Full error message/stack trace
-- Your request code (what you're sending)
-- Your API configuration (sanitized)
-- Your tech stack (Python/Node/Go/Java/etc)
-
-I'll review and send back the exact fix with explanation.
-
-**Why I Know This Will Work**
-I've worked through {error_code} errors with dozens of companies. With your team and full context, we solve these in under 15 minutes. No uncertainty, no back-and-forth emails.
-
-I'm going to be direct: getting unstuck today matters. The longer this sits, the more context your team loses. But once we've resolved it, integration typically moves really fast.
-
-Let me know which option works best. I'm ready to help immediately.
+What works best for {company}?
 
 Best regards,
 
 [Your Name]
-Senior Technical Success Manager
-Blostem Support
-
-P.S. If you want to get a head start, our {category}-specific troubleshooting guide covers 90% of issues like this: [link]. But I'd still want to jump on a quick call to make sure we identify your specific issue correctly.
-
-P.P.S. No blame here—this is completely normal. Integration is hard, and half the teams we work with hit a blocker at this exact stage. The key is just getting eyes on it to resolve quickly."""
+Technical Success Manager
+Blostem"""
     
     return {
         "partner_id": partner_id,
@@ -324,110 +214,60 @@ def generate_production_blocked_email(partner_id: int, stall_data: dict) -> dict
     days_blocked = stall_data.get('days_of_inactivity', 0)
     sandbox_success = stall_data.get('last_sandbox_success', 'recently')
     
-    subject = f"{company} is ready for {product} production — let's unblock next steps"
+    subject = f"{company} is ready for {product} — help unblock production launch"
     
-    body = f"""Hello {company} Leadership Team,
+    body = f"""Hi {company} team,
 
-Great news: your engineering team successfully completed sandbox testing for {product}. All integration tests passed, API connectivity is working perfectly, and the technical team confirmed everything is ready for production.
+Great news: your engineering team successfully completed sandbox testing for {product}. All tests passed, API connectivity is working perfectly, and everything is approved for production.
 
-Here's where we are:
+Here's the status:
 ✓ Sandbox testing: Complete (all tests passed)
-✓ Integration validation: Confirmed working
-✓ Security review: {product} meets fintech compliance standards
-✓ Architecture: Approved by your engineering team
+✓ Integration validation: Confirmed working  
+✓ Security review: Meets compliance requirements
+✓ Architecture: Approved by engineering team
 
-What's missing: The decision to deploy to production.
+**What's Next**
+Sometimes when engineering is ready, the path forward isn't always clear. There might be approvals needed, compliance questions, budget decisions, or just timeline priorities.
 
-I wanted to reach out because sometimes even when engineering is ready, the path forward isn't always clear. There might be approvals needed, questions about data privacy, compliance concerns, budget confirmation, or just bandwidth on your side. Whatever it is, I can usually help unblock it in one conversation.
+**Common Questions We Help With**
+- Compliance/security: Does {product} meet our data residency and compliance needs?
+- Privacy concerns: How is data encrypted? What's your data retention policy?
+- Procurement/contracts: Do we need to update contracts? What's the cost model?
+- Integration validation: Will this work with our existing systems and processes?
+- Timeline: What's the best time to move forward?
 
-**Why This Moment Matters**
-Your team did the hard part—they built, tested, and validated the integration. Deploying takes literally 30 minutes. Staying in this "sandbox ready but not live" state costs you:
+We've helped dozens of {category} companies answer these questions and launch successfully.
 
-- **Compliance Gap**: You're missing regulatory data signals that {product} provides
-- **Operational Inefficiency**: Your team maintains manual data processes that the API would handle automatically
-- **Competitive Risk**: You're relying on older data infrastructure while competitors get faster insights
-- **Team Friction**: Your engineering team built this, they're probably wondering why it's not live yet
+**How We Help**
+I can support you through:
 
-But here's what matters most: every week you delay is a week you're not getting the business value you signed up for.
+1. **Quick Call** (30-60 minutes)
+   → You pick your team, I bring compliance/finance/technical expertise
+   → Result: Deployment plan within one week
+   → Schedule: [calendar link]
 
-**What Might Be Blocking You (And How We Fix It)**
+2. **Written Q&A**
+   → Send us your specific questions
+   → We respond with documentation and answers
+   → No pressure, just information
 
-I work with {category} companies on this all the time. The blockers usually fall into these categories:
+3. **Async Support**
+   → Tell me your specific blocker
+   → I'll send the exact information needed
 
-**1. Compliance / Security Questions**
-"Does {product} meet our data residency requirements?"
-"Who has access to the data?"
-"What's your SOC2/ISO certification status?"
-→ We can answer all of this in a 15-minute call with our compliance team
+**Why Now Matters**
+Your team built this—let's get it live. Every week delay means:
+- Manual data work your team could eliminate
+- Compliance signals you're missing
+- Opportunity cost while others integrate
 
-**2. Privacy / Data Governance Questions**
-"How is transaction data encrypted?"
-"Do you store customer PII?"
-"What's your data retention policy?"
-→ We have comprehensive privacy documentation, and I can walk you through it
-
-**3. Business Approval Questions**
-"Do we need to update our contracts?"
-"Is there a cost for production use?"
-"What's the SLA for uptime?"
-→ All standard questions, all addressable quickly
-
-**4. Integration Validation Questions**
-"Will {product} work with our existing systems?"
-"What if there's an outage?"
-"How do we handle error scenarios?"
-→ Your engineering team validated this already, but I can confirm or address any remaining technical concerns
-
-**5. Project Prioritization Questions**
-"We have other priorities right now. When can we revisit?"
-→ Totally fair. Let's just schedule a specific time so it doesn't get lost
-
-**6. Budget / Procurement Questions**
-"Do we need approval for this spend?"
-"How does billing work?"
-→ I can send over the pricing model and answer any financial questions
-
-**Next Steps - Pick What Applies**
-
-I want to make this as easy as possible. Here's what I'm proposing:
-
-**Option A: Direct Call (Fastest - 1 hour total)**
-You pick whoever should be on the call from your end (CEO, CTO, CFO—whoever unblocks this), I bring whoever we need, and we resolve it:
-- 30 min: Q&A on compliance/security/privacy (I bring right people)
-- 15 min: Address any remaining concerns
-- 15 min: Plan deployment timeline
-
-→ Calendar link for this week: [CALENDAR_LINK]
-
-**Option B: Written Response (For Specific Questions)**
-If you'd rather not meet, just reply with your specific questions/concerns and I'll provide written answers with documentation.
-
-**Option C: Start with Your Blocker**
-Tell me what the specific question/blocker is, and I'll respond with exactly what you need.
-
-**What I Know for Sure**
-- Your team did excellent work on the integration
-- Everything is technically ready
-- Deployment is a 30-minute process
-- Whatever the question is, it's one we've answered 50+ times before
-
-I'm confident we can unblock this conversation and get to a deployment plan within one week. The best time to do it is now, while the work is fresh in your team's mind.
-
-Looking forward to getting {company} live.
+I'm here to help. What works best for {company}?
 
 Best regards,
 
 [Your Name]
-Account Manager
-Blostem Partnerships
-
-P.S. If you want some background reading before we talk, here are the most common questions answered:
-- Production readiness checklist: [link]
-- Compliance and security guide: [link]
-- Data privacy and residency: [link]
-- Production deployment best practices: [link]
-
-P.P.S. If now is genuinely bad timing, that's okay. Just let me know when your team will be ready to think about this, and I'll touch base then. But I do think this is worth a conversation now—you're this close to launching."""
+Partnership Manager
+Blostem"""
     
     return {
         "partner_id": partner_id,
