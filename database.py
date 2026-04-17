@@ -536,9 +536,83 @@ def get_all_prospects_for_monitoring():
     """Get all HOT and WARM prospects for monitoring. Excludes WATCH and garbage companies."""
     with get_db() as conn:
         return conn.execute("""
-            SELECT id, name, play_store_id, description 
-            FROM prospects 
+            SELECT id, name, play_store_id, description
+            FROM prospects
             WHERE is_existing_partner = 0
             AND status IN ('HOT', 'WARM')
             ORDER BY who_score DESC
         """).fetchall()
+
+
+# ============================================================================
+# DATA VALIDATION LAYER — Prevent bad data at the source
+# ============================================================================
+
+def validate_prospect_data(prospect_dict: dict) -> tuple[bool, str]:
+    """Validate prospect data before upsert. Returns (is_valid, error_message)"""
+    
+    name = prospect_dict.get('name', '').strip()
+    category = prospect_dict.get('category', '').strip() if prospect_dict.get('category') else None
+    
+    # Validate company name
+    if not name or len(name) < 2:
+        return False, f"Company name too short: '{name}'"
+    
+    if len(name) > 80:
+        return False, f"Company name too long (>80 chars): '{name}'"
+    
+    # Reject test data
+    if 'test' in name.lower() and 'partner' in name.lower():
+        return False, f"Test data rejected: {name}"
+    
+    # Reject suspicious/garbage names
+    garbage_patterns = ['none', 'n/a', 'unknown', 'undefined', '###', 'null']
+    if any(pattern in name.lower() for pattern in garbage_patterns):
+        return False, f"Garbage company name rejected: {name}"
+    
+    # Validate category (required, must be in whitelist)
+    valid_categories = [
+        'neobank', 'wealth', 'payment', 'savings',
+        'lending', 'broker', 'fintech', 'banking',
+        'ai', 'cross-border'
+    ]
+    
+    if not category:
+        return False, f"Category is required for {name}"
+    
+    if category not in valid_categories:
+        return False, f"Invalid category '{category}' for {name}. Valid: {', '.join(valid_categories)}"
+    
+    return True, "Valid"
+
+
+def validate_signal(prospect_id: int, signal_type: str, strength: str) -> tuple[bool, str]:
+    """Validate signal before insert. Returns (is_valid, error_message)"""
+    
+    valid_types = [
+        'PRODUCT_GAP', 'FUNDING_EXPANSION', 'LEADERSHIP_HIRE',
+        'COMPETITOR_MOVE', 'DISPLACEMENT', 'COMPLIANCE_RISK',
+        'PRODUCTION_READY', 'API_INTEGRATION'
+    ]
+    
+    valid_strengths = ['HIGH', 'MEDIUM', 'LOW']
+    
+    if signal_type not in valid_types:
+        return False, f"Invalid signal type: {signal_type}. Valid: {', '.join(valid_types)}"
+    
+    if strength not in valid_strengths:
+        return False, f"Invalid signal strength: {strength}. Valid: {', '.join(valid_strengths)}"
+    
+    if prospect_id <= 0:
+        return False, f"Invalid prospect_id: {prospect_id}"
+    
+    return True, "Valid"
+
+
+def validate_who_score(score) -> bool:
+    """Validate WHO score is in valid range (0-100)."""
+    try:
+        score_int = int(score) if score is not None else 0
+        return 0 <= score_int <= 100
+    except (ValueError, TypeError):
+        return False
