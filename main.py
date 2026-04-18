@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Body
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db, remove_non_prospects, get_monitoring_events
 from discovery.news_monitor import run_news_monitor
@@ -48,7 +49,7 @@ async def startup():
 
 @app.get("/")
 def root():
-    return {"status": "Pragma WHO layer running"}
+    return FileResponse("pragma-frontend.html", media_type="text/html")
 
 @app.post("/api/discover")
 def trigger_discovery():
