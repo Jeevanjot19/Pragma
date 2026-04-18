@@ -873,7 +873,7 @@
       <button class="run-btn" onclick="runDiscovery()">⚡ Run Discovery</button>
       <div id="discovery-history-panel" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;max-height:250px;overflow-y:auto;font-size:11px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;cursor:pointer;user-select:none" onclick="toggleHistoryPanel()">
-          <span style="color:var(--text3);text-transform:uppercase;font-weight:600">📊 History</span>
+          <span style="color:var(--text3);text-transform:uppercase;font-weight:600;letter-spacing:0.5px">History</span>
           <span id="history-toggle" style="color:var(--text3)">▼</span>
         </div>
         <div id="history-content" style="display:none"></div>
@@ -2185,9 +2185,9 @@ function updateHistoryPanel() {
     const date = new Date(run.completed_at).toLocaleDateString();
     html += `
       <div style="padding:6px;background:var(--bg3);border-radius:3px;margin-bottom:6px;border-left:2px solid var(--accent)">
-        <div style="color:var(--accent);font-weight:600">Run #${idx + 1}</div>
-        <div style="color:var(--text3);font-size:9px;margin-bottom:3px">${date} ${time}</div>
-        <div style="color:var(--text2)"><strong style="color:var(--green)">${run.new_prospects}</strong> prospect${run.new_prospects !== 1 ? 's' : ''} in ${run.duration.toFixed(1)}s</div>
+        <div style="color:var(--text2);font-size:10px;margin-bottom:2px">${date} ${time}</div>
+        <div style="color:var(--accent);font-weight:600">${run.new_prospects}</div>
+        <div style="color:var(--text3);font-size:9px">prospect${run.new_prospects !== 1 ? 's' : ''} • ${run.duration.toFixed(1)}s</div>
       </div>
     `;
   });
@@ -2339,9 +2339,9 @@ async function runDiscovery() {
         <div style="flex:1">
           <div style="color:var(--green);font-weight:600;margin-bottom:8px">Discovery Pipeline Completed</div>
           <div style="font-size:12px;color:var(--text2);line-height:1.6">
-            <div>🎯 New prospects: <strong style="color:var(--accent)">${newProspectsCount}</strong></div>
-            <div>⏱️ Duration: <strong style="color:var(--accent)">${durationSec}s</strong></div>
-            <div>📅 Time: <strong style="color:var(--accent)">${new Date(r.completed_at).toLocaleTimeString()}</strong></div>
+            <div>New prospects: <strong style="color:var(--accent)">${newProspectsCount}</strong></div>
+            <div>Duration: <strong style="color:var(--accent)">${durationSec}s</strong></div>
+            <div>Time: <strong style="color:var(--accent)">${new Date(r.completed_at).toLocaleTimeString()}</strong></div>
             ${companiesHtml}
           </div>
           <div style="display:flex;gap:6px;margin-top:12px">
