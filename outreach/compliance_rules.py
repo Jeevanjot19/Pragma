@@ -71,6 +71,43 @@ def check_compliance(email_text: str, rule_id_only: str = None) -> dict:
     violations = []
     warnings = []
 
+    # Check for pattern-based violations
+    # 1. Excessive exclamation marks (more than 2 in a sentence)
+    sentences = email_text.split('.')
+    for sentence in sentences:
+        if sentence.count('!') > 2:
+            violations.append({
+                "rule_id": "R007",
+                "rule": "No excessive exclamation marks",
+                "triggered_by": [f"{sentence.count('!')} exclamation marks in one sentence"],
+                "severity": "MEDIUM",
+                "replacement": "Use at most 1-2 exclamation marks per email"
+            })
+            break
+    
+    # 2. Excessive ALL CAPS words (3+ ALL CAPS words)
+    import re
+    caps_words = re.findall(r'\b[A-Z]{2,}\b', email_text)
+    if len(caps_words) >= 3:
+        violations.append({
+            "rule_id": "R008",
+            "rule": "No excessive ALL CAPS words (spam indicator)",
+            "triggered_by": caps_words[:5],  # Show first 5
+            "severity": "MEDIUM",
+            "replacement": "Use normal capitalization and emphasis instead"
+        })
+    
+    # 3. Too many links (more than 2)
+    links = re.findall(r'https?://\S+', email_text)
+    if len(links) > 2:
+        violations.append({
+            "rule_id": "R009",
+            "rule": "Too many links (spam indicator)",
+            "triggered_by": [f"{len(links)} links found"],
+            "severity": "MEDIUM",
+            "replacement": "Include at most 1-2 links per email"
+        })
+
     with get_db() as conn:
         overrides = conn.execute(
             "SELECT * FROM compliance_overrides"
@@ -80,6 +117,7 @@ def check_compliance(email_text: str, rule_id_only: str = None) -> dict:
         o['rule_id']: o['override_count'] for o in overrides
     }
 
+    # Check trigger-based rules (case-insensitive)
     for rule in COMPLIANCE_RULES:
         triggered_by = [t for t in rule['triggers'] if t in text_lower]
         if triggered_by:

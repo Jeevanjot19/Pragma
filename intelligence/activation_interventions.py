@@ -320,6 +320,7 @@ def check_email_compliance(subject: str, body: str) -> dict:
     Check email for compliance issues.
     Returns compliance status with warnings and suggestions.
     """
+    import re
     warnings = []
     is_compliant = True
     score = 100
@@ -332,6 +333,29 @@ def check_email_compliance(subject: str, body: str) -> dict:
     if len(body) > 2000:
         warnings.append({"type": "TOO_LONG", "message": "Email exceeds 2000 characters (aim for 300-1500)", "severity": "info"})
         score -= 5
+    
+    # Check for excessive exclamation marks (spam indicator)
+    sentences = body.split('.')
+    for sentence in sentences:
+        if sentence.count('!') > 2:
+            warnings.append({"type": "EXCESSIVE_PUNCTUATION", "message": f"Too many exclamation marks ({sentence.count('!')} in one sentence) - looks like spam", "severity": "warning"})
+            score -= 15
+            is_compliant = False
+            break
+    
+    # Check for excessive ALL CAPS words (spam indicator)
+    caps_words = re.findall(r'\b[A-Z]{2,}\b', body)
+    if len(caps_words) >= 3:
+        warnings.append({"type": "EXCESSIVE_CAPS", "message": f"Too many ALL CAPS words ({len(caps_words)}+) - looks like spam", "severity": "warning"})
+        score -= 20
+        is_compliant = False
+    
+    # Check for too many links (spam indicator)
+    links = re.findall(r'https?://\S+', body)
+    if len(links) > 2:
+        warnings.append({"type": "TOO_MANY_LINKS", "message": f"Too many links ({len(links)}) - looks like spam", "severity": "warning"})
+        score -= 20
+        is_compliant = False
     
     # Check tone - flag aggressive language
     aggressive_words = ['must', 'demand', 'required', 'immediately', 'urgent', 'critical']
