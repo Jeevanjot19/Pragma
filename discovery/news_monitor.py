@@ -271,8 +271,16 @@ def process_query_batch(query: str, feed_url: str) -> dict:
 
     logger.info(f"Found {len(unprocessed)} unprocessed articles for '{query}'")
 
-    # ONE LLM call for all articles in this query
-    extracted_list = batch_extract_companies(unprocessed)
+    # BATCH in groups of 3 to avoid too many tokens per request
+    BATCH_SIZE = 3  # Process 3 articles at a time to reduce token usage
+    extracted_list = []
+    
+    for i in range(0, len(unprocessed), BATCH_SIZE):
+        batch = unprocessed[i:i+BATCH_SIZE]
+        logger.info(f"  Processing batch {i//BATCH_SIZE + 1} ({len(batch)} articles)...")
+        batch_results = batch_extract_companies(batch)
+        extracted_list.extend(batch_results)
+        time.sleep(1)  # Wait between batches to avoid rate limits
     
     # Mark all as processed
     for article in unprocessed:
