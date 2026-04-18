@@ -86,34 +86,34 @@ def detect_competitor_in_text(title: str, summary: str) -> str | None:
     return None
 
 
-def _process_extracted_company(extracted: dict, url: str, title: str, article_date: str) -> int:
-    """Process a single extracted company and create signals. Returns 1 if added, 0 otherwise."""
+def _process_extracted_company(extracted: dict, url: str, title: str, article_date: str) -> dict:
+    """Process a single extracted company and create signals. Returns dict with result details."""
+    result = {'added': False, 'company': None, 'category': None, 'signals': 0}
+    
     if not extracted or not extracted.get('is_relevant', False):
-        return 0
+        return result
     
     company_name = extracted.get('company_name') or ''
     company_name = company_name.strip()
     
     if not company_name or len(company_name) < 2:
-        return 0
+        return result
 
     # Skip garbage names
     if company_name in ['None', 'None mentioned', 'N/A', 'Unknown', '']:
-        return 0
+        return result
 
     # Skip non-prospects (regulatory bodies, generic terms, etc.)
     if any(np.lower() == company_name.lower() for np in NON_PROSPECTS):
-        print(f"  Skipped non-prospect: {company_name}")
         logger.debug(f"Skipped non-prospect: {company_name}")
-        return 0
+        return result
 
     # Skip existing Blostem partners
     if any(p.lower() in company_name.lower() or 
            company_name.lower() in p.lower() 
            for p in EXISTING_PARTNERS):
-        print(f"  Skipped existing partner: {company_name}")
         logger.debug(f"Skipped existing partner: {company_name}")
-        return 0
+        return result
 
     # Check for competitor
     competitor = None
@@ -121,9 +121,8 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
                         company_name.lower() in c.lower() 
                         for c in COMPETITORS)
     if is_competitor:
-        print(f"  Skipped competitor: {company_name}")
         logger.debug(f"Skipped competitor: {company_name}")
-        return 0
+        return result
 
     # Build prospect
     current_products = extracted.get('current_products', [])
@@ -151,11 +150,12 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
     # Get ID for signals
     prospect = get_prospect_by_name(company_name)
     if not prospect:
-        return 0
+        return result
     prospect_id = prospect['id']
 
     # Add signals
     expansion = extracted.get('expansion_signals', [])
+    signal_count = 0
 
     # Product gap
     add_signal(
@@ -166,6 +166,7 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
         evidence=extracted.get('signal_summary', ''),
         source_url=url
     )
+    signal_count += 1
 
     # Funding + expansion
     if extracted.get('funding_detected') and expansion:
@@ -177,6 +178,7 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
             evidence=title,
             source_url=url
         )
+        signal_count += 1
 
     # Leadership hire
     if extracted.get('leadership_hire') and extracted.get('leadership_role'):
@@ -188,6 +190,7 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
             evidence=title,
             source_url=url
         )
+        signal_count += 1
 
     # Competitor displacement
     if extracted.get('competitor_mentioned'):
@@ -199,22 +202,37 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
             evidence=title,
             source_url=url
         )
+        signal_count += 1
 
-    print(f"  ✓ {company_name} ({category}) → {recommended}")
-    logger.info(f"✓ Added {company_name} ({category}) → {recommended}")
-    return 1
+    logger.info(f"✓ Added {company_name} ({category}) → {recommended} with {signal_count} signals")
+    
+    result['added'] = True
+    result['company'] = company_name
+    result['category'] = category
+    result['signals'] = signal_count
+    result['recommended_product'] = recommended
+    result['source'] = url
+    result['summary'] = extracted.get('signal_summary', '')
+    return result
 
 
-def process_query_batch(query: str, feed_url: str) -> int:
-    """Process one Google News query with batched LLM calls."""
-    new_count = 0
+def process_query_batch(query: str, feed_url: str) -> dict:
+    """Process one Google News query with batched LLM calls. Returns detailed results."""
+    results = {
+        'query': query,
+        'new_prospects': 0,
+        'companies': [],
+        'error': None
+    }
+
     logger.info(f"Processing query: {query}")
 
     try:
         feed = feedparser.parse(feed_url)
     except Exception as e:
         logger.error(f"Error fetching '{query}': {e}")
-        return 0
+        results['error'] = str(e)
+        return results
 
     # Collect unprocessed articles first
     unprocessed = []
@@ -248,7 +266,10 @@ def process_query_batch(query: str, feed_url: str) -> int:
         })
 
     if not unprocessed:
-        return 0
+        logger.debug(f"No unprocessed articles for query: {query}")
+        return results
+
+    logger.info(f"Found {len(unprocessed)} unprocessed articles for '{query}'")
 
     # ONE LLM call for all articles in this query
     extracted_list = batch_extract_companies(unprocessed)
@@ -262,19 +283,25 @@ def process_query_batch(query: str, feed_url: str) -> int:
         if i >= len(unprocessed):
             break
         article = unprocessed[i]
-        new_count += _process_extracted_company(
+        result = _process_extracted_company(
             extracted, 
             article['url'],
             article['title'],
             article.get('article_date')
         )
+        
+        if result['added']:
+            results['new_prospects'] += 1
+            results['companies'].append(result)
+            
         time.sleep(0.2)
 
-    return new_count
+    logger.info(f"Query '{query}': {results['new_prospects']} new prospects")
+    return results
 
 
 def run_news_monitor() -> dict:
-    """Run all Google News queries. Returns comprehensive results."""
+    """Run all Google News queries. Returns comprehensive results with prospect details."""
     start_time = datetime.now()
     logger.info("="*80)
     logger.info(f"🔍 STARTING NEWS DISCOVERY PIPELINE")
@@ -283,15 +310,19 @@ def run_news_monitor() -> dict:
     logger.info("="*80)
     
     total_new = 0
-    total_signals = 0
-    total_skipped = 0
     all_companies = []
     failed_queries = []
 
     for query in GOOGLE_NEWS_QUERIES:
         url = build_google_news_url(query)
-        new = process_query_batch(query, url)
-        total_new += new
+        result = process_query_batch(query, url)
+        
+        total_new += result['new_prospects']
+        all_companies.extend(result['companies'])
+        
+        if result['error']:
+            failed_queries.append({'query': query, 'error': result['error']})
+        
         time.sleep(1)  # Pause between queries
 
     end_time = datetime.now()
@@ -301,6 +332,10 @@ def run_news_monitor() -> dict:
     logger.info(f"✅ NEWS DISCOVERY PIPELINE COMPLETE")
     logger.info(f"Duration: {duration:.1f} seconds")
     logger.info(f"New Prospects Found: {total_new}")
+    if all_companies:
+        logger.info("Companies discovered:")
+        for c in all_companies:
+            logger.info(f"  - {c['company']} ({c['category']}) → {c['recommended_product']} ({c['signals']} signals)")
     logger.info("="*80 + "\n")
     
     return {
@@ -309,5 +344,8 @@ def run_news_monitor() -> dict:
         "completed_at": end_time.isoformat(),
         "duration_seconds": duration,
         "new_prospects": total_new,
-        "message": f"✓ Discovery pipeline complete. Found {total_new} new prospects."
+        "companies": all_companies,
+        "failed_queries": failed_queries,
+        "total_queries": len(GOOGLE_NEWS_QUERIES),
+        "message": f"✓ Discovery pipeline complete. Found {total_new} new prospect(s)."
     }
