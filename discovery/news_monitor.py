@@ -280,7 +280,7 @@ def process_query_batch(query: str, feed_url: str) -> dict:
         logger.info(f"  Processing batch {i//BATCH_SIZE + 1} ({len(batch)} articles)...")
         batch_results = batch_extract_companies(batch)
         extracted_list.extend(batch_results)
-        time.sleep(2)  # Wait 2 seconds between batches to throttle requests
+        time.sleep(10)  # Wait 10 seconds between batches to avoid 429 rate limit errors
     
     # Mark all as processed
     for article in unprocessed:
