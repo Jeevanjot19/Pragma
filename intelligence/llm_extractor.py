@@ -169,27 +169,24 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-# Quality model for low-volume generation tasks
-MODEL_QUALITY = "llama-3.3-70b-versatile"
-
-# Fast model for high-volume extraction tasks (batch processing)
-MODEL_FAST = "llama-3.1-8b-instant"   # Higher rate limits, good for structured tasks
+# Versatile model for all tasks (only using one model to avoid rate limits)
+MODEL = "llama-3.3-70b-versatile"  # Versatile model handles both generation and extraction
 
 # Rate limiting — Groq free tier is generous but we still throttle
 _last_call_time = 0
 MIN_CALL_INTERVAL = 0.5  # seconds between LLM calls
 
 
-def _call_llm(prompt: str, max_tokens: int = 500, use_fast_model: bool = False) -> str | None:
+def _call_llm(prompt: str, max_tokens: int = 500) -> str | None:
     """
     Single unified LLM call with rate limiting and error handling.
     All LLM calls go through here.
-    Supports fast model for batch extraction and quality model for generation.
+    Uses llama-3.3-70b-versatile for all tasks (best for avoiding rate limits).
     """
     global _last_call_time
 
-    # Select model based on task
-    model = MODEL_FAST if use_fast_model else MODEL_QUALITY
+    # Always use versatile model (avoids rate limiting issues with fast model)
+    model = MODEL
 
     # Rate limiting
     elapsed = time.time() - _last_call_time
@@ -653,8 +650,8 @@ Rules for is_relevant = false:
 
 Return ONLY the JSON array. No explanation. No markdown."""
 
-    # Use fast model for batch extraction
-    raw = _call_llm(prompt, max_tokens=1500, use_fast_model=True)
+    # Use versatile model for batch extraction (no rate limit issues)
+    raw = _call_llm(prompt, max_tokens=1500)
     
     if not raw:
         return [None] * len(articles)
