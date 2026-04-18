@@ -973,8 +973,118 @@
       </div>
 
       <!-- ═══ SCREEN 5: ABOUT PROJECT ═══ -->
-      <div class="screen" id="screen-about" style="padding:0;background:var(--bg);display:flex;align-items:center;justify-content:center">
-        <iframe src="/about2" style="width:100%;height:100%;border:none;background:var(--bg)"></iframe>
+      <div class="screen" id="screen-about" style="padding:0;background:var(--bg);overflow-y:auto">
+        <!-- HERO -->
+        <section style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:80px 60px;position:relative;overflow:hidden">
+          <div style="position:absolute;top:-200px;right:-200px;width:700px;height:700px;background:radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 60%);pointer-events:none"></div>
+          <div style="position:absolute;bottom:-100px;left:-100px;width:500px;height:500px;background:radial-gradient(circle, rgba(157,110,255,0.05) 0%, transparent 60%);pointer-events:none"></div>
+          
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:100px;padding:6px 16px;font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:40px;width:fit-content">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)"></span> Live Intelligence Platform
+          </div>
+          
+          <h1 style="font-family:var(--font-head);font-size:52px;font-weight:400;line-height:1.05;letter-spacing:-2px;color:var(--text);margin-bottom:12px">
+            Stop guessing<br>who to call<br><em style="font-style:italic;color:var(--accent)">and when.</em>
+          </h1>
+          
+          <p style="font-size:20px;color:var(--text2);font-weight:300;margin-bottom:32px;max-width:700px">
+            Pragma is an end-to-end Go-To-Market intelligence platform for fintech sales and marketing teams.
+          </p>
+          
+          <p style="font-size:17px;color:var(--text2);max-width:640px;line-height:1.8;margin-bottom:48px">
+            It discovers high-intent prospects from market signals, scores them on fit and timing, generates compliance-checked outreach for each persona, and monitors every partner activation — all in one dashboard, with no external CRM required.
+          </p>
+          
+          <div style="display:flex;gap:14px;flex-wrap:wrap">
+            <a href="/" style="background:var(--accent);color:#000;padding:14px 28px;border-radius:8px;font-weight:600;font-size:14px;border:none;cursor:pointer;letter-spacing:0.3px;transition:all 0.15s;text-decoration:none;display:inline-block;border:none">Open Dashboard →</a>
+            <a href="#" onclick="return false" style="background:transparent;color:var(--text2);padding:14px 28px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid var(--border2);cursor:pointer;text-decoration:none;display:inline-block;transition:all 0.15s">View Stats</a>
+          </div>
+        </section>
+
+        <!-- METRICS -->
+        <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:80px 60px">
+          <div style="background:var(--bg2);padding:36px 32px;text-align:center">
+            <div style="font-family:var(--font-head);font-size:52px;color:var(--text);line-height:1;margin-bottom:8px">46<span style="color:var(--accent)">+</span></div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px">Qualified Prospects</div>
+          </div>
+          <div style="background:var(--bg2);padding:36px 32px;text-align:center">
+            <div style="font-family:var(--font-head);font-size:52px;color:var(--text);line-height:1;margin-bottom:8px">101</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px">Signal Events</div>
+          </div>
+          <div style="background:var(--bg2);padding:36px 32px;text-align:center">
+            <div style="font-family:var(--font-head);font-size:52px;color:var(--text);line-height:1;margin-bottom:8px">4</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px">Intelligence Layers</div>
+          </div>
+          <div style="background:var(--bg2);padding:36px 32px;text-align:center">
+            <div style="font-family:var(--font-head);font-size:52px;color:var(--text);line-height:1;margin-bottom:8px">0</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px">External CRMs</div>
+          </div>
+        </div>
+
+        <!-- PROBLEM/SOLUTION -->
+        <div style="max-width:1100px;margin:80px auto;padding:0 60px">
+          <p style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:20px">The Challenge</p>
+          <h2 style="font-family:var(--font-head);font-size:48px;font-weight:400;line-height:1.1;letter-spacing:-1px;color:var(--text);margin-bottom:20px">
+            Fintech GTM teams are flying blind.
+          </h2>
+          <p style="font-size:17px;color:var(--text2);max-width:580px;line-height:1.8;margin-bottom:60px">
+            Sales reps spend 20+ hours a week manually researching prospects. Marketing sends generic emails. Nobody knows when partners go quiet.
+          </p>
+
+          <!-- BEFORE/AFTER -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+            <div style="padding:44px;background:var(--bg2)">
+              <span style="background:rgba(255,77,106,0.1);color:#ff4d6a;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 10px;border-radius:4px;display:inline-block;font-weight:600;margin-bottom:20px">Before Pragma</span>
+              <div style="margin-top:20px">
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.5">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#ff4d6a;margin-top:6px;flex-shrink:0"></div>
+                  <span>Research in spreadsheets — 20+ hours/week</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.5">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#ff4d6a;margin-top:6px;flex-shrink:0"></div>
+                  <span>Generic cold emails, 2% response rate</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.5">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#ff4d6a;margin-top:6px;flex-shrink:0"></div>
+                  <span>No idea which prospects are hot right now</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;font-size:14px;color:var(--text2);line-height:1.5">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#ff4d6a;margin-top:6px;flex-shrink:0"></div>
+                  <span>Partner stalls detected by accident</span>
+                </div>
+              </div>
+            </div>
+            <div style="padding:44px;background:var(--bg2)">
+              <span style="background:rgba(0,229,153,0.1);color:#00e599;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 10px;border-radius:4px;display:inline-block;font-weight:600;margin-bottom:20px">With Pragma</span>
+              <div style="margin-top:20px">
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.5">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#00e599;margin-top:6px;flex-shrink:0"></div>
+                  <span>Prospects discovered automatically in minutes</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.5">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#00e599;margin-top:6px;flex-shrink:0"></div>
+                  <span>Persona-specific emails with compliance scoring</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.5">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#00e599;margin-top:6px;flex-shrink:0"></div>
+                  <span>WHEN score shows exactly who's ready today</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;font-size:14px;color:var(--text2);line-height:1.5">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#00e599;margin-top:6px;flex-shrink:0"></div>
+                  <span>Stalls detected automatically, intervention sent</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRODUCTION READY -->
+          <div style="padding:32px;background:linear-gradient(135deg, rgba(245,200,66,0.05) 0%, rgba(245,200,66,0.02) 100%);border-left:4px solid #f5c842;border-radius:8px;margin:60px 0;border:1px solid rgba(245,200,66,0.2)">
+            <div style="font-weight:700;color:#f5c842;margin-bottom:12px;font-size:16px">✓ Production Ready</div>
+            <div style="color:var(--text2);font-size:14px;line-height:1.9">
+              End-to-end platform combining 4 layers: WHO (discovery), WHEN (timing), HOW (outreach), ACTIVATE (partner health). 50+ prospects. 101+ signals. 0 external dependencies. Ready for immediate use.
+            </div>
+          </div>
+        </div>
       </div>
 
     </div><!-- /content -->
