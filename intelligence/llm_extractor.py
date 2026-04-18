@@ -158,6 +158,7 @@
 import json
 import os
 import time
+import random
 import logging
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -183,39 +184,65 @@ MODEL = "llama-3.3-70b-versatile"  # Versatile model handles both generation and
 
 # Rate limiting — Groq free tier is generous but we still throttle
 _last_call_time = 0
-MIN_CALL_INTERVAL = 0.5  # seconds between LLM calls
+MIN_CALL_INTERVAL = 1.5  # seconds between LLM calls (safe for free tier with multiple workers)
 
 
 def _call_llm(prompt: str, max_tokens: int = 500) -> str | None:
     """
     Single unified LLM call using primary API only.
     - No failover to backup (backup key was causing 2x request rate)
+    - Includes exponential backoff retry on rate limit errors
     - All LLM calls go through here
     """
     global _last_call_time
 
     model = MODEL
+    max_retries = 5
+    base_delay = 1.0
 
-    # Rate limiting
-    elapsed = time.time() - _last_call_time
-    if elapsed < MIN_CALL_INTERVAL:
-        time.sleep(MIN_CALL_INTERVAL - elapsed)
+    for attempt in range(max_retries):
+        # Rate limiting
+        elapsed = time.time() - _last_call_time
+        if elapsed < MIN_CALL_INTERVAL:
+            time.sleep(MIN_CALL_INTERVAL - elapsed)
 
-    try:
-        response = primary_client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.1,
-            max_tokens=max_tokens
-        )
-        _last_call_time = time.time()
-        return response.choices[0].message.content.strip()
+        try:
+            response = primary_client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                max_tokens=max_tokens
+            )
+            _last_call_time = time.time()
+            return response.choices[0].message.content.strip()
 
-    except Exception as e:
-        error_msg = str(e)
-        logger.warning(f"API call failed: {error_msg}")
-        _last_call_time = time.time()
-        return None
+        except Exception as e:
+            error_msg = str(e).lower()
+            _last_call_time = time.time()
+            
+            # Check if rate limit error
+            is_rate_limit = (
+                "rate_limit" in error_msg or 
+                "429" in error_msg or 
+                "too many" in error_msg or
+                "limit reached" in error_msg
+            )
+            
+            if is_rate_limit and attempt < max_retries - 1:
+                # Exponential backoff + jitter for rate limit errors
+                delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
+                logger.warning(f"Rate limit hit, retrying in {delay:.1f}s (attempt {attempt+1}/{max_retries})")
+                time.sleep(delay)
+                continue
+            elif is_rate_limit:
+                logger.error(f"Rate limit: max retries exhausted after {max_retries} attempts")
+                return None
+            else:
+                # Other errors — don't retry
+                logger.error(f"API call failed: {e}")
+                return None
+    
+    return None
 
 
 def _parse_json_response(raw: str) -> dict | None:
