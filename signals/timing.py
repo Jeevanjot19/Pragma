@@ -247,6 +247,32 @@ def get_all_when_scores() -> list:
     return results
 
 
+def save_all_when_scores() -> int:
+    """
+    Calculate and persist WHEN scores for all prospects to the database.
+    Returns count of prospects updated.
+    """
+    with get_db() as conn:
+        prospects = conn.execute(
+            "SELECT id FROM prospects"
+        ).fetchall()
+    
+    updated = 0
+    for p in prospects:
+        score_data = calculate_when_score(p['id'])
+        
+        # Persist when_score to database
+        with get_db() as conn:
+            conn.execute(
+                "UPDATE prospects SET when_score = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (score_data['when_score'], p['id'])
+            )
+            conn.commit()
+        updated += 1
+    
+    return updated
+
+
 def get_weekly_priorities() -> dict:
     """Returns categorized priority list — the Monday morning view of what to do this week."""
     all_scores = get_all_when_scores()

@@ -28,6 +28,7 @@ def init_db():
             using_competitor TEXT,
             is_existing_partner BOOLEAN DEFAULT 0,
             who_score INTEGER DEFAULT 0,
+            when_score INTEGER DEFAULT 0,
             status TEXT DEFAULT 'WATCH',
             source TEXT,
             last_description_checked TIMESTAMP,

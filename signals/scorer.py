@@ -1,5 +1,6 @@
 from database import get_db
 from config import SIGNAL_WEIGHTS, HOT_THRESHOLD, WARM_THRESHOLD
+from signals.timing import save_all_when_scores
 
 def calculate_who_score(prospect_id: int) -> tuple[int, str]:
     with get_db() as conn:
@@ -103,10 +104,17 @@ def calculate_who_score(prospect_id: int) -> tuple[int, str]:
 
 
 def recalculate_all_scores():
-    """Recalculate WHO scores for all prospects."""
+    """Recalculate WHO and WHEN scores for all prospects."""
+    # Calculate WHO scores (fit scores)
     with get_db() as conn:
         prospects = conn.execute("SELECT id, name FROM prospects").fetchall()
     
+    print("Calculating WHO scores...")
     for p in prospects:
         score, status = calculate_who_score(p['id'])
         print(f"  {p['name']}: {score} ({status})")
+    
+    # Calculate and persist WHEN scores (temporal/urgency scores)
+    print("Calculating WHEN scores...")
+    updated = save_all_when_scores()
+    print(f"  Updated {updated} WHEN scores")

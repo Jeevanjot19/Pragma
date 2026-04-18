@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pragma — GTM Intelligence for Fintech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #050507;
+    --bg2: #0c0c10;
+    --bg3: #111116;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f5;
+    --text2: #9898a8;
+    --text3: #4a4a5a;
+    --cyan: #00d4ff;
+    --cyan-dim: rgba(0,212,255,0.08);
+    --green: #00e599;
+    --green-dim: rgba(0,229,153,0.08);
+    --orange: #ff8c42;
+    --red: #ff4d6a;
+    --purple: #9d6eff;
+    --yellow: #f5c842;
+    --serif: 'Instrument Serif', Georgia, serif;
+    --sans: 'Geist', system-ui, sans-serif;
+    --mono: 'Geist Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.5;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -200px;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: -100px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(157,110,255,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    width: fit-content;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .hero-title {
+    font-family: var(--serif);
+    font-size: clamp(52px, 7vw, 96px);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--cyan);
+  }
+
+  .hero-subtitle {
+    font-size: clamp(18px, 2.5vw, 26px);
+    color: var(--text2);
+    font-weight: 300;
+    margin-bottom: 32px;
+    max-width: 700px;
+  }
+
+  .hero-desc {
+    font-size: 17px;
+    color: var(--text2);
+    max-width: 640px;
+    line-height: 1.8;
+    margin-bottom: 48px;
+  }
+
+  .hero-cta-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--cyan);
+    color: #000;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.15s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary:hover { background: #33ddff; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.15s;
+  }
+
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+
+  /* NUMBERS */
+  .numbers-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 80px 60px;
+  }
+
+  .number-cell {
+    background: var(--bg2);
+    padding: 36px 32px;
+    text-align: center;
+  }
+
+  .number-value {
+    font-family: var(--serif);
+    font-size: 52px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .number-value span { color: var(--cyan); }
+
+  .number-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  /* SECTION */
+  .section {
+    padding: 100px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .section-desc {
+    font-size: 17px;
+    color: var(--text2);
+    max-width: 580px;
+    line-height: 1.8;
+    margin-bottom: 60px;
+  }
+
+  /* LAYER GRID */
+  .layer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .layer-card {
+    background: var(--bg2);
+    padding: 44px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .layer-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-color, var(--cyan));
+  }
+
+  .layer-card:nth-child(1) { --accent-color: var(--cyan); }
+  .layer-card:nth-child(2) { --accent-color: var(--purple); }
+  .layer-card:nth-child(3) { --accent-color: var(--green); }
+  .layer-card:nth-child(4) { --accent-color: var(--orange); }
+
+  .layer-number {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  .layer-name {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+
+  .layer-tagline {
+    font-size: 15px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  .feature-list li::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    margin-top: 7px;
+    flex-shrink: 0;
+  }
+
+  /* FLOW */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 60px;
+  }
+
+  .flow-step {
+    flex: 1;
+    padding: 28px 24px;
+    background: var(--bg2);
+    position: relative;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .flow-step:last-child { border-right: none; }
+
+  .flow-step-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .flow-step-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .flow-arrow {
+    color: var(--text3);
+    font-size: 18px;
+    padding: 0 4px;
+    background: var(--bg2);
+  }
+
+  /* FEATURE SHOWCASE */
+  .feature-showcase {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  .feature-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    transition: border-color 0.15s;
+  }
+
+  .feature-card:hover { border-color: var(--border2); }
+
+  .feature-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--icon-bg, var(--cyan-dim));
+    border: 1px solid var(--icon-border, rgba(0,212,255,0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .feature-icon svg {
+    width: 16px; height: 16px;
+    stroke: var(--icon-color, var(--cyan));
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .feature-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .feature-card-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* BEFORE/AFTER */
+  .before-after {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .ba-pane {
+    padding: 44px;
+    background: var(--bg2);
+  }
+
+  .ba-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 20px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: 600;
+  }
+
+  .ba-pane:first-child .ba-label {
+    background: rgba(255,77,106,0.1);
+    color: var(--red);
+  }
+
+  .ba-pane:last-child .ba-label {
+    background: rgba(0,229,153,0.1);
+    color: var(--green);
+  }
+
+  .ba-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  .ba-item:last-child { border-bottom: none; }
+
+  .ba-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .ba-pane:first-child .ba-dot { background: var(--red); }
+  .ba-pane:last-child .ba-dot { background: var(--green); }
+
+  /* TERMINAL */
+  .terminal {
+    background: #0a0c0f;
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 40px 0;
+  }
+
+  .terminal-header {
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .terminal-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .terminal-label {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  .terminal-body {
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .t-comment { color: #4a4a5a; }
+  .t-key { color: var(--cyan); }
+  .t-string { color: var(--green); }
+  .t-number { color: var(--orange); }
+  .t-label { color: var(--purple); }
+  .t-success { color: var(--green); }
+  .t-arrow { color: var(--text3); }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 60px;
+  }
+
+  /* QUOTE */
+  .pull-quote {
+    padding: 80px 60px;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .pull-quote p {
+    font-family: var(--serif);
+    font-size: clamp(22px, 3vw, 38px);
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .pull-quote cite {
+    display: block;
+    margin-top: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-style: normal;
+  }
+
+  /* ARCHITECTURE */
+  .arch-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .arch-row {
+    display: flex;
+    background: var(--bg2);
+    min-height: 64px;
+  }
+
+  .arch-label {
+    width: 160px;
+    flex-shrink: 0;
+    padding: 20px 24px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .arch-label span {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+  }
+
+  .arch-content {
+    flex: 1;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .arch-tag {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  .arch-tag.cyan { background: var(--cyan-dim); border-color: rgba(0,212,255,0.2); color: var(--cyan); }
+  .arch-tag.green { background: var(--green-dim); border-color: rgba(0,229,153,0.2); color: var(--green); }
+  .arch-tag.purple { background: rgba(157,110,255,0.08); border-color: rgba(157,110,255,0.2); color: var(--purple); }
+  .arch-tag.orange { background: rgba(255,140,66,0.08); border-color: rgba(255,140,66,0.2); color: var(--orange); }
+
+  /* FOOTER */
+  .footer {
+    padding: 60px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-logo {
+    font-family: var(--serif);
+    font-size: 24px;
+    color: var(--text);
+  }
+
+  .footer-logo span { color: var(--cyan); font-style: italic; }
+
+  .footer-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  /* HIGHLIGHT STRIP */
+  .highlight-strip {
+    background: linear-gradient(135deg, rgba(0,212,255,0.05) 0%, rgba(157,110,255,0.03) 100%);
+    border-top: 1px solid rgba(0,212,255,0.1);
+    border-bottom: 1px solid rgba(0,212,255,0.1);
+    padding: 60px;
+    margin: 0;
+  }
+
+  .highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .highlight-item-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .highlight-item-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .highlight-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .hero { padding: 60px 30px; }
+    .numbers-row { grid-template-columns: 1fr 1fr; margin: 60px 30px; }
+    .section { padding: 60px 30px; }
+    .layer-grid { grid-template-columns: 1fr; }
+    .feature-showcase { grid-template-columns: 1fr; }
+    .before-after { grid-template-columns: 1fr; }
+    .divider { margin: 0 30px; }
+    .footer { flex-direction: column; gap: 20px; padding: 40px 30px; text-align: center; }
+    .footer-meta { text-align: center; }
+    .highlight-grid { grid-template-columns: 1fr; gap: 32px; }
+    .highlight-strip { padding: 40px 30px; }
+  }
+
+  /* ANIMATION */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-badge, .hero-title, .hero-subtitle, .hero-desc, .hero-cta-row {
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero-badge { animation-delay: 0.05s; }
+  .hero-title { animation-delay: 0.12s; }
+  .hero-subtitle { animation-delay: 0.18s; }
+  .hero-desc { animation-delay: 0.24s; }
+  .hero-cta-row { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">Live Intelligence Platform · Blostem GTM</div>
+  <h1 class="hero-title">
+    Stop guessing<br>who to call<br><em>and when.</em>
+  </h1>
+  <p class="hero-subtitle">Pragma is an end-to-end Go-To-Market intelligence platform for fintech sales and marketing teams.</p>
+  <p class="hero-desc">
+    It discovers high-intent prospects from market signals, scores them on fit and timing, generates compliance-checked outreach for each persona, and monitors every partner activation — all in one dashboard, with no external CRM required.
+  </p>
+  <div class="hero-cta-row">
+    <a href="http://localhost:8000" class="btn-primary">Open Dashboard →</a>
+    <a href="#layers" class="btn-ghost">Explore the 4 Layers</a>
+  </div>
+</section>
+
+<!-- NUMBERS -->
+<div class="numbers-row">
+  <div class="number-cell">
+    <div class="number-value">46<span>+</span></div>
+    <div class="number-label">Qualified Prospects</div>
+  </div>
+  <div class="number-cell">
+    <div class="number-value">101</div>
+    <div class="number-label">Signal Events Tracked</div>
+  </div>
+  <div class="number-cell">
+    <div class="number-value">4</div>
+    <div class="number-label">Intelligence Layers</div>
+  </div>
+  <div class="number-cell">
+    <div class="number-value">0</div>
+    <div class="number-label">External CRMs Needed</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- THE PROBLEM -->
+<section class="section">
+  <p class="section-eyebrow">The Problem</p>
+  <h2 class="section-title">Fintech GTM teams are<br>flying blind.</h2>
+  <p class="section-desc">
+    Sales reps spend 20+ hours a week manually researching prospects. Marketing sends the same generic email to every persona. Nobody knows when a partner goes quiet or why.
+  </p>
+
+  <div class="before-after">
+    <div class="ba-pane">
+      <span class="ba-label">Before Pragma</span>
+      <div class="ba-item"><div class="ba-dot"></div>Research done manually in spreadsheets — 20+ hours/week per rep</div>
+      <div class="ba-item"><div class="ba-dot"></div>Generic cold emails with 2% response rates, same for CTO and CFO</div>
+      <div class="ba-item"><div class="ba-dot"></div>No idea which prospects are hot right now vs. six months ago</div>
+      <div class="ba-item"><div class="ba-dot"></div>Partner signs contract, then silently disappears into a 60-day onboarding black hole</div>
+      <div class="ba-item"><div class="ba-dot"></div>Stalls detected by accident, addressed with generic "let's sync up" emails</div>
+      <div class="ba-item"><div class="ba-dot"></div>Leadership asks "how's the pipeline?" — nobody has a confident answer</div>
+    </div>
+    <div class="ba-pane">
+      <span class="ba-label">With Pragma</span>
+      <div class="ba-item"><div class="ba-dot"></div>Prospects discovered automatically from live news signals in minutes, not weeks</div>
+      <div class="ba-item"><div class="ba-dot"></div>Three separate persona-specific emails generated per prospect (CPO, CTO, CFO) with real-time compliance scoring</div>
+      <div class="ba-item"><div class="ba-dot"></div>WHEN score tells you exactly who is ready to hear from you this Monday morning</div>
+      <div class="ba-item"><div class="ba-dot"></div>Every partner activation tracked across 3 stall patterns — problems caught in days, not months</div>
+      <div class="ba-item"><div class="ba-dot"></div>Root cause detected from API call data, targeted intervention email generated automatically</div>
+      <div class="ba-item"><div class="ba-dot"></div>Dashboard shows pipeline health, email effectiveness, and partner activation status in real time</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- THE 4 LAYERS -->
+<section class="section" id="layers">
+  <p class="section-eyebrow">The System</p>
+  <h2 class="section-title">Four layers of intelligence,<br>one unified dashboard.</h2>
+  <p class="section-desc">
+    Most GTM tools solve one problem. Pragma connects discovery, prioritisation, outreach, and partner health into a single coherent workflow.
+  </p>
+
+  <div class="layer-grid">
+
+    <div class="layer-card">
+      <div class="layer-number">Layer 01 · WHO</div>
+      <div class="layer-name">Prospect Discovery<br>&amp; Fit Scoring</div>
+      <div class="layer-tagline">
+        Pragma continuously monitors 16 targeted Google News feeds and scores every company it finds on a 0–100 scale. No manual research. No spreadsheets.
+      </div>
+      <ul class="feature-list">
+        <li>Funding rounds, leadership hires, product launches — each signal carries specific weight in the WHO score</li>
+        <li>Play Store enrichment: install count, product flags (has FD? has bonds?) detected automatically</li>
+        <li>Category classification: lending vs. neobank vs. wealth management changes which Blostem product gets recommended</li>
+        <li>Competitor displacement detection: if they use Stable Money or Deciml, they're a higher-priority target</li>
+        <li>Revenue proof calculator built in: click any prospect, see projected Year 1 commission in seconds</li>
+      </ul>
+    </div>
+
+    <div class="layer-card">
+      <div class="layer-number">Layer 02 · WHEN</div>
+      <div class="layer-name">Temporal Scoring<br>&amp; Weekly Priorities</div>
+      <div class="layer-tagline">
+        A WHO score tells you who fits. WHEN tells you who is ready to hear from you right now — this Monday, not six months ago.
+      </div>
+      <ul class="feature-list">
+        <li>Exponential decay on event signals: a funding round from yesterday scores 40 pts, the same from 30 days ago scores 4</li>
+        <li>Contact factor: just reached out to someone? Their urgency score drops to 0.5× to prevent re-engagement spam</li>
+        <li>Five action buckets every week: CALL THIS WEEK → EMAIL → INTRO → NURTURE → MONITOR</li>
+        <li>Event boost by type: FUNDING and DISPLACEMENT carry the highest urgency multipliers</li>
+        <li>The dashboard becomes your Monday morning briefing: open it, see exactly who to contact today</li>
+      </ul>
+    </div>
+
+    <div class="layer-card">
+      <div class="layer-number">Layer 03 · HOW</div>
+      <div class="layer-name">Persona-Specific<br>Outreach Generation</div>
+      <div class="layer-tagline">
+        Select a prospect. Click Generate. Get three fully written, compliance-checked emails in under 10 seconds — one for the CPO, one for the CTO, one for the CFO.
+      </div>
+      <ul class="feature-list">
+        <li>Each email is genuinely different: the CTO email focuses on integration time and API quality; the CFO email focuses on commission economics</li>
+        <li>Real-time compliance scoring (0–100) with live warnings as you type — no RBI-prohibited phrases slip through</li>
+        <li>"Enhance with AI" button expands a draft email from 400 to 600+ words with better structure and stronger CTAs</li>
+        <li>Full editor: customise recipient name, subject, body — all inline, before you send</li>
+        <li>3-strike compliance override memory: if your team approves a rule exception three times, it stops blocking future sends</li>
+      </ul>
+    </div>
+
+    <div class="layer-card">
+      <div class="layer-number">Layer 04 · ACTIVATE</div>
+      <div class="layer-name">Partner Activation<br>Health &amp; Stall Detection</div>
+      <div class="layer-tagline">
+        Most GTM tools end at the deal. Pragma keeps watching. If a partner goes quiet, it knows exactly why — and writes the intervention email for you.
+      </div>
+      <ul class="feature-list">
+        <li>Three stall patterns detected from real API call data: Dead on Arrival, Stuck in Sandbox, Production Blocked</li>
+        <li>Stall cards show the detection evidence: "0 API calls in 14 days" or "AUTH_FAILED error code on last sandbox call"</li>
+        <li>Intervention emails are pattern-specific: a technical stall gets a debugging email for the CTO; a procurement stall gets a business case email for the CFO</li>
+        <li>Intervention effectiveness metrics: track response rates and resolution rates per stall pattern over time</li>
+        <li>Political risk detection: build-vs-buy signals and competitor integrations flagged from news monitoring</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- PULL QUOTE -->
+<div class="pull-quote">
+  <p>"The intelligence we used to spend three weeks building manually, Pragma gives us every Monday morning."</p>
+  <cite>The value proposition for every fintech sales team</cite>
+</div>
+
+<div class="divider"></div>
+
+<!-- EMAIL FEATURES -->
+<section class="section">
+  <p class="section-eyebrow">Deep Feature: Outreach Engine</p>
+  <h2 class="section-title">The most usable part<br>of any GTM tool is the<br><em>email you actually send.</em></h2>
+  <p class="section-desc">
+    We built a complete email editing and compliance workflow directly into the dashboard. No switching to Gmail. No pasting into Google Docs.
+  </p>
+
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="terminal-dot" style="background:#ff5f57"></div>
+      <div class="terminal-dot" style="background:#ffbd2e"></div>
+      <div class="terminal-dot" style="background:#28c840"></div>
+      <div class="terminal-label">real-time compliance check</div>
+    </div>
+    <div class="terminal-body">
+      <span class="t-comment"># Compliance engine output for generated CPO email</span><br><br>
+      <span class="t-label">subject</span>: <span class="t-string">"Kreditbee has the users. Blostem adds the FD revenue."</span><br>
+      <span class="t-label">body_length</span>: <span class="t-number">1,842</span> chars<br>
+      <span class="t-label">compliance_score</span>: <span class="t-number">100</span> / 100<br>
+      <span class="t-label">is_sendable</span>: <span class="t-success">true</span><br>
+      <span class="t-label">violations</span>: <span class="t-number">[]</span><br>
+      <span class="t-label">warnings</span>: <span class="t-number">[]</span><br><br>
+      <span class="t-comment"># ✓ No guaranteed returns language</span><br>
+      <span class="t-comment"># ✓ No false DICGC insurance claims</span><br>
+      <span class="t-comment"># ✓ No RBI-approval misrepresentation</span><br>
+      <span class="t-comment"># ✓ Interest rates qualified correctly</span><br>
+      <span class="t-comment"># ✓ Clear call-to-action detected</span><br><br>
+      <span class="t-arrow">→</span> <span class="t-success">Ready to send to cpo@kreditbee.com</span>
+    </div>
+  </div>
+
+  <div class="feature-showcase">
+
+    <div class="feature-card" style="--icon-bg: rgba(0,212,255,0.08); --icon-border: rgba(0,212,255,0.2); --icon-color: #00d4ff">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+      </div>
+      <div class="feature-card-title">Live compliance scoring</div>
+      <div class="feature-card-desc">Scores update as you type, 0–100. A green badge means you can send. Yellow means review. Red means the email is blocked from sending.</div>
+    </div>
+
+    <div class="feature-card" style="--icon-bg: rgba(157,110,255,0.08); --icon-border: rgba(157,110,255,0.2); --icon-color: #9d6eff">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div class="feature-card-title">AI enhancement in one click</div>
+      <div class="feature-card-desc">Short on time? Hit "Enhance with AI" and watch a 400-word draft expand into a 600-word structured email with clear benefits and CTAs.</div>
+    </div>
+
+    <div class="feature-card" style="--icon-bg: rgba(0,229,153,0.08); --icon-border: rgba(0,229,153,0.2); --icon-color: #00e599">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/></svg>
+      </div>
+      <div class="feature-card-title">Three personas, one click</div>
+      <div class="feature-card-desc">The CPO email, CTO email, and CFO email are generated simultaneously. Each is genuinely different — not the same email with the salutation swapped.</div>
+    </div>
+
+    <div class="feature-card" style="--icon-bg: rgba(255,140,66,0.08); --icon-border: rgba(255,140,66,0.2); --icon-color: #ff8c42">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h6M7 16h4"/></svg>
+      </div>
+      <div class="feature-card-title">Full in-dashboard editor</div>
+      <div class="feature-card-desc">Edit recipient name, email address, subject, and body inline. Send directly or copy to your email client — no context switching.</div>
+    </div>
+
+    <div class="feature-card" style="--icon-bg: rgba(245,200,66,0.08); --icon-border: rgba(245,200,66,0.2); --icon-color: #f5c842">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="feature-card-title">6 RBI/SEBI/DICGC rules</div>
+      <div class="feature-card-desc">Guaranteed returns, false insurance claims, misleading RBI approval language — all caught automatically before a human ever sees the email.</div>
+    </div>
+
+    <div class="feature-card" style="--icon-bg: rgba(255,77,106,0.08); --icon-border: rgba(255,77,106,0.2); --icon-color: #ff4d6a">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div class="feature-card-title">Override memory</div>
+      <div class="feature-card-desc">Teams that legitimately override a compliance flag three times see it demoted from blocking to warning. Alert fatigue is managed intelligently.</div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT SETS US APART -->
+<section class="section">
+  <p class="section-eyebrow">Differentiation</p>
+  <h2 class="section-title">Every tool does one thing.<br>Pragma does all four.</h2>
+  <p class="section-desc">The GTM stack that covers discovery, timing, outreach, and partner health in a single platform with zero external dependencies.</p>
+
+  <div class="highlight-strip" style="margin: 0; border-radius: 12px; border: 1px solid rgba(0,212,255,0.1);">
+    <div class="highlight-grid">
+      <div>
+        <div class="highlight-eyebrow">Vs. HubSpot / Salesforce</div>
+        <div class="highlight-item-title">They track what you already know</div>
+        <div class="highlight-item-desc">CRMs record deals you've already found. Pragma finds deals you don't know exist yet, then hands them to you with a scored reason to call today.</div>
+      </div>
+      <div>
+        <div class="highlight-eyebrow">Vs. Apollo / Hunter</div>
+        <div class="highlight-item-title">They give you a list. We give you intelligence.</div>
+        <div class="highlight-item-desc">Contact databases give you names. Pragma tells you which of those names just raised money, hired a new CPO, or launched a product that creates a gap Blostem fills.</div>
+      </div>
+      <div>
+        <div class="highlight-eyebrow">Vs. Outreach / Salesloft</div>
+        <div class="highlight-item-title">They send emails. We help you not send bad ones.</div>
+        <div class="highlight-item-desc">Sequence tools automate generic emails. Pragma generates persona-specific, compliance-checked drafts for a specific company at a specific moment — and monitors whether the partnership actually activates.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="section">
+  <p class="section-eyebrow">Technical Overview</p>
+  <h2 class="section-title">Built to run, not to demo.</h2>
+  <p class="section-desc">The entire platform is self-contained — SQLite database, FastAPI backend, single-file SPA frontend. Deploys anywhere. No cloud lock-in.</p>
+
+  <div class="arch-flow">
+    <div class="arch-row">
+      <div class="arch-label"><span>Data Sources</span></div>
+      <div class="arch-content">
+        <span class="arch-tag cyan">Google News RSS (16 feeds)</span>
+        <span class="arch-tag cyan">Google Play Store API</span>
+        <span class="arch-tag cyan">Partner API call logs</span>
+        <span class="arch-tag">Blostem monitoring events</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label"><span>Intelligence</span></div>
+      <div class="arch-content">
+        <span class="arch-tag purple">Groq LLaMA 3.3 70B (extraction)</span>
+        <span class="arch-tag purple">Claude AI (email enhancement)</span>
+        <span class="arch-tag purple">Rule-based compliance engine</span>
+        <span class="arch-tag purple">Exponential decay scoring</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label"><span>Backend</span></div>
+      <div class="arch-content">
+        <span class="arch-tag green">FastAPI + Python 3.14</span>
+        <span class="arch-tag green">SQLite (10+ tables)</span>
+        <span class="arch-tag green">Pydantic validation</span>
+        <span class="arch-tag green">32 REST endpoints</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label"><span>Frontend</span></div>
+      <div class="arch-content">
+        <span class="arch-tag orange">Vanilla HTML / CSS / JS</span>
+        <span class="arch-tag orange">Single-file SPA (2,300+ lines)</span>
+        <span class="arch-tag orange">Zero npm dependencies</span>
+        <span class="arch-tag orange">Offline-capable</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label"><span>Key Features</span></div>
+      <div class="arch-content">
+        <span class="arch-tag">Data validation layer</span>
+        <span class="arch-tag">Discovery history (localStorage)</span>
+        <span class="arch-tag">Dual API failover (Groq primary + backup)</span>
+        <span class="arch-tag">WHO score deduplication</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- THE WORKFLOW -->
+<section class="section">
+  <p class="section-eyebrow">How a rep uses it</p>
+  <h2 class="section-title">A Monday morning<br>in 90 seconds.</h2>
+  <p class="section-desc">This is the actual workflow a sales rep follows. No training required.</p>
+
+  <div class="flow-row">
+    <div class="flow-step"><div class="flow-step-label">9:00 AM</div><div class="flow-step-value">Open Pragma dashboard</div></div>
+    <div class="flow-step"><div class="flow-step-label">9:01</div><div class="flow-step-value">Click "This Week" — see 7 CALL THIS WEEK prospects</div></div>
+    <div class="flow-step"><div class="flow-step-label">9:03</div><div class="flow-step-value">Click Kreditbee — see funding signal from 3 days ago</div></div>
+    <div class="flow-step"><div class="flow-step-label">9:04</div><div class="flow-step-value">Click Generate Outreach — CPO, CTO, CFO emails ready</div></div>
+    <div class="flow-step"><div class="flow-step-label">9:06</div><div class="flow-step-value">Edit CPO email, see 100/100 compliance score</div></div>
+    <div class="flow-step"><div class="flow-step-label">9:07</div><div class="flow-step-value">Send. Move to the next prospect.</div></div>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="terminal-dot" style="background:#ff5f57"></div>
+      <div class="terminal-dot" style="background:#ffbd2e"></div>
+      <div class="terminal-dot" style="background:#28c840"></div>
+      <div class="terminal-label">WHO score breakdown for Kreditbee</div>
+    </div>
+    <div class="terminal-body">
+      <span class="t-label">prospect</span>: <span class="t-string">"Kreditbee"</span><br>
+      <span class="t-label">who_score</span>: <span class="t-number">100</span> / 100<br>
+      <span class="t-label">status</span>: <span class="t-success">HOT</span><br>
+      <span class="t-label">when_score</span>: <span class="t-number">80</span> / 100<br>
+      <span class="t-label">action</span>: <span class="t-string">"CALL THIS WEEK"</span><br>
+      <span class="t-label">install_count</span>: <span class="t-string">"100,000,000+"</span><br>
+      <span class="t-label">recommended_product</span>: <span class="t-string">"Credit on UPI"</span><br>
+      <span class="t-label">best_recent_event</span>: <span class="t-string">"Kreditbee raises $20M Series B"</span><br>
+      <span class="t-label">event_type</span>: <span class="t-string">"FUNDING"</span><br>
+      <span class="t-label">event_urgency</span>: <span class="t-string">"HIGH"</span> <span class="t-comment">← 3 days ago, decaying fast</span><br>
+      <span class="t-label">event_boost</span>: <span class="t-number">30</span> pts<br>
+      <span class="t-label">revenue_year1_cr</span>: <span class="t-number">0.17</span> crore<br><br>
+      <span class="t-arrow">→</span> <span class="t-success">Emails generated. Compliance check passed. Ready to send.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ACTIVATION -->
+<section class="section">
+  <p class="section-eyebrow">What makes Pragma different</p>
+  <h2 class="section-title">The deal is signed.<br>Now what?</h2>
+  <p class="section-desc">
+    Every other GTM tool ends at the signature. Pragma keeps watching. If a partner goes quiet, it catches it in days — not months.
+  </p>
+
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="terminal-dot" style="background:#ff5f57"></div>
+      <div class="terminal-dot" style="background:#ffbd2e"></div>
+      <div class="terminal-dot" style="background:#28c840"></div>
+      <div class="terminal-label">activation pattern detected</div>
+    </div>
+    <div class="terminal-body">
+      <span class="t-comment"># ACTIVATE layer — partner Groww, signed 15 days ago</span><br><br>
+      <span class="t-label">stall_pattern</span>: <span class="t-string">"STUCK_IN_SANDBOX"</span><br>
+      <span class="t-label">days_inactive</span>: <span class="t-number">9</span><br>
+      <span class="t-label">total_sandbox_calls</span>: <span class="t-number">3</span><br>
+      <span class="t-label">last_endpoint</span>: <span class="t-string">"/v1/balance"</span><br>
+      <span class="t-label">last_status_code</span>: <span class="t-number">401</span><br>
+      <span class="t-label">last_error_code</span>: <span class="t-string">"AUTH_INVALID_KEY"</span><br>
+      <span class="t-label">severity</span>: <span class="t-string">"HIGH"</span><br>
+      <span class="t-label">likely_cause</span>: <span class="t-string">"API key expired or misconfigured"</span><br><br>
+      <span class="t-arrow">→</span> <span class="t-success">Generating debugging email for CTO...</span><br>
+      <span class="t-arrow">→</span> <span class="t-success">Subject: "Groww — /v1/balance AUTH_INVALID_KEY — 20-min fix available"</span>
+    </div>
+  </div>
+
+  <div class="feature-showcase" style="margin-top: 40px;">
+    <div class="feature-card" style="--icon-bg: rgba(255,77,106,0.08); --icon-border: rgba(255,77,106,0.2); --icon-color: #ff4d6a">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="feature-card-title">Dead on Arrival</div>
+      <div class="feature-card-desc">Zero API calls in 14 days after signing. The person who signed isn't the engineer. Pragma writes a getting-started email to the CTO.</div>
+    </div>
+    <div class="feature-card" style="--icon-bg: rgba(245,200,66,0.08); --icon-border: rgba(245,200,66,0.2); --icon-color: #f5c842">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="feature-card-title">Stuck in Sandbox</div>
+      <div class="feature-card-desc">Sandbox calls exist, then silence. Error code from the last call is surfaced in the intervention email. The CTO gets the exact fix — not a generic "let's sync".</div>
+    </div>
+    <div class="feature-card" style="--icon-bg: rgba(0,229,153,0.08); --icon-border: rgba(0,229,153,0.2); --icon-color: #00e599">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <div class="feature-card-title">Production Blocked</div>
+      <div class="feature-card-desc">Sandbox tests pass but no production calls for 14 days. An approval or procurement blocker. Pragma routes to the CFO — not the engineer.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FINAL CTA -->
+<section class="section" style="text-align: center; padding-bottom: 40px;">
+  <p class="section-eyebrow" style="text-align: center; display: block;">Ready to see it</p>
+  <h2 class="section-title" style="margin: 0 auto 20px;">Open the dashboard.<br>It's running right now.</h2>
+  <p style="font-size: 17px; color: var(--text2); max-width: 500px; margin: 0 auto 40px; line-height: 1.8;">
+    46 live prospects, scored and ready. Click any one, generate outreach, check compliance, review your activation health. The entire GTM workflow, end to end.
+  </p>
+  <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+    <a href="http://localhost:8000" class="btn-primary" style="font-size: 16px; padding: 16px 36px;">Open Dashboard →</a>
+    <a href="https://github.com/Jeevanjot19/Pragma" class="btn-ghost" style="font-size: 16px; padding: 16px 36px;">View on GitHub</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-logo">Prag<span>ma</span></div>
+  <div class="footer-meta">
+    Built for Blostem GTM Challenge · April 2026<br>
+    FastAPI · SQLite · Vanilla JS · Groq LLaMA 3.3 · Claude AI<br>
+    46 prospects · 101 signals · 4 intelligence layers
+  </div>
+</footer>
+
+</body>
+</html>
