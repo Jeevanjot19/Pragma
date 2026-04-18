@@ -47,18 +47,20 @@ async def startup():
     init_db()
     print("Pragma is running.")
     
-    # Seed database with initial prospects if empty
-    # This prevents dashboard from breaking due to API rate limits
+    # Check if we have prospects; if not, run discovery
     with get_db() as conn:
         count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
         if count == 0:
-            print("Database is empty. Seeding with initial prospects...")
-            from seed_data import seed_database
-            seeded = seed_database()
-            print(f"✓ Seeded {seeded} initial prospects")
-            # Recalculate scores for seeded data
-            recalculate_all_scores()
-            print("✓ Scores calculated")
+            print("No prospects found. Running discovery pipeline on startup...")
+            try:
+                news_result = run_news_monitor()
+                remove_non_prospects()
+                from discovery.play_store import enrich_all_prospects
+                enrich_all_prospects()
+                recalculate_all_scores()
+                print(f"✓ Discovery complete: {news_result.get('new_prospects', 0)} new prospects found")
+            except Exception as e:
+                print(f"Warning: Discovery failed on startup: {e}")
 
 @app.get("/")
 def root():
@@ -70,41 +72,33 @@ def about2():
 
 @app.post("/api/discover")
 def trigger_discovery():
-    """
-    Manually trigger discovery pipeline.
-    WARNING: Uses Groq API which has daily token limits (100k free tier).
-    One full discovery burn ~280k tokens. Use sparingly.
-    """
-    try:
-        # Get current prospect count before discovery
-        with get_db() as conn:
-            before_count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
-        
-        news_result = run_news_monitor()
-        
-        # Only remove and enrich if discovery actually found something
-        if news_result.get('new_prospects', 0) > 0:
-            remove_non_prospects()
-            from discovery.play_store import enrich_all_prospects
-            enrich_all_prospects()
-            recalculate_all_scores()
-        
-        with get_db() as conn:
-            after_count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
-        
-        return {
-            "status": "complete",
-            "before_count": before_count,
-            "after_count": after_count,
-            "new_found": news_result.get('new_prospects', 0),
-            **news_result
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "message": "Discovery failed. Check Groq API rate limits."
-        }
+    news_result = run_news_monitor()
+    remove_non_prospects()
+    
+    # Enrich known prospects with Play Store data
+    from discovery.play_store import enrich_all_prospects
+    enrich_all_prospects()
+    
+    recalculate_all_scores()
+    return {"status": "complete", **news_result}
+
+@app.post("/api/enrich")
+def trigger_enrichment():
+    """Enrich all existing prospects with Play Store data and recalculate scores.
+    Does NOT require Groq API - just Play Store enrichment and scoring."""
+    from discovery.play_store import enrich_all_prospects
+    enrich_all_prospects()
+    recalculate_all_scores()
+    
+    with get_db() as conn:
+        hot = conn.execute("SELECT COUNT(*) FROM prospects WHERE status = 'HOT'").fetchone()[0]
+        warm = conn.execute("SELECT COUNT(*) FROM prospects WHERE status = 'WARM'").fetchone()[0]
+    
+    return {
+        "status": "enrichment complete",
+        "hot_prospects": hot,
+        "warm_prospects": warm
+    }
 
 @app.get("/api/status")
 def get_status():
