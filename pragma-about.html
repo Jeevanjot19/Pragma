@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pragma — GTM Intelligence for Fintech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #050507;
+    --bg2: #0c0c10;
+    --bg3: #111116;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f5;
+    --text2: #9898a8;
+    --text3: #4a4a5a;
+    --cyan: #00d4ff;
+    --cyan-dim: rgba(0,212,255,0.08);
+    --green: #00e599;
+    --green-dim: rgba(0,229,153,0.08);
+    --orange: #ff8c42;
+    --red: #ff4d6a;
+    --purple: #9d6eff;
+    --yellow: #f5c842;
+    --serif: 'Instrument Serif', Georgia, serif;
+    --sans: 'Geist', system-ui, sans-serif;
+    --mono: 'Geist Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.5;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -200px;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: -100px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(157,110,255,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    width: fit-content;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .hero-title {
+    font-family: var(--serif);
+    font-size: clamp(52px, 7vw, 96px);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--cyan);
+  }
+
+  .hero-subtitle {
+    font-size: clamp(18px, 2.5vw, 26px);
+    color: var(--text2);
+    font-weight: 300;
+    margin-bottom: 32px;
+    max-width: 700px;
+  }
+
+  .hero-desc {
+    font-size: 17px;
+    color: var(--text2);
+    max-width: 640px;
+    line-height: 1.8;
+    margin-bottom: 48px;
+  }
+
+  .hero-cta-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--cyan);
+    color: #000;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.15s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary:hover { background: #33ddff; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.15s;
+  }
+
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .hero { padding: 60px 30px; }
+  }
+
+  /* ANIMATION */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-badge, .hero-title, .hero-subtitle, .hero-desc, .hero-cta-row {
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero-badge { animation-delay: 0.05s; }
+  .hero-title { animation-delay: 0.12s; }
+  .hero-subtitle { animation-delay: 0.18s; }
+  .hero-desc { animation-delay: 0.24s; }
+  .hero-cta-row { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">GTM Intelligence for Fintech</div>
+  <h1 class="hero-title">
+    Stop guessing<br>who to call<br><em>and when.</em>
+  </h1>
+  <p class="hero-subtitle">Pragma is a production-grade Go-To-Market intelligence platform for fintech sales and marketing teams.</p>
+  <p class="hero-desc">
+    It discovers high-intent prospects from market signals, scores them on fit and timing, generates compliance-checked outreach for each persona, and monitors every partner activation — all in one dashboard, with no external CRM required.
+  </p>
+  <div class="hero-cta-row">
+    <a href="http://localhost:8000" class="btn-primary">Open Dashboard →</a>
+    <a href="http://localhost:8000" class="btn-ghost">View Demo</a>
+  </div>
+</section>
+
+</body>
+</html>
