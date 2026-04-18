@@ -1,5 +1,7 @@
 import feedparser
 import time
+import logging
+from datetime import datetime
 from database import (
     upsert_prospect, add_signal, is_article_processed,
     mark_article_processed, get_prospect_by_name
@@ -8,6 +10,13 @@ from intelligence.llm_extractor import (
     determine_recommended_product, batch_extract_companies
 )
 from config import EXISTING_PARTNERS, COMPETITORS, NON_PROSPECTS
+
+# Setup logging for discovery pipeline
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - DISCOVERY - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Google News RSS with keyword search
 # Format: https://news.google.com/rss/search?q=QUERY&hl=en-IN&gl=IN&ceid=IN:en
@@ -95,6 +104,7 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
     # Skip non-prospects (regulatory bodies, generic terms, etc.)
     if any(np.lower() == company_name.lower() for np in NON_PROSPECTS):
         print(f"  Skipped non-prospect: {company_name}")
+        logger.debug(f"Skipped non-prospect: {company_name}")
         return 0
 
     # Skip existing Blostem partners
@@ -102,6 +112,7 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
            company_name.lower() in p.lower() 
            for p in EXISTING_PARTNERS):
         print(f"  Skipped existing partner: {company_name}")
+        logger.debug(f"Skipped existing partner: {company_name}")
         return 0
 
     # Check for competitor
@@ -111,6 +122,7 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
                         for c in COMPETITORS)
     if is_competitor:
         print(f"  Skipped competitor: {company_name}")
+        logger.debug(f"Skipped competitor: {company_name}")
         return 0
 
     # Build prospect
@@ -189,17 +201,19 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
         )
 
     print(f"  ✓ {company_name} ({category}) → {recommended}")
+    logger.info(f"✓ Added {company_name} ({category}) → {recommended}")
     return 1
 
 
 def process_query_batch(query: str, feed_url: str) -> int:
     """Process one Google News query with batched LLM calls."""
     new_count = 0
+    logger.info(f"Processing query: {query}")
 
     try:
         feed = feedparser.parse(feed_url)
     except Exception as e:
-        print(f"  Error fetching '{query}': {e}")
+        logger.error(f"Error fetching '{query}': {e}")
         return 0
 
     # Collect unprocessed articles first
@@ -260,9 +274,19 @@ def process_query_batch(query: str, feed_url: str) -> int:
 
 
 def run_news_monitor() -> dict:
-    """Run all Google News queries."""
-    print("\n🔍 Running news monitor...")
+    """Run all Google News queries. Returns comprehensive results."""
+    start_time = datetime.now()
+    logger.info("="*80)
+    logger.info(f"🔍 STARTING NEWS DISCOVERY PIPELINE")
+    logger.info(f"Started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"Number of queries: {len(GOOGLE_NEWS_QUERIES)}")
+    logger.info("="*80)
+    
     total_new = 0
+    total_signals = 0
+    total_skipped = 0
+    all_companies = []
+    failed_queries = []
 
     for query in GOOGLE_NEWS_QUERIES:
         url = build_google_news_url(query)
@@ -270,5 +294,20 @@ def run_news_monitor() -> dict:
         total_new += new
         time.sleep(1)  # Pause between queries
 
-    print(f"✅ Done. {total_new} new prospects discovered.\n")
-    return {"new_prospects": total_new}
+    end_time = datetime.now()
+    duration = (end_time - start_time).total_seconds()
+    
+    logger.info("="*80)
+    logger.info(f"✅ NEWS DISCOVERY PIPELINE COMPLETE")
+    logger.info(f"Duration: {duration:.1f} seconds")
+    logger.info(f"New Prospects Found: {total_new}")
+    logger.info("="*80 + "\n")
+    
+    return {
+        "status": "completed",
+        "started_at": start_time.isoformat(),
+        "completed_at": end_time.isoformat(),
+        "duration_seconds": duration,
+        "new_prospects": total_new,
+        "message": f"✓ Discovery pipeline complete. Found {total_new} new prospects."
+    }

@@ -228,6 +228,21 @@ def get_monitoring_summary():
     }
 
 
+@app.get("/api/discovery/run")
+def run_discovery_pipeline():
+    """Run the news discovery pipeline and return results."""
+    result = run_news_monitor()
+    return {
+        "success": True,
+        "status": "completed",
+        "message": result.get("message", "Discovery pipeline completed"),
+        "new_prospects": result.get("new_prospects", 0),
+        "started_at": result.get("started_at"),
+        "completed_at": result.get("completed_at"),
+        "duration_seconds": result.get("duration_seconds")
+    }
+
+
 # ============================================================================
 # WHEN LAYER — Temporal Scoring Endpoints
 # ============================================================================

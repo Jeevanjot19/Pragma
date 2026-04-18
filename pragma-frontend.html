@@ -2145,12 +2145,95 @@ async function simulateStall() {
    DISCOVERY
 ═══════════════════════════════════════════════ */
 async function runDiscovery() {
-  toast('Running discovery… this may take 30s', 'blue');
-  const r = await apiFetch('/api/discover', { method: 'POST' });
-  if (r) {
-    toast(`Discovery complete: ${r.new_prospects||0} new prospects`, 'green');
-    allProspects = [];
-    loadWho();
+  const btn = event.target;
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  
+  // Show running status
+  toast('🔍 Discovery pipeline starting…', 'blue');
+  const startMsg = document.createElement('div');
+  startMsg.id = 'discovery-status';
+  startMsg.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    max-width: 300px;
+    z-index: 1000;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  `;
+  startMsg.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div class="spinner" style="width:16px;height:16px"></div>
+      <span style="color:var(--accent);font-weight:600">Discovery Pipeline Running</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2)">Processing news feeds and LLM extraction…</div>
+  `;
+  document.body.appendChild(startMsg);
+  
+  // Call the discovery API
+  const r = await apiFetch('/api/discovery/run', { method: 'GET' });
+  
+  // Remove status message
+  const statusMsg = document.getElementById('discovery-status');
+  if (statusMsg) statusMsg.remove();
+  
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  
+  if (r && r.success) {
+    const newProspectsCount = r.new_prospects || 0;
+    const durationSec = (r.duration_seconds || 0).toFixed(1);
+    
+    // Show completion toast
+    toast(`✅ Discovery complete! Found ${newProspectsCount} new prospects in ${durationSec}s`, 'green');
+    
+    // Show detailed results
+    const resultMsg = document.createElement('div');
+    resultMsg.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      padding: 16px 20px;
+      max-width: 320px;
+      z-index: 1000;
+      box-shadow: 0 10px 40px rgba(0,101,153,0.3);
+    `;
+    resultMsg.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <div style="color:var(--green);font-size:20px">✓</div>
+        <div>
+          <div style="color:var(--green);font-weight:600;margin-bottom:4px">Discovery Pipeline Completed</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5">
+            <div>🎯 New prospects: <strong style="color:var(--text)">${newProspectsCount}</strong></div>
+            <div>⏱️ Duration: <strong style="color:var(--text)">${durationSec}s</strong></div>
+            <div>📅 Time: <strong style="color:var(--text)">${new Date(r.completed_at).toLocaleTimeString()}</strong></div>
+          </div>
+          <button onclick="this.parentElement.parentElement.remove()" style="margin-top:8px;padding:4px 8px;background:var(--accent);color:var(--bg);border:none;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600">Dismiss</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(resultMsg);
+    
+    // Auto-dismiss after 8 seconds
+    setTimeout(() => {
+      if (resultMsg.parentElement) resultMsg.remove();
+    }, 8000);
+    
+    // Reload prospects list if on WHO screen
+    if (document.getElementById('screen-who').classList.contains('active')) {
+      allProspects = [];
+      loadWho();
+    }
+  } else {
+    toast('Discovery failed. Check browser console.', 'red');
+    console.error('Discovery result:', r);
   }
 }
 
