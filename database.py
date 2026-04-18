@@ -398,17 +398,17 @@ def upsert_prospect(data: dict):
 def add_signal(prospect_id: int, signal_type: str, strength: str, 
                title: str, evidence: str = None, source_url: str = None):
     with get_db() as conn:
-        # Check if we already have this signal type today for this prospect
-        # Prevents duplicate signals from similar articles
+        # Check for exact duplicate signals (same type, same title)
+        # This prevents adding the same signal multiple times across multiple runs
         existing = conn.execute("""
             SELECT id FROM signals 
             WHERE prospect_id = ? 
             AND signal_type = ?
-            AND date(detected_at) = date('now')
-        """, (prospect_id, signal_type)).fetchone()
+            AND title = ?
+        """, (prospect_id, signal_type, title)).fetchone()
         
         if existing:
-            return  # Don't add duplicate signal type for same day
+            return  # Don't add exact duplicate
         
         conn.execute("""
             INSERT INTO signals (prospect_id, signal_type, signal_strength, title, evidence, source_url)
