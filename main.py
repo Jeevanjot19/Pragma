@@ -47,20 +47,14 @@ async def startup():
     init_db()
     print("Pragma is running.")
     
-    # Check if we have prospects; if not, run discovery
+    # Don't auto-run discovery on startup - user must manually trigger via /api/discover
+    # This prevents token exhaustion when Render redeploys
     with get_db() as conn:
         count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
-        if count == 0:
-            print("No prospects found. Running discovery pipeline on startup...")
-            try:
-                news_result = run_news_monitor()
-                remove_non_prospects()
-                from discovery.play_store import enrich_all_prospects
-                enrich_all_prospects()
-                recalculate_all_scores()
-                print(f"✓ Discovery complete: {news_result.get('new_prospects', 0)} new prospects found")
-            except Exception as e:
-                print(f"Warning: Discovery failed on startup: {e}")
+        if count > 0:
+            print(f"✓ Database loaded with {count} prospects")
+        else:
+            print("⚠ No prospects found. Use /api/discover endpoint to run discovery pipeline.")
 
 @app.get("/")
 def root():
