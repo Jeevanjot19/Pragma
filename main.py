@@ -51,6 +51,10 @@ async def startup():
 def root():
     return FileResponse("pragma-frontend.html", media_type="text/html")
 
+@app.get("/about2")
+def about2():
+    return FileResponse("pragma-about2.html", media_type="text/html")
+
 @app.post("/api/discover")
 def trigger_discovery():
     news_result = run_news_monitor()
