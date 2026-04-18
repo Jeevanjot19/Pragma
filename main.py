@@ -46,6 +46,21 @@ app.add_middleware(
 async def startup():
     init_db()
     print("Pragma is running.")
+    
+    # Check if we have prospects; if not, run discovery
+    with get_db() as conn:
+        count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
+        if count == 0:
+            print("No prospects found. Running discovery pipeline on startup...")
+            try:
+                news_result = run_news_monitor()
+                remove_non_prospects()
+                from discovery.play_store import enrich_all_prospects
+                enrich_all_prospects()
+                recalculate_all_scores()
+                print(f"✓ Discovery complete: {news_result.get('new_prospects', 0)} new prospects found")
+            except Exception as e:
+                print(f"Warning: Discovery failed on startup: {e}")
 
 @app.get("/")
 def root():
@@ -66,6 +81,19 @@ def trigger_discovery():
     
     recalculate_all_scores()
     return {"status": "complete", **news_result}
+
+@app.get("/api/status")
+def get_status():
+    """Check if the backend is ready and has data."""
+    with get_db() as conn:
+        prospect_count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
+        signal_count = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
+    return {
+        "status": "ready",
+        "prospects": prospect_count,
+        "signals": signal_count,
+        "has_data": prospect_count > 0
+    }
 
 @app.get("/api/prospects")
 def get_prospects(status: str = None, limit: int = 50):
