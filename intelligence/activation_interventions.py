@@ -317,13 +317,14 @@ This is intelligence, not panic. But worth a conversation with the partner soon.
 
 def check_email_compliance(subject: str, body: str) -> dict:
     """
-    Check email for compliance issues.
-    Returns compliance status with warnings and suggestions.
+    Check email for compliance issues with advanced pattern matching.
+    Uses regex word boundaries to catch variations and detect manipulation tactics.
     """
     import re
     warnings = []
     is_compliant = True
     score = 100
+    body_lower = body.lower()
     
     # Check length
     if len(body) < 150:
@@ -343,6 +344,14 @@ def check_email_compliance(subject: str, body: str) -> dict:
             is_compliant = False
             break
     
+    # Check for multiple !! in sequence (pressure tactic)
+    if '!!' in body:
+        consecutive_exclamations = re.findall(r'!{2,}', body)
+        if len(consecutive_exclamations) >= 2:
+            warnings.append({"type": "PRESSURE_TACTICS", "message": "Multiple sequences of !! detected - aggressive pressure language", "severity": "warning"})
+            score -= 12
+            is_compliant = False
+    
     # Check for excessive ALL CAPS words (spam indicator)
     caps_words = re.findall(r'\b[A-Z]{2,}\b', body)
     if len(caps_words) >= 3:
@@ -357,25 +366,79 @@ def check_email_compliance(subject: str, body: str) -> dict:
         score -= 20
         is_compliant = False
     
-    # Check tone - flag aggressive language
-    aggressive_words = ['must', 'demand', 'required', 'immediately', 'urgent', 'critical']
-    aggressive_found = [w for w in aggressive_words if f' {w} ' in f' {body.lower()} ']
+    # Check tone - flag aggressive language (with word boundaries to catch variations)
+    aggressive_patterns = [
+        (r'\b(must|must\'s|musts)\b', 'must/mandatory'),
+        (r'\b(demands?|demanding)\b', 'demand'),
+        (r'\b(require[ds]?|requiring|requirement|required)\b', 'require'),
+        (r'\b(immediately|urgent|urgently|critical|critically)\b', 'immediate/urgent'),
+        (r'\b(don\'?t\s+miss|don\'?t\s+wait|don\'?t\s+delay)\b', 'FOMO tactics'),
+    ]
+    
+    aggressive_found = []
+    for pattern, label in aggressive_patterns:
+        matches = re.findall(pattern, body_lower, re.IGNORECASE)
+        if matches:
+            aggressive_found.append(label)
+    
     if aggressive_found:
-        warnings.append({"type": "TONE", "message": f"Aggressive language detected: {', '.join(aggressive_found)}", "severity": "warning"})
+        warnings.append({"type": "AGGRESSIVE_LANGUAGE", "message": f"Aggressive language detected: {', '.join(aggressive_found)}", "severity": "warning"})
         score -= 15
         is_compliant = False
     
+    # Check for aggressive scarcity/urgency tactics (high-pressure sales language)
+    # Only flag the most aggressive patterns combined together
+    scarcity_patterns = [
+        (r'\b(expires?|expir(ing|ed)|deadline|last\s+chance)\b', 'expiration urgency'),
+        (r'\b(hurr(y|ies)|rush)\b', 'rush tactics'),
+        (r'\b(only\s+\d+\s+(left|remaining|available))\b', 'scarcity numbers'),
+        (r'\b(act\s+now|don\'?t\s+wait|don\'?t\s+miss)\b', 'FOMO tactics'),
+    ]
+    
+    scarcity_found = []
+    for pattern, label in scarcity_patterns:
+        matches = re.findall(pattern, body_lower, re.IGNORECASE)
+        if matches:
+            scarcity_found.append(label)
+    
+    # Only penalize if 3+ aggressive patterns combined
+    if len(scarcity_found) >= 3:
+        warnings.append({"type": "SCARCITY_TACTICS", "message": f"Multiple aggressive scarcity/urgency tactics detected: {', '.join(scarcity_found)}", "severity": "warning"})
+        score -= 18
+        is_compliant = False
+    elif len(scarcity_found) == 2:
+        warnings.append({"type": "SCARCITY_TACTICS", "message": f"Scarcity/urgency tactics: {', '.join(scarcity_found)}", "severity": "info"})
+        score -= 5
+    
+    # Check for false authority claims (mimicking certifications/approvals)
+    authority_patterns = [
+        (r'\b(we\s+guarantee|we\s+promise|guaranteed|promised)\b', 'false guarantee'),
+        (r'\b(certified|verification|verified|approved|official)\b', 'authority claims'),
+        (r'\b(endorsed|recommended\s+by|trusted\s+by)\b', 'endorsement claims'),
+    ]
+    
+    authority_found = []
+    for pattern, label in authority_patterns:
+        matches = re.findall(pattern, body_lower, re.IGNORECASE)
+        if matches:
+            authority_found.append(label)
+    
+    if authority_found:
+        warnings.append({"type": "AUTHORITY_MIMICKING", "message": f"Authority/guarantee claims detected: {', '.join(authority_found)} - must be substantiated", "severity": "warning"})
+        score -= 10
+        is_compliant = False
+    
     # Check for vague claims
-    vague_words = ['revolutionary', 'game-changing', 'best-in-class', 'industry-leading']
-    vague_found = [w for w in vague_words if w in body.lower()]
+    vague_words = ['revolutionary', 'game-changing', 'best-in-class', 'industry-leading', 'breakthrough']
+    vague_found = [w for w in vague_words if w in body_lower]
     if vague_found:
         warnings.append({"type": "VAGUE_CLAIMS", "message": f"Unsubstantiated claims: {', '.join(vague_found)}. Use concrete facts instead.", "severity": "warning"})
         score -= 10
         is_compliant = False
     
     # Check for compliance language
-    if 'compliance' in body.lower() or 'regulatory' in body.lower():
-        if 'please' not in body.lower() or 'help' not in body.lower():
+    if 'compliance' in body_lower or 'regulatory' in body_lower:
+        if 'please' not in body_lower and 'help' not in body_lower:
             warnings.append({"type": "COMPLIANCE_TONE", "message": "Compliance emails should use 'help' and 'support' language, not mandates", "severity": "info"})
     
     # Check for subject line quality
@@ -390,7 +453,7 @@ def check_email_compliance(subject: str, body: str) -> dict:
     
     # Check for CTA clarity
     cta_words = ['help', 'support', 'discuss', 'chat', 'call', 'meeting', 'session', 'available']
-    has_cta = any(word in body.lower() for word in cta_words)
+    has_cta = any(word in body_lower for word in cta_words)
     if not has_cta:
         warnings.append({"type": "MISSING_CTA", "message": "No clear call-to-action detected. Add what you want them to do.", "severity": "warning"})
         score -= 20
