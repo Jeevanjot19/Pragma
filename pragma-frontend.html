@@ -890,7 +890,7 @@
     <div class="topbar">
       <div class="page-title" id="page-title">Prospect Pipeline</div>
       <div class="status-dot"></div>
-      <div class="status-text">API Connected · localhost:8000</div>
+      <div class="status-text">API Connected · <span id="api-status">Loading...</span></div>
     </div>
 
     <div class="content">
@@ -1118,7 +1118,7 @@
     It discovers high-intent prospects from market signals, scores them on fit and timing, generates compliance-checked outreach for each persona, and monitors every partner activation — all in one dashboard, with no external CRM required.
   </p>
   <div class="hero-cta-row">
-    <a href="http://localhost:8000" class="btn-primary">Open Dashboard →</a>
+    <a href="/" class="btn-primary">Open Dashboard →</a>
     <a href="#layers" class="btn-ghost">Explore the 4 Layers</a>
   </div>
 </section>
@@ -1533,7 +1533,7 @@
     46 live prospects, scored and ready. Click any one, generate outreach, check compliance, review your activation health. The entire GTM workflow, end to end.
   </p>
   <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
-    <a href="http://localhost:8000" class="btn-primary" style="font-size: 16px; padding: 16px 36px;">Open Dashboard →</a>
+    <a href="/" class="btn-primary" style="font-size: 16px; padding: 16px 36px;">Open Dashboard →</a>
     <a href="https://github.com/Jeevanjot19/Pragma" class="btn-ghost" style="font-size: 16px; padding: 16px 36px;">View on GitHub</a>
   </div>
 </section>
@@ -1571,7 +1571,7 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-const API = 'http://localhost:8000';
+const API = window.location.origin;  // Automatically use current domain/server
 let allProspects = [];
 let prospectCache = {};
 
@@ -3012,6 +3012,10 @@ function toast(msg, color = 'green') {
    INIT
 ═══════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
+  // Display the actual API endpoint
+  const apiStatus = document.getElementById('api-status');
+  if (apiStatus) apiStatus.textContent = window.location.origin;
+  
   loadDiscoveryHistory();
   loadWho();
 });
