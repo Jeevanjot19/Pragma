@@ -158,16 +158,37 @@
 import json
 import os
 import time
+import logging
 from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Groq client (OpenAI-compatible)
-client = OpenAI(
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# Dual Groq API Setup with Failover
+# ============================================================================
+
+# Primary API client
+primary_client = OpenAI(
     api_key=os.getenv("GROQ_API_KEY"),
     base_url="https://api.groq.com/openai/v1"
 )
+
+# Backup API client (uses GROQ_API_KEY_BACKUP)
+backup_client = None
+backup_api_key = os.getenv("GROQ_API_KEY_BACKUP")
+if backup_api_key:
+    backup_client = OpenAI(
+        api_key=backup_api_key,
+        base_url="https://api.groq.com/openai/v1"
+    )
+    logger.info("Backup Groq API configured")
+
+# Track which client is currently being used
+_current_client = primary_client
+_backup_activated = False
 
 # Versatile model for all tasks (only using one model to avoid rate limits)
 MODEL = "llama-3.3-70b-versatile"  # Versatile model handles both generation and extraction
@@ -179,13 +200,13 @@ MIN_CALL_INTERVAL = 0.5  # seconds between LLM calls
 
 def _call_llm(prompt: str, max_tokens: int = 500) -> str | None:
     """
-    Single unified LLM call with rate limiting and error handling.
-    All LLM calls go through here.
-    Uses llama-3.3-70b-versatile for all tasks (best for avoiding rate limits).
+    Single unified LLM call with failover to backup API.
+    - Tries primary API first
+    - On failure (429, timeout, etc.), switches to backup API
+    - All LLM calls go through here
     """
-    global _last_call_time
+    global _last_call_time, _current_client, _backup_activated
 
-    # Always use versatile model (avoids rate limiting issues with fast model)
     model = MODEL
 
     # Rate limiting
@@ -193,20 +214,59 @@ def _call_llm(prompt: str, max_tokens: int = 500) -> str | None:
     if elapsed < MIN_CALL_INTERVAL:
         time.sleep(MIN_CALL_INTERVAL - elapsed)
 
+    # Try primary API first (unless already switched to backup)
+    client_to_use = _current_client
+    is_retry = False
+    
     try:
-        response = client.chat.completions.create(
+        response = client_to_use.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
             max_tokens=max_tokens
         )
         _last_call_time = time.time()
+        
+        # If we switched to backup before, log successful recovery
+        if _backup_activated:
+            logger.info("Backup API working - continuing with backup")
+        
         return response.choices[0].message.content.strip()
 
     except Exception as e:
-        print(f"  LLM call failed: {e}")
-        _last_call_time = time.time()
-        return None
+        error_msg = str(e)
+        
+        # Check if it's a rate limit error or other API error
+        is_rate_limit = "429" in error_msg or "rate" in error_msg.lower()
+        is_auth_error = "401" in error_msg or "authentication" in error_msg.lower()
+        
+        logger.warning(f"API call failed with {client_to_use}: {error_msg}")
+        
+        # If primary failed AND we have backup, try backup
+        if not _backup_activated and backup_client is not None:
+            logger.info("Switching to backup Groq API...")
+            _current_client = backup_client
+            _backup_activated = True
+            is_retry = True
+            
+            try:
+                response = backup_client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.1,
+                    max_tokens=max_tokens
+                )
+                _last_call_time = time.time()
+                logger.info("Backup API successful - now using backup")
+                return response.choices[0].message.content.strip()
+            
+            except Exception as backup_error:
+                logger.error(f"Backup API also failed: {backup_error}")
+                _last_call_time = time.time()
+                return None
+        else:
+            _last_call_time = time.time()
+            return None
 
 
 def _parse_json_response(raw: str) -> dict | None:
