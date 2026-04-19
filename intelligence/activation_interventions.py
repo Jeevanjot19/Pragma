@@ -462,6 +462,173 @@ def check_email_compliance(subject: str, body: str) -> dict:
     }
 
 
+def fix_compliance_issues_with_ai(subject: str, body: str, compliance_result: dict) -> dict:
+    """
+    Intelligently fix specific compliance issues detected in email using AI.
+    Uses surgical approach - fixes only the flagged issues, preserves other content.
+    Includes error handling for graceful degradation if API fails.
+    
+    Args:
+        subject: Email subject line
+        body: Email body text
+        compliance_result: Result from check_compliance() with status, warnings, violations
+        
+    Returns:
+        {
+            "subject": str,
+            "body": str,
+            "compliance_status": "CLEAR" | "WARNING" | "BLOCKED" | "ERROR",
+            "compliance_score": int (0-100),
+            "fixed": bool,
+            "error": str or None,
+            "method": str ("ai_fix" | "original_returned" | "api_error_fallback")
+        }
+    """
+    try:
+        from intelligence.llm_extractor import _call_llm
+        from outreach.compliance_rules import check_compliance
+        
+        # Extract the specific issues to fix
+        violations = compliance_result.get("violations", [])
+        warnings = compliance_result.get("warnings", [])
+        all_issues = violations + warnings
+        
+        if not all_issues:
+            # Already compliant, no need to fix
+            return {
+                "subject": subject,
+                "body": body,
+                "compliance_status": compliance_result.get("status", "CLEAR"),
+                "compliance_score": compliance_result.get("score", 100),
+                "fixed": False,
+                "error": None,
+                "method": "original_returned"
+            }
+        
+        # Build issue summary for the LLM
+        issue_summary = "\n".join([
+            f"- {issue.get('type', 'UNKNOWN')}: {issue.get('message', 'No details')}"
+            for issue in all_issues
+        ])
+        
+        # Create focused prompt to fix only the issues
+        fix_prompt = f"""You are an expert email compliance editor. Your task is to fix ONLY the specific compliance issues in this email while preserving all other content and tone.
+
+CURRENT EMAIL:
+Subject: {subject}
+Body:
+{body}
+
+ISSUES TO FIX:
+{issue_summary}
+
+INSTRUCTIONS:
+1. Fix ONLY the flagged issues above
+2. Keep the email structure, tone, and messaging intact
+3. Make minimal surgical edits - don't rewrite the entire email
+4. Ensure the fixed email reads naturally and professionally
+5. DO NOT add new content, only modify problematic phrases
+6. Replace aggressive/urgent language with collaborative language
+7. Remove any time pressure or scarcity language
+
+Return ONLY the fixed email in this format:
+SUBJECT: [fixed subject]
+BODY:
+[fixed body text]
+
+Do not include explanations or other text."""
+
+        try:
+            # Call LLM with timeout
+            response = _call_llm(fix_prompt, max_tokens=1024, use_fast_model=False)
+            
+            if not response:
+                logger.warning("LLM returned empty response for compliance fix, using original email")
+                return {
+                    "subject": subject,
+                    "body": body,
+                    "compliance_status": compliance_result.get("status", "UNKNOWN"),
+                    "compliance_score": compliance_result.get("score", 0),
+                    "fixed": False,
+                    "error": "API returned empty response",
+                    "method": "api_error_fallback"
+                }
+            
+            # Parse response
+            response_text = response.strip()
+            if "SUBJECT:" not in response_text or "BODY:" not in response_text:
+                logger.warning("LLM response malformed, using original email")
+                return {
+                    "subject": subject,
+                    "body": body,
+                    "compliance_status": compliance_result.get("status", "UNKNOWN"),
+                    "compliance_score": compliance_result.get("score", 0),
+                    "fixed": False,
+                    "error": "API response malformed",
+                    "method": "api_error_fallback"
+                }
+            
+            # Extract fixed subject and body
+            subject_start = response_text.index("SUBJECT:") + 8
+            body_start = response_text.index("BODY:") + 5
+            
+            fixed_subject = response_text[subject_start:body_start-5].strip()
+            fixed_body = response_text[body_start:].strip()
+            
+            # Validate fixed email with compliance check
+            fixed_compliance = check_compliance(fixed_body, fixed_subject)
+            
+            # Only return if it's now CLEAR or better
+            if fixed_compliance.get("status") in ["CLEAR", "TIP"]:
+                logger.info(f"Successfully fixed compliance issues via AI. Score improved from {compliance_result.get('score', 0)} to {fixed_compliance.get('score', 0)}")
+                return {
+                    "subject": fixed_subject,
+                    "body": fixed_body,
+                    "compliance_status": fixed_compliance.get("status", "CLEAR"),
+                    "compliance_score": fixed_compliance.get("score", 100),
+                    "fixed": True,
+                    "error": None,
+                    "method": "ai_fix"
+                }
+            else:
+                logger.warning(f"Fixed email still has compliance issues ({fixed_compliance.get('status')}), using original")
+                return {
+                    "subject": subject,
+                    "body": body,
+                    "compliance_status": compliance_result.get("status", "UNKNOWN"),
+                    "compliance_score": compliance_result.get("score", 0),
+                    "fixed": False,
+                    "error": f"Fix still has {fixed_compliance.get('status')} status",
+                    "method": "api_error_fallback"
+                }
+        
+        except Exception as llm_error:
+            logger.error(f"Error calling LLM for compliance fix: {str(llm_error)}", exc_info=True)
+            # Gracefully return original email on API failure
+            return {
+                "subject": subject,
+                "body": body,
+                "compliance_status": compliance_result.get("status", "UNKNOWN"),
+                "compliance_score": compliance_result.get("score", 0),
+                "fixed": False,
+                "error": f"API error: {str(llm_error)[:50]}",
+                "method": "api_error_fallback"
+            }
+    
+    except Exception as outer_error:
+        logger.error(f"Unexpected error in fix_compliance_issues_with_ai: {str(outer_error)}", exc_info=True)
+        # Final safety net - return original email
+        return {
+            "subject": subject,
+            "body": body,
+            "compliance_status": "ERROR",
+            "compliance_score": 0,
+            "fixed": False,
+            "error": f"System error: {str(outer_error)[:50]}",
+            "method": "api_error_fallback"
+        }
+
+
 def enhance_email_with_llm(partner_id: int, subject: str, body: str, pattern: str) -> dict:
     """
     Enhance email using Groq for more polished, compelling version.

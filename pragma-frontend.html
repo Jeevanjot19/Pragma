@@ -2153,6 +2153,9 @@ function renderHowResult(data) {
             <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="enhanceHowEmail('${k}')">
               ✨ Enhance with AI
             </button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;color:var(--yellow)" onclick="fixHowEmailCompliance('${k}')" title="Use AI to fix detected compliance issues while preserving content">
+              🔧 Fix Issues
+            </button>
             <button class="btn btn-primary" style="font-size:11px;padding:6px 14px;margin-left:auto" onclick="sendHowEmail('${k}')">
               📤 Send Email
             </button>
@@ -2356,6 +2359,63 @@ async function enhanceHowEmail(persona) {
     toast('Email enhanced! Review and adjust as needed', 'green');
   } else {
     toast('Enhancement failed: ' + (result.error || 'Unknown error'), 'red');
+  }
+}
+
+async function fixHowEmailCompliance(persona) {
+  const subject = document.getElementById(`how-subject-${persona}`).value;
+  const body = document.getElementById(`how-body-${persona}`).value;
+  const recipientName = document.getElementById(`how-email-name-${persona}`).value;
+  const recipientEmail = document.getElementById(`how-email-addr-${persona}`).value;
+  
+  if (!subject || !body) {
+    toast('Please enter a subject and body first', 'yellow');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ Fixing issues…';
+
+  try {
+    const result = await apiFetch('/api/activate/email/fix-compliance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, body, recipient_name: recipientName, recipient_email: recipientEmail })
+    });
+
+    btn.disabled = false;
+    btn.textContent = '🔧 Fix Issues';
+
+    if (!result) {
+      toast('Error fixing compliance issues', 'red');
+      return;
+    }
+
+    // Check if fix was successful
+    if (result.fixed) {
+      // Update email content with fixed version
+      document.getElementById(`how-subject-${persona}`).value = result.subject;
+      document.getElementById(`how-body-${persona}`).value = result.body;
+      
+      // Re-check compliance to update badge and warnings
+      checkHowEmailCompliance(persona);
+      
+      toast(`Compliance issues fixed! Score improved to ${result.compliance_score}/100`, 'green');
+    } else if (result.compliance_status === 'CLEAR') {
+      // Already clear, no fixes needed
+      toast('Email is already fully compliant!', 'green');
+    } else if (result.error) {
+      // API failed gracefully - show the error but offer original email
+      toast(`Could not apply fixes: ${result.error}. Original email returned.`, 'yellow');
+      // Original email is already in place
+    } else {
+      toast('Could not fix all compliance issues. Please manually edit the flagged items.', 'yellow');
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '🔧 Fix Issues';
+    toast('Error communicating with AI: ' + (err.message || 'Unknown error'), 'red');
   }
 }
 

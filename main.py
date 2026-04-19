@@ -1782,6 +1782,79 @@ def enhance_email(payload: EmailEditorPayload, partner_id: int = None):
     return result
 
 
+@app.post("/api/activate/email/fix-compliance")
+def fix_email_compliance(payload: EmailEditorPayload):
+    """
+    Intelligently fix compliance issues in an email using AI.
+    Takes the email with flagged compliance issues and surgically fixes only those issues,
+    preserving the rest of the content and tone.
+    
+    Includes graceful error handling - if API fails, returns original email with error message.
+    
+    Args:
+        payload: EmailEditorPayload with subject and body
+        
+    Returns:
+        {
+            "subject": str,
+            "body": str,
+            "compliance_status": "CLEAR" | "WARNING" | "BLOCKED" | "ERROR",
+            "compliance_score": int (0-100),
+            "fixed": bool (true if successfully fixed),
+            "method": str ("ai_fix" | "original_returned" | "api_error_fallback"),
+            "error": str or None (error message if any)
+        }
+    """
+    from intelligence.activation_interventions import fix_compliance_issues_with_ai
+    from outreach.compliance_rules import check_compliance
+    
+    try:
+        # Check current compliance status
+        compliance_result = check_compliance(
+            payload.body,
+            subject=payload.subject,
+            recipient_name=payload.recipient_name,
+            company_name=None
+        )
+        
+        # If already clear, no need to fix
+        if compliance_result.get('status') == 'CLEAR':
+            return {
+                "subject": payload.subject,
+                "body": payload.body,
+                "compliance_status": "CLEAR",
+                "compliance_score": compliance_result.get('score', 100),
+                "fixed": False,
+                "method": "original_returned",
+                "error": None,
+                "message": "Email is already fully compliant - no fixes needed"
+            }
+        
+        # Use AI to fix the compliance issues
+        fix_result = fix_compliance_issues_with_ai(
+            payload.subject,
+            payload.body,
+            compliance_result
+        )
+        
+        return fix_result
+    
+    except Exception as e:
+        logger.error(f"Error in fix_email_compliance endpoint: {str(e)}", exc_info=True)
+        # Graceful fallback - return original email with error message
+        return {
+            "subject": payload.subject,
+            "body": payload.body,
+            "compliance_status": "ERROR",
+            "compliance_score": 0,
+            "fixed": False,
+            "method": "api_error_fallback",
+            "error": f"Fix system error: {str(e)[:100]}",
+            "message": "Could not apply fixes due to system error. Please manually edit the flagged items."
+        }
+
+
+
 @app.post("/api/activate/email/send")
 def send_intervention_email(payload: EmailEditorPayload, partner_id: int = None):
     """
