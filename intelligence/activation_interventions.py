@@ -493,17 +493,30 @@ def enhance_email_with_llm(partner_id: int, subject: str, body: str, pattern: st
             category = partner.get('category', 'fintech')
     
     # COMPLIANCE CONSTRAINTS: Tell the LLM what to avoid
-    compliance_constraints = """CRITICAL COMPLIANCE RULES - DO NOT VIOLATE:
-1. NO guaranteed returns language (avoid: 'guaranteed', 'assured', 'zero risk')
-2. NO overstated insurance claims (avoid: 'fully insured', '100% insured')
-3. NO false regulatory claims (avoid: 'RBI-approved', 'SEBI-certified')
-4. NO unqualified interest rates (always say 'up to' or 'rates vary by')
-5. NO aggressive/pushy language (avoid: 'don't miss', 'act now', 'must', 'urgent')
-6. NO unsubstantiated superlatives (avoid: 'best-in-class', 'world-leading')
-7. NO vague transformation claims (replace with specific outcomes)
-8. NO mention of monitoring/surveillance signals
+    compliance_constraints = """CRITICAL COMPLIANCE & TONE RULES - DO NOT VIOLATE:
 
-Focus on: specific value, partnership benefits, technical differentiation, clear CTAs."""
+REGULATORY (Hard rules):
+1. NO guaranteed returns (avoid: 'guaranteed', 'assured', 'zero risk', '100% safe')
+2. NO overstated insurance (avoid: 'fully insured', '100% covered')
+3. NO false regulatory claims (avoid: 'RBI-approved', 'SEBI-certified')
+4. NO unqualified rates (always use: 'up to X%', 'rates vary by', 'subject to')
+5. NO misleading comparisons (no 'better than', 'unlike', 'replace')
+
+TONE (Critical for response rates):
+6. NEVER use directive language: avoid 'must', 'should', 'need to', 'expect', 'demand'
+   Bad: "you must buy", "you should integrate", "you need to consider"
+   Good: "we recommend", "you might benefit from", "we can help you"
+7. NO aggressive urgency (avoid: "don't miss", "act now", "limited time", "urgent")
+8. NO unsubstantiated claims (avoid: "best-in-class", "world-leading", "top-tier")
+9. NO vague transformations (avoid: "transform", "revolutionize", "disrupt")
+10. NO signal leakage (avoid: "we noticed", "we saw your", "your funding", "your app update")
+
+FORMAT:
+- Write professionally for C-level executives (CFO, CTO, CPO)
+- Use collaborative, partnership language
+- Focus on SPECIFIC benefits, not abstract claims
+- Include actual value propositions with concrete outcomes
+- End with clear, optional next steps (not demands)"""
     
     prompt = f"""You are an expert partnership manager at Blostem writing professional, compliant intervention emails.
 
@@ -525,9 +538,15 @@ Please enhance this email to be:
 4. More personalized to their situation
 5. Include specific value propositions
 6. Better CTA framing
-7. 100% COMPLIANT with all regulatory rules above
+7. 100% COMPLIANT with all regulatory and tone rules above
 
-Keep the original tone and engagement model, but make it more professional and persuasive while maintaining full regulatory compliance.
+IMPORTANT: 
+- Replace any directive language ("must", "should", "need to", "expect") with collaborative language
+- If the original email contains prohibited phrases, REMOVE them and rewrite those sections
+- Use "we can help you", "we recommend", "consider", "explore", "partnership" instead of commands
+- End with optional next steps, NOT demands ("Would you be open to..." instead of "You must...")
+
+Keep the original engagement model, but make it more professional and persuasive while maintaining 100% compliance with all rules listed above.
 
 Return ONLY the enhanced email in this format:
 SUBJECT: [new subject]
@@ -563,11 +582,12 @@ Do not include any other text or explanations."""
             company_name=company
         )
         
-        # If enhanced email violates compliance, reject and use local fallback
-        if not compliance_result.get('is_sendable', False):
+        # Stricter check: Reject if status is not CLEAR (reject WARNING and BLOCKED)
+        # This ensures enhanced emails have NO violations, not just no CRITICAL violations
+        if compliance_result.get('status') != 'CLEAR':
             logger.warning(
-                f"Enhanced email failed compliance: {compliance_result.get('summary')}. "
-                f"Using local enhancement instead."
+                f"Enhanced email has compliance issues ({compliance_result.get('status')}): "
+                f"{compliance_result.get('summary')}. Using local enhancement instead."
             )
             return _enhance_email_locally(subject, body, pattern, company, product, category)
         
