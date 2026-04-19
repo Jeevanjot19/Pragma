@@ -225,5 +225,247 @@
   </div>
 </section>
 
+<!-- NEW: INTELLIGENCE LAYERS SECTION -->
+<section style="background: var(--bg2); padding: 120px 60px; position: relative; overflow: hidden;" class="intelligence-layers-section">
+  <style>
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; max-width: 1400px; margin: 0 auto; }
+    .feature-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 32px; position: relative; }
+    .feature-card:hover { border-color: var(--cyan); background: rgba(0,212,255,0.02); }
+    .feature-card h3 { font-family: var(--serif); font-size: 24px; color: var(--cyan); margin-bottom: 12px; }
+    .feature-card .subtitle { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 16px; }
+    .feature-card p { color: var(--text2); font-size: 15px; line-height: 1.8; margin-bottom: 16px; }
+    .feature-list { list-style: none; margin-top: 16px; }
+    .feature-list li { color: var(--text2); font-size: 14px; padding: 6px 0; padding-left: 24px; position: relative; }
+    .feature-list li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: bold; }
+    .section-title { font-family: var(--serif); font-size: 48px; text-align: center; margin-bottom: 60px; max-width: 900px; margin-left: auto; margin-right: auto; }
+    .badge-new { display: inline-block; background: rgba(0,229,153,0.1); color: var(--green); padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+    
+    /* MOVING LIGHT EFFECT */
+    @keyframes movingLight {
+      0% {
+        background-position: -200% 0;
+        box-shadow: inset -200px 0 100px rgba(0,212,255,0.15), 0 0 40px rgba(0,212,255,0.2);
+      }
+      25% {
+        box-shadow: inset -100px -100px 100px rgba(0,212,255,0.1), 0 0 40px rgba(0,212,255,0.25);
+      }
+      50% {
+        background-position: 200% 0;
+        box-shadow: inset 100px 0 100px rgba(0,212,255,0.15), 0 0 40px rgba(0,212,255,0.2);
+      }
+      75% {
+        box-shadow: inset 100px 100px 100px rgba(0,212,255,0.1), 0 0 40px rgba(0,212,255,0.25);
+      }
+      100% {
+        background-position: -200% 0;
+        box-shadow: inset -200px 0 100px rgba(0,212,255,0.15), 0 0 40px rgba(0,212,255,0.2);
+      }
+    }
+    
+    @keyframes glowPulse {
+      0%, 100% { text-shadow: 0 0 20px rgba(0,212,255,0.3); }
+      50% { text-shadow: 0 0 40px rgba(0,212,255,0.5); }
+    }
+    
+    .features-section-wrapper {
+      animation: movingLight 8s ease-in-out infinite;
+      border-radius: 16px;
+      padding: 60px;
+      background-size: 400% 100%;
+    }
+    
+    .section-title {
+      animation: glowPulse 4s ease-in-out infinite;
+    }
+    
+    .intelligence-layers-section {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Animated border glow */
+    .intelligence-layers-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 2px;
+      background: linear-gradient(90deg, 
+        rgba(0,212,255,0) 0%, 
+        rgba(0,212,255,0.4) 25%, 
+        rgba(0,212,255,0) 50%,
+        rgba(0,212,255,0.4) 75%,
+        rgba(0,212,255,0) 100%);
+      background-size: 200% 100%;
+      animation: borderGlow 6s linear infinite;
+      pointer-events: none;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      border-radius: 16px;
+    }
+    
+    @keyframes borderGlow {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+
+  <h2 class="section-title">Advanced Intelligence Layers</h2>
+
+  <div class="features-grid">
+    <!-- COMPLIANCE ENGINE -->
+    <div class="feature-card">
+      <div class="badge-new">NEW IN v2.0</div>
+      <h3>Compliance Engine</h3>
+      <p class="subtitle">Regulatory Guardrail for Fintech Outreach</p>
+      <p>11-rule engine that blocks regulatory violations, detects aggressive tone, flags surveillance language, and prevents mail bombing. Ensures every outreach email meets RBI, SEBI, and DICGC requirements.</p>
+      <ul class="feature-list">
+        <li>Blocks 5 regulatory violations (guaranteed returns, false RBI claims)</li>
+        <li>Detects 4 aggressive tone patterns (FOMO, commanding language)</li>
+        <li>Prevents surveillance language (no "we noticed your app")</li>
+        <li>Scores emails 0–100 with actionable fixes</li>
+        <li>Auto-recovery: override tracking prevents alert fatigue</li>
+        <li>Case-sensitive caps check (excludes DICGC, NBFC, CFO acronyms)</li>
+      </ul>
+    </div>
+
+    <!-- OUTREACH GENERATOR -->
+    <div class="feature-card">
+      <div class="badge-new">NEW IN v2.0</div>
+      <h3>Email Generator</h3>
+      <p class="subtitle">LLM-Powered Anti-Template Outreach</p>
+      <p>Generates 3 persona-specific emails (CTO, CPO, CFO) that address each role's actual concerns, not product features. Automatically retries if compliance violations detected.</p>
+      <ul class="feature-list">
+        <li>3 persona-driven prompts (Engineer, Product, Finance)</li>
+        <li>Signal translation (no surveillance language)</li>
+        <li>Natural, non-templated emails (80–140 words)</li>
+        <li>Category-driven sequences (right person, right order)</li>
+        <li>Auto-retry on regulatory violations</li>
+        <li>Compliance-checked before returning</li>
+      </ul>
+    </div>
+
+    <!-- WHO LAYER -->
+    <div class="feature-card">
+      <h3>WHO Layer</h3>
+      <p class="subtitle">Prospect Discovery & Scoring</p>
+      <p>Identifies 46+ fintech prospects from market signals. Scores each on fit probability for Blostem partnership using signals like funding, product launches, and leadership hires.</p>
+      <ul class="feature-list">
+        <li>Market signal intelligence (news, funding, hires)</li>
+        <li>46+ active prospects in Indian fintech</li>
+        <li>WHO-score: Fit probability 0–100</li>
+        <li>Signal tracking (FUNDING, PRODUCT_LAUNCH, DISPLACEMENT)</li>
+        <li>Category classification (neobank, payment, broker, lending)</li>
+        <li>Product gap analysis (missing FD, RD, Bonds)</li>
+      </ul>
+    </div>
+
+    <!-- WHEN LAYER -->
+    <div class="feature-card">
+      <h3>WHEN Layer</h3>
+      <p class="subtitle">Temporal Prioritization</p>
+      <p>Event decay scoring that tracks 100+ monitoring events and prioritizes prospects based on timing. Fresh signals weighted higher; old signals fade. Weekly action priorities generated.</p>
+      <ul class="feature-list">
+        <li>100+ monitoring events tracked over time</li>
+        <li>Exponential decay scoring (recency matters)</li>
+        <li>WHEN-score: Urgency & readiness 0–100</li>
+        <li>Recommendations: "CALL THIS WEEK" or "EMAIL NEXT WEEK"</li>
+        <li>Auto-escalation on stale deals (30+ days inactive)</li>
+        <li>Event-driven urgency (funding announcement = high score)</li>
+      </ul>
+    </div>
+
+    <!-- HOW LAYER -->
+    <div class="feature-card">
+      <h3>HOW Layer (Innovation 3-4)</h3>
+      <p class="subtitle">Role-Specific Playbooks & Campaign Orchestration</p>
+      <p>4 role-specific playbooks (CTO, CFO, Product, Legal) with 3–4 escalating interventions each. Orchestrates multi-stakeholder campaigns with intelligent timing and mail bombing prevention.</p>
+      <ul class="feature-list">
+        <li>4 playbooks: CTO (technical), CFO (finance), CPO (product), Legal</li>
+        <li>15 interventions total with variable substitution</li>
+        <li>Campaign sequencing (CFO → CEO → CTO → Users)</li>
+        <li>Optimal timing: 2–3 day spacing, weekend-aware</li>
+        <li>Mail bombing prevention: max 2 emails/week per person</li>
+        <li>5-state send tracking (scheduled → sent → opened → clicked → responded)</li>
+      </ul>
+    </div>
+
+    <!-- ACTIVATE LAYER -->
+    <div class="feature-card">
+      <h3>ACTIVATE Layer</h3>
+      <p class="subtitle">Post-Signature Milestone Tracking</p>
+      <p>6 milestone tracking system that detects bottlenecks in partner activation. Auto-diagnoses why deals stall and routes to appropriate teams with SLAs.</p>
+      <ul class="feature-list">
+        <li>6 milestones: Integration → Sandbox → Production → First txn → Volume → Recurring</li>
+        <li>Auto-diagnosis: 6 root cause categories (technical, business, compliance, etc.)</li>
+        <li>Smart routing with SLAs (2–48 hours depending on severity)</li>
+        <li>Buyer committee consensus tracking (HEALTHY / AT_RISK / STALLED)</li>
+        <li>Bottleneck auto-escalation for high-priority deals</li>
+        <li>Sentiment tracking per stakeholder (EAGER → BLOCKED)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- WHY PRAGMA SECTION -->
+<section style="background: var(--bg); padding: 120px 60px; border-top: 1px solid var(--border);">
+  <style>
+    .why-content { max-width: 900px; margin: 0 auto; }
+    .why-heading { font-family: var(--serif); font-size: 42px; margin-bottom: 32px; }
+    .why-text { color: var(--text2); font-size: 16px; line-height: 1.8; margin-bottom: 24px; }
+    .why-stat { display: inline-block; background: var(--bg2); border: 1px solid var(--border); padding: 16px 24px; border-radius: 8px; margin-right: 16px; margin-bottom: 16px; }
+    .why-stat .number { font-size: 24px; font-weight: 700; color: var(--cyan); }
+    .why-stat .label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  </style>
+
+  <div class="why-content">
+    <h2 class="why-heading">Why Pragma Works</h2>
+    
+    <p class="why-text">
+      <strong>Before Pragma:</strong> Sales teams rely on guessing. They send one email to one contact. If there's silence, they don't know if the blocker is technical (CTO), financial (CFO), product (CPO), or legal. They send more generic emails. The deal dies.
+    </p>
+
+    <p class="why-text">
+      <strong>After Pragma:</strong> The system discovers high-intent prospects automatically. Scores them by both fit (WHO) and timing (WHEN). Generates persona-specific emails that address each stakeholder's actual concerns—not generic pitches. Monitors every step of activation and auto-diagnoses why deals stall.
+    </p>
+
+    <p class="why-text">
+      <strong>The Results:</strong>
+    </p>
+
+    <div>
+      <div class="why-stat">
+        <div class="number">46+</div>
+        <div class="label">fintech prospects identified</div>
+      </div>
+      <div class="why-stat">
+        <div class="number">100+</div>
+        <div class="label">monitoring events tracked</div>
+      </div>
+      <div class="why-stat">
+        <div class="number">6</div>
+        <div class="label">milestone tracking system</div>
+      </div>
+      <div class="why-stat">
+        <div class="number">11</div>
+        <div class="label">compliance rules enforced</div>
+      </div>
+      <div class="why-stat">
+        <div class="number">3</div>
+        <div class="label">persona emails generated</div>
+      </div>
+      <div class="why-stat">
+        <div class="number">0</div>
+        <div class="label">external CRM required</div>
+      </div>
+    </div>
+
+    <p class="why-text" style="margin-top: 32px;">
+      <strong>Built for Fintech.</strong> Every rule respects RBI, SEBI, DICGC, and IRDAI requirements. No guaranteed returns. No false regulatory claims. No surveillance language that destroys trust.
+    </p>
+  </div>
+</section>
+
 </body>
 </html>

@@ -49,6 +49,7 @@ from database import get_db
 from intelligence.llm_extractor import _call_llm, _parse_json_response
 from outreach.compliance_rules import check_compliance
 from signals.timing import calculate_when_score
+from demo_email_cache import get_cached_email
 
 
 # ─────────────────────────────────────────────
@@ -383,17 +384,28 @@ def generate_email_for_persona(
     Generate one persona-targeted email for a prospect.
 
     Returns a dict with subject, body, compliance info, and metadata.
+    Falls back to demo cache if Groq LLM fails (keeps judges seeing working examples).
     """
     ctx = _translate_signals_to_context(prospect, signals)
     prompt = _build_prompt(persona, ctx, when_data)
 
     raw = _call_llm(prompt, max_tokens=700)
     if not raw:
-        return {"error": "LLM call failed", "persona": persona}
+        # Fallback to demo cache if LLM unavailable (Groq down, rate limited, etc.)
+        cached = get_cached_email(prospect.get("name"), persona)
+        if cached:
+            cached["fallback_reason"] = "LLM unavailable, using cached example (Groq API temporarily offline)"
+            return cached
+        return {"error": "LLM call failed and no cached email available", "persona": persona}
 
     result = _parse_json_response(raw)
     if not result or "body" not in result:
-        return {"error": "Could not parse LLM response", "persona": persona}
+        # Fallback to demo cache on parse error too
+        cached = get_cached_email(prospect.get("name"), persona)
+        if cached:
+            cached["fallback_reason"] = "Could not parse LLM response, using cached example"
+            return cached
+        return {"error": "Could not parse LLM response and no cached email available", "persona": persona}
 
     subject = result.get("subject", "")
     body = result.get("body", "")

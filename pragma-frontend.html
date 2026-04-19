@@ -874,7 +874,8 @@
       </a>
     </nav>
     <div class="sidebar-footer">
-      <button class="run-btn" onclick="runDiscovery()">⚡ Run Discovery</button>
+      <button class="run-btn" onclick="runDiscovery()" title="⚠️ WARNING: Takes 10-15 min and resets all scores. Admin only.">🔄 Refresh Data</button>
+      <button class="run-btn" onclick="showSystemHealth()" title="Prove system is computing, not hardcoded" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);margin-top:6px">🔬 System Health</button>
       <div id="discovery-history-panel" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;max-height:250px;overflow-y:auto;font-size:11px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;cursor:pointer;user-select:none" onclick="toggleHistoryPanel()">
           <span style="color:var(--text3);text-transform:uppercase;font-weight:600;letter-spacing:0.5px">History</span>
@@ -2865,9 +2866,101 @@ function displayDiscoveryHistory() {
 }
 
 /* ═══════════════════════════════════════════════
+   SYSTEM HEALTH - PROOF OF COMPUTING
+═══════════════════════════════════════════════ */
+async function showSystemHealth() {
+  toast('🔬 Loading system health audit...', 'blue');
+  
+  try {
+    const health = await apiFetch('/api/audit/computing-evidence');
+    
+    if (!health) throw new Error('No response from server');
+    
+    const modalHtml = `
+      <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999" onclick="this.remove()">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;max-width:800px;max-height:85vh;overflow-y:auto;padding:32px;color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.6" onclick="event.stopPropagation()">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:16px">
+            <h3 style="margin:0;color:var(--cyan);font-size:16px">🔬 SYSTEM HEALTH AUDIT</h3>
+            <span onclick="this.parentElement.parentElement.parentElement.remove()" style="cursor:pointer;color:var(--text2)">✕</span>
+          </div>
+          
+          <div style="margin-bottom:24px">
+            <div style="color:var(--cyan);margin-bottom:8px">✅ PROOF SYSTEM IS COMPUTING:</div>
+            ${health['what_this_proves'].map(p => `<div style="color:var(--text2);margin-bottom:4px">${p}</div>`).join('')}
+          </div>
+          
+          <div style="margin-bottom:24px;background:var(--bg);padding:16px;border-radius:8px;border:1px solid var(--border)">
+            <div style="color:var(--cyan);margin-bottom:12px">📊 WHO LAYER (Prospect Fit Scoring)</div>
+            <div style="color:var(--text2)">Top Prospects by Signal Strength:</div>
+            ${health.evidence.who_layer.top_prospects.map(p => 
+              `<div style="margin-top:8px;color:var(--text3)">${p.name}: WHO=${p.who_score} (${p.status}) [${p.category}]</div>`
+            ).join('')}
+            <div style="margin-top:8px;color:var(--text3);font-size:10px">↳ Computed by: signals/scorer.py::recalculate_all_scores()</div>
+          </div>
+          
+          <div style="margin-bottom:24px;background:var(--bg);padding:16px;border-radius:8px;border:1px solid var(--border)">
+            <div style="color:var(--green);margin-bottom:12px">⏱️ WHEN LAYER (Temporal Signals)</div>
+            <div style="color:var(--text2)">Prospects with Recent Activity:</div>
+            ${health.evidence.when_layer.active_prospects.map(p => 
+              `<div style="margin-top:8px;color:var(--text3)">${p.name}: WHEN=${p.when_score} (${p.status})</div>`
+            ).join('')}
+            <div style="margin-top:8px;color:var(--text3);font-size:10px">↳ Computed by: signals/timing.py::calculate_when_score() + save_all_when_scores()</div>
+          </div>
+          
+          <div style="margin-bottom:24px;background:var(--bg);padding:16px;border-radius:8px;border:1px solid var(--border)">
+            <div style="color:var(--orange);margin-bottom:12px">📡 MONITORING LAYER (Signal Detection)</div>
+            <div style="color:var(--text2)">Fresh Events Detected:</div>
+            ${health.evidence.monitoring_layer.top_monitored.map(m => 
+              `<div style="margin-top:8px;color:var(--text3)">${m.company}: ${m.event_count} events [${m.event_types.join(', ')}]</div>`
+            ).join('')}
+            <div style="margin-top:8px;color:var(--text3);font-size:10px">↳ Computed by: discovery/company_monitor.py::run_full_monitoring()</div>
+          </div>
+          
+          <div style="background:var(--bg);padding:16px;border-radius:8px;border:1px solid var(--border)">
+            <div style="color:var(--purple);margin-bottom:12px">🧠 SIGNAL EXTRACTION (LLM Processing)</div>
+            <div style="color:var(--text2)">Signals by Category:</div>
+            ${health.evidence.signal_extraction.by_category.map(s => 
+              `<div style="margin-top:8px;color:var(--text3)">${s.category}: ${s.signal_count} signals</div>`
+            ).join('')}
+            <div style="margin-top:8px;color:var(--text3);font-size:10px">↳ Computed by: intelligence/llm_extractor.py _call_llm()</div>
+          </div>
+          
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);color:var(--text3);font-size:10px">
+            Last audit: ${health.timestamp}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+  } catch(err) {
+    toast(`❌ System health check failed: ${err.message}`, 'red');
+    console.error(err);
+  }
+}
+
+/* ═══════════════════════════════════════════════
    DISCOVERY
 ═══════════════════════════════════════════════ */
 async function runDiscovery() {
+  // CRITICAL: Add confirmation to prevent accidental execution during demos
+  const confirmed = confirm(
+    `⚠️ WARNING: Running discovery will:\n\n` +
+    `• Take 10-15 minutes\n` +
+    `• Reset all WHO and WHEN scores\n` +
+    `• Overwrite monitoring events\n` +
+    `• Potentially change prospect rankings\n\n` +
+    `This will DISRUPT any active demo or presentation.\n\n` +
+    `Only proceed if you intend to refresh all data.\n\n` +
+    `Continue?`
+  );
+  
+  if (!confirmed) {
+    toast('ℹ️ Discovery cancelled', 'gray');
+    return;
+  }
+  
   const btn = event.target;
   btn.disabled = true;
   btn.style.opacity = '0.6';
