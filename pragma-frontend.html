@@ -1631,7 +1631,7 @@ async function apiFetch(path, opts={}) {
 async function loadWho() {
   const [stats, prospects] = await Promise.all([
     apiFetch('/api/stats'),
-    apiFetch('/api/prospects?limit=100')
+    apiFetch('/api/prospects?limit=500')  // Increased from 100 to show all prospects including WATCH
   ]);
 
   if (stats) renderWhoStats(stats);
@@ -1666,9 +1666,14 @@ function renderWhoStats(s) {
     <div class="stat-card yellow">
       <div class="stat-label">WARM</div>
       <div class="stat-value">${s.warm ?? 0}</div>
-      <div class="stat-sub">score 30–64</div>
+      <div class="stat-sub">score 35–64</div>
     </div>
     <div class="stat-card purple">
+      <div class="stat-label">WATCH</div>
+      <div class="stat-value">${s.watch ?? 0}</div>
+      <div class="stat-sub">score < 35</div>
+    </div>
+    <div class="stat-card orange">
       <div class="stat-label">Displacement</div>
       <div class="stat-value">${s.displacement_targets ?? 0}</div>
       <div class="stat-sub">using competitor</div>
@@ -2029,7 +2034,7 @@ function populateHowSelect(prospects) {
 
 async function loadHowSelect() {
   if (allProspects.length) return; // already loaded
-  const prospects = await apiFetch('/api/prospects?limit=100');
+  const prospects = await apiFetch('/api/prospects?limit=500');  // Increased from 100 to show all prospects including WATCH
   if (prospects) { allProspects = prospects; populateHowSelect(prospects); }
 }
 

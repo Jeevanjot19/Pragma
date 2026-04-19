@@ -451,6 +451,10 @@ def get_stats():
             "SELECT COUNT(*) as c FROM prospects WHERE status = 'WARM'"
         ).fetchone()['c']
         
+        watch = conn.execute(
+            "SELECT COUNT(*) as c FROM prospects WHERE status = 'WATCH'"
+        ).fetchone()['c']
+        
         displacement = conn.execute(
             "SELECT COUNT(*) as c FROM prospects WHERE using_competitor IS NOT NULL"
         ).fetchone()['c']
@@ -466,6 +470,7 @@ def get_stats():
         "total_prospects": total,
         "hot": hot,
         "warm": warm,
+        "watch": watch,
         "displacement_targets": displacement,
         "by_recommended_product": [dict(r) for r in by_product]
     }
