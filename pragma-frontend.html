@@ -2171,11 +2171,8 @@ function renderHowResult(data) {
           </div>
 
           <div style="padding:16px;display:flex;gap:8px;align-items:center;border-top:1px solid var(--border);background:var(--bg3)">
-            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="enhanceHowEmail('${k}')">
-              ✨ Enhance with AI
-            </button>
-            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;color:var(--yellow)" onclick="fixHowEmailCompliance('${k}')" title="Use AI to fix detected compliance issues while preserving content">
-              🔧 Fix Issues
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;color:var(--accent)" onclick="fixHowEmailCompliance('${k}')" title="Use AI to fix detected compliance issues while preserving content">
+              🔧 Fix Issues with AI
             </button>
             <button class="btn btn-primary" style="font-size:11px;padding:6px 14px;margin-left:auto" onclick="sendHowEmail('${k}')">
               📤 Send Email
@@ -2346,41 +2343,6 @@ async function checkHowEmailCompliance(persona) {
   }
 
   warningsEl.innerHTML = warningsHtml;
-}
-
-async function enhanceHowEmail(persona) {
-  const subject = document.getElementById(`how-subject-${persona}`).value;
-  const body = document.getElementById(`how-body-${persona}`).value;
-  
-  if (!subject || !body) {
-    toast('Please enter a subject and body first', 'yellow');
-    return;
-  }
-
-  const btn = event.target;
-  btn.disabled = true;
-  btn.textContent = '⏳ Enhancing…';
-
-  const result = await apiFetch('/api/activate/email/enhance', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subject, body }),
-    params: { partner_id: 0 }
-  });
-
-  btn.disabled = false;
-  btn.textContent = '✨ Enhance with AI';
-
-  if (!result) return;
-
-  if (result.success) {
-    document.getElementById(`how-subject-${persona}`).value = result.subject;
-    document.getElementById(`how-body-${persona}`).value = result.body;
-    checkHowEmailCompliance(persona);
-    toast('Email enhanced! Review and adjust as needed', 'green');
-  } else {
-    toast('Enhancement failed: ' + (result.error || 'Unknown error'), 'red');
-  }
 }
 
 async function fixHowEmailCompliance(persona) {
@@ -2656,8 +2618,8 @@ async function generateIntervention(partnerId, pattern, btn) {
       </div>
 
       <div style="padding:16px;display:flex;gap:8px;align-items:center;border-top:1px solid var(--border);background:var(--bg3)">
-        <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="enhanceEmail(${partnerId})">
-          ✨ Enhance with AI
+        <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;color:var(--accent)" onclick="fixEmailCompliance(${partnerId})" title="Use AI to fix detected compliance issues while preserving content">
+          🔧 Fix Issues with AI
         </button>
         <button class="btn btn-primary" style="font-size:11px;padding:6px 14px;margin-left:auto" onclick="sendEmail(${partnerId})">
           📤 Send Email
@@ -2735,10 +2697,12 @@ async function checkEmailCompliance(partnerId) {
   warningsEl.innerHTML = warningsHtml;
 }
 
-async function enhanceEmail(partnerId) {
+async function fixEmailCompliance(partnerId) {
   const subject = document.getElementById(`email-subject-${partnerId}`).value;
   const body = document.getElementById(`email-body-${partnerId}`).value;
-  
+  const recipientName = document.getElementById(`email-recipient-name-${partnerId}`).value;
+  const recipientEmail = document.getElementById(`email-recipient-email-${partnerId}`).value;
+
   if (!subject || !body) {
     toast('Please enter a subject and body first', 'yellow');
     return;
@@ -2746,27 +2710,46 @@ async function enhanceEmail(partnerId) {
 
   const btn = event.target;
   btn.disabled = true;
-  btn.textContent = '⏳ Enhancing…';
+  btn.textContent = '⏳ Fixing issues…';
 
-  const result = await apiFetch('/api/activate/email/enhance', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subject, body }),
-    params: { partner_id: partnerId }
-  });
+  try {
+    const result = await apiFetch('/api/activate/email/fix-compliance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, body, recipient_name: recipientName, recipient_email: recipientEmail })
+    });
 
-  btn.disabled = false;
-  btn.textContent = '✨ Enhance with AI';
+    btn.disabled = false;
+    btn.textContent = '🔧 Fix Issues with AI';
 
-  if (!result) return;
+    if (!result) {
+      toast('Error fixing compliance issues', 'red');
+      return;
+    }
 
-  if (result.success) {
-    document.getElementById(`email-subject-${partnerId}`).value = result.subject;
-    document.getElementById(`email-body-${partnerId}`).value = result.body;
-    checkEmailCompliance(partnerId);
-    toast('Email enhanced! Review and adjust as needed', 'green');
-  } else {
-    toast('Enhancement failed: ' + (result.error || 'Unknown error'), 'red');
+    // Check if fix was successful
+    if (result.fixed) {
+      // Update email content with fixed version
+      document.getElementById(`email-subject-${partnerId}`).value = result.subject;
+      document.getElementById(`email-body-${partnerId}`).value = result.body;
+      
+      // Re-check compliance to update badge and warnings
+      checkEmailCompliance(partnerId);
+      
+      toast(`Compliance issues fixed! Score improved to ${result.compliance_score}/100`, 'green');
+    } else if (result.compliance_status === 'CLEAR') {
+      // Already clear, no fixes needed
+      toast('Email is already fully compliant!', 'green');
+    } else if (result.error) {
+      // API failed gracefully - show the error but offer original email
+      toast(`Could not apply fixes: ${result.error}. Original email returned.`, 'yellow');
+    } else {
+      toast('Could not fix all compliance issues. Please manually edit the flagged items.', 'yellow');
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '🔧 Fix Issues with AI';
+    toast('Error communicating with AI: ' + (err.message || 'Unknown error'), 'red');
   }
 }
 
