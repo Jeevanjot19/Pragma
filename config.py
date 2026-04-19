@@ -102,9 +102,9 @@ SIGNAL_WEIGHTS = {
     "DISPLACEMENT": 30,      # separate track, high weight
 }
 
-# Score thresholds
-HOT_THRESHOLD = 60
-WARM_THRESHOLD = 30
+# Score thresholds (must match scorer.py logic)
+HOT_THRESHOLD = 65   # Score >= 65 → HOT
+WARM_THRESHOLD = 35  # Score >= 35 → WARM, < 65 → not HOT
 
 # Only monitor prospects with WHO score >= this threshold
 # Prevents wasting resources on low-potential WATCH prospects

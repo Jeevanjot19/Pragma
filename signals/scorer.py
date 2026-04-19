@@ -30,11 +30,10 @@ def calculate_who_score(prospect_id: int) -> tuple[int, str]:
             signal_counts[signal_type] = {'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
         signal_counts[signal_type][strength] += 1
     
-    # Score signals — but PRODUCT_GAP has reduced weight
-    # It's a prerequisite not a buying signal
+    # Score signals
     for signal_type, severities in signal_counts.items():
         if signal_type == 'PRODUCT_GAP':
-            base = 15  # Reduced from 35
+            base = SIGNAL_WEIGHTS.get(signal_type, 35)  # Use config weight (35), not hardcoded 15
         else:
             base = SIGNAL_WEIGHTS.get(signal_type, 10)
         

@@ -157,7 +157,7 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
     expansion = extracted.get('expansion_signals', [])
     signal_count = 0
 
-    # Product gap
+    # Product gap — always added
     add_signal(
         prospect_id=prospect_id,
         signal_type='PRODUCT_GAP',
@@ -168,13 +168,15 @@ def _process_extracted_company(extracted: dict, url: str, title: str, article_da
     )
     signal_count += 1
 
-    # Funding + expansion
-    if extracted.get('funding_detected') and expansion:
+    # Funding signal — created whenever funding is detected
+    # This is separate from FUNDING_EXPANSION (which also requires expansion)
+    if extracted.get('funding_detected'):
+        funding_text = extracted.get('funding_amount', 'funding')
         add_signal(
             prospect_id=prospect_id,
-            signal_type='FUNDING_EXPANSION',
+            signal_type='FUNDING_EXPANSION',  # Same type as FUNDING_EXPANSION for now
             strength='HIGH',
-            title=f"Raised {extracted.get('funding_amount', 'funding')}, plans to add {', '.join(expansion)}",
+            title=f"Raised {funding_text}" + (f" — plans to add {', '.join(expansion)}" if expansion else ""),
             evidence=title,
             source_url=url
         )
