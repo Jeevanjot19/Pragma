@@ -461,12 +461,11 @@ def check_email_compliance(subject: str, body: str) -> dict:
 
 def enhance_email_with_llm(partner_id: int, subject: str, body: str, pattern: str) -> dict:
     """
-    Enhance email using Claude for more polished, compelling version.
+    Enhance email using Groq for more polished, compelling version.
     Makes emails longer, more persuasive, and better structured.
-    Falls back to local enhancement if Claude is unavailable.
+    Falls back to local enhancement if Groq is unavailable.
     """
-    import anthropic
-    import os
+    from intelligence.llm_extractor import _call_llm
     
     # Try to get partner context, but don't fail if not available
     company = "Partner"
@@ -517,21 +516,15 @@ BODY:
 Do not include any other text or explanations."""
 
     try:
-        # Try Claude enhancement first
-        api_key = os.getenv('ANTHROPIC_API_KEY')
-        if not api_key:
-            raise ValueError("Claude API key not configured")
-            
-        client = anthropic.Anthropic()
-        response = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1024,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
+        # Use Groq API for enhancement (same as email generation)
+        response = _call_llm(prompt, max_tokens=1024, use_fast_model=False)
         
-        enhanced_text = response.content[0].text
+        if not response:
+            # Fallback to local enhancement if Groq fails
+            return _enhance_email_locally(subject, body, pattern, company, product, category)
+        
+        # Parse response
+        enhanced_text = response.strip()
         parts = enhanced_text.split('BODY:', 1)
         
         if len(parts) == 2:
@@ -545,10 +538,10 @@ Do not include any other text or explanations."""
             "success": True,
             "subject": enhanced_subject,
             "body": enhanced_body,
-            "enhancement_note": "Powered by Claude AI - makes email more compelling and professional"
+            "enhancement_note": "Powered by Groq AI - makes email more compelling and professional"
         }
     except Exception as e:
-        # Fallback to local enhancement if Claude fails
+        # Fallback to local enhancement if Groq fails
         return _enhance_email_locally(subject, body, pattern, company, product, category)
 
 
