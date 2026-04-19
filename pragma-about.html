@@ -226,7 +226,7 @@
 </section>
 
 <!-- NEW: INTELLIGENCE LAYERS SECTION -->
-<section style="background: var(--bg2); padding: 120px 60px; position: relative; overflow: hidden;" class="intelligence-layers-section">
+<section style="background: var(--bg2); padding: 120px 60px; position: relative; overflow: hidden;">
   <style>
     .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; max-width: 1400px; margin: 0 auto; }
     .feature-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 32px; position: relative; }
@@ -239,76 +239,6 @@
     .feature-list li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: bold; }
     .section-title { font-family: var(--serif); font-size: 48px; text-align: center; margin-bottom: 60px; max-width: 900px; margin-left: auto; margin-right: auto; }
     .badge-new { display: inline-block; background: rgba(0,229,153,0.1); color: var(--green); padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-    
-    /* MOVING LIGHT EFFECT */
-    @keyframes movingLight {
-      0% {
-        background-position: -200% 0;
-        box-shadow: inset -200px 0 100px rgba(0,212,255,0.15), 0 0 40px rgba(0,212,255,0.2);
-      }
-      25% {
-        box-shadow: inset -100px -100px 100px rgba(0,212,255,0.1), 0 0 40px rgba(0,212,255,0.25);
-      }
-      50% {
-        background-position: 200% 0;
-        box-shadow: inset 100px 0 100px rgba(0,212,255,0.15), 0 0 40px rgba(0,212,255,0.2);
-      }
-      75% {
-        box-shadow: inset 100px 100px 100px rgba(0,212,255,0.1), 0 0 40px rgba(0,212,255,0.25);
-      }
-      100% {
-        background-position: -200% 0;
-        box-shadow: inset -200px 0 100px rgba(0,212,255,0.15), 0 0 40px rgba(0,212,255,0.2);
-      }
-    }
-    
-    @keyframes glowPulse {
-      0%, 100% { text-shadow: 0 0 20px rgba(0,212,255,0.3); }
-      50% { text-shadow: 0 0 40px rgba(0,212,255,0.5); }
-    }
-    
-    .features-section-wrapper {
-      animation: movingLight 8s ease-in-out infinite;
-      border-radius: 16px;
-      padding: 60px;
-      background-size: 400% 100%;
-    }
-    
-    .section-title {
-      animation: glowPulse 4s ease-in-out infinite;
-    }
-    
-    .intelligence-layers-section {
-      position: relative;
-      overflow: hidden;
-    }
-    
-    /* Animated border glow */
-    .intelligence-layers-section::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      padding: 2px;
-      background: linear-gradient(90deg, 
-        rgba(0,212,255,0) 0%, 
-        rgba(0,212,255,0.4) 25%, 
-        rgba(0,212,255,0) 50%,
-        rgba(0,212,255,0.4) 75%,
-        rgba(0,212,255,0) 100%);
-      background-size: 200% 100%;
-      animation: borderGlow 6s linear infinite;
-      pointer-events: none;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      border-radius: 16px;
-    }
-    
-    @keyframes borderGlow {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
   </style>
 
   <h2 class="section-title">Advanced Intelligence Layers</h2>

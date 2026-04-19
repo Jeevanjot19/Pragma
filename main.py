@@ -1520,30 +1520,84 @@ class EmailEditorPayload(BaseModel):
 def check_email_compliance(payload: EmailEditorPayload):
     """
     Real-time compliance checking for edited emails.
-    Checks for: tone, length, vague claims, CTAs, etc.
-    Returns: compliance score, warnings, and suggestions.
+    Checks for: regulatory violations, signal leakage, tone, length, etc.
+    Returns: compliance score, status, violations, warnings, and suggestions.
     """
-    from intelligence.activation_interventions import check_email_compliance
+    from outreach.compliance_rules import check_compliance
     
-    result = check_email_compliance(payload.subject, payload.body)
+    # Use the proper compliance checker from compliance_rules
+    compliance_result = check_compliance(
+        payload.body,
+        subject=payload.subject,
+        recipient_name=payload.recipient_name,
+        company_name=None
+    )
     
-    # Add helpful suggestions based on warnings
+    # Transform the result into the format expected by frontend
+    # Combine warnings and tips for display
+    warnings = []
+    
+    # Add all warnings from compliance rules
+    for w in compliance_result.get('warnings', []):
+        warnings.append({
+            "type": w['code'],  # e.g., "L001", "L002"
+            "message": w['headline'],
+            "severity": "warning",
+            "detail": w['detail'],
+            "triggered_by": w.get('triggered_by', [])
+        })
+    
+    # Add tips as info-level suggestions
+    for tip in compliance_result.get('tips', []):
+        warnings.append({
+            "type": tip['code'],
+            "message": tip['headline'],
+            "severity": "info",
+            "detail": tip['detail']
+        })
+    
+    # Add violations as critical warnings
+    for v in compliance_result.get('violations', []):
+        warnings.append({
+            "type": v['code'],
+            "message": v['headline'],
+            "severity": "critical",
+            "detail": v['detail'],
+            "triggered_by": v.get('triggered_by', [])
+        })
+    
+    # Generate suggestions based on detected issues
     suggestions = []
-    for warning in result.get('warnings', []):
-        wtype = warning.get('type')
-        if wtype == "TOO_SHORT":
-            suggestions.append("Expand the email with more context about why they should act now")
-        elif wtype == "TONE":
-            suggestions.append("Replace aggressive language with collaborative tone (e.g., 'help' instead of 'must')")
-        elif wtype == "MISSING_CTA":
-            suggestions.append("Add a clear call-to-action: suggest a meeting time, calendar link, or next step")
-        elif wtype == "VAGUE_CLAIMS":
-            suggestions.append("Back up claims with specific metrics or examples (e.g., '40% faster integration')")
-        elif wtype == "WEAK_SUBJECT":
-            suggestions.append("Make subject more specific: include company name or benefit (e.g., 'Quick wins for Groww')")
+    codes_found = set()
+    
+    for w in compliance_result['warnings'] + compliance_result['violations']:
+        code = w['code']
+        if code in codes_found:
+            continue
+        codes_found.add(code)
+        
+        # Signal leakage suggestions
+        if code == 'L001':
+            suggestions.append("Remove references to Play Store, App Store, or specific platform mentions")
+        elif code == 'L002':
+            suggestions.append("Replace 'we noticed' with 'our research shows' or 'industry data indicates'")
+        elif code == 'L003':
+            suggestions.append("Don't mention specific user metrics or install data")
+        # Tone suggestions
+        elif code in ['T001', 'T002']:
+            suggestions.append("Use collaborative language like 'help', 'support', 'explore' instead of commanding tone")
+        # Substantiation suggestions
+        elif code == 'S001':
+            suggestions.append("Back up claims with specific metrics, case studies, or proof")
+        elif code == 'S002':
+            suggestions.append("Explain HOW the solution addresses the problem, not just WHAT it does")
     
     return {
-        **result,
+        "is_compliant": compliance_result['status'] == 'CLEAR',
+        "compliance_score": compliance_result['score'],
+        "status": compliance_result['status'],
+        "summary": compliance_result['summary'],
+        "warnings": warnings,
         "suggestions": suggestions,
         "recipient": {
             "name": payload.recipient_name,
