@@ -5,9 +5,12 @@ Generates targeted intervention emails for each stall pattern.
 No LLM needed — rule-based + simple templates.
 """
 
+import logging
 from datetime import datetime
 from database import get_db
 from intelligence.activation_patterns import StallPattern
+
+logger = logging.getLogger(__name__)
 
 
 def generate_dead_on_arrival_email(partner_id: int) -> dict:
@@ -463,9 +466,11 @@ def enhance_email_with_llm(partner_id: int, subject: str, body: str, pattern: st
     """
     Enhance email using Groq for more polished, compelling version.
     Makes emails longer, more persuasive, and better structured.
-    Falls back to local enhancement if Groq is unavailable.
+    CRITICAL: Validates compliance after enhancement to avoid regulatory violations.
+    Falls back to local enhancement if Groq is unavailable or produces non-compliant output.
     """
     from intelligence.llm_extractor import _call_llm
+    from outreach.compliance_rules import check_compliance
     
     # Try to get partner context, but don't fail if not available
     company = "Partner"
@@ -487,7 +492,20 @@ def enhance_email_with_llm(partner_id: int, subject: str, body: str, pattern: st
             product = partner['recommended_product']
             category = partner.get('category', 'fintech')
     
-    prompt = f"""You are an expert partnership manager at Blostem writing professional, compelling intervention emails.
+    # COMPLIANCE CONSTRAINTS: Tell the LLM what to avoid
+    compliance_constraints = """CRITICAL COMPLIANCE RULES - DO NOT VIOLATE:
+1. NO guaranteed returns language (avoid: 'guaranteed', 'assured', 'zero risk')
+2. NO overstated insurance claims (avoid: 'fully insured', '100% insured')
+3. NO false regulatory claims (avoid: 'RBI-approved', 'SEBI-certified')
+4. NO unqualified interest rates (always say 'up to' or 'rates vary by')
+5. NO aggressive/pushy language (avoid: 'don't miss', 'act now', 'must', 'urgent')
+6. NO unsubstantiated superlatives (avoid: 'best-in-class', 'world-leading')
+7. NO vague transformation claims (replace with specific outcomes)
+8. NO mention of monitoring/surveillance signals
+
+Focus on: specific value, partnership benefits, technical differentiation, clear CTAs."""
+    
+    prompt = f"""You are an expert partnership manager at Blostem writing professional, compliant intervention emails.
 
 Context:
 - Partner: {company} ({category})
@@ -498,6 +516,8 @@ Current email:
 Subject: {subject}
 Body: {body}
 
+{compliance_constraints}
+
 Please enhance this email to be:
 1. More compelling and persuasive (add specific benefits)
 2. Longer and more detailed (400-600 words)
@@ -505,8 +525,9 @@ Please enhance this email to be:
 4. More personalized to their situation
 5. Include specific value propositions
 6. Better CTA framing
+7. 100% COMPLIANT with all regulatory rules above
 
-Keep the original tone and engagement model, but make it more professional and persuasive.
+Keep the original tone and engagement model, but make it more professional and persuasive while maintaining full regulatory compliance.
 
 Return ONLY the enhanced email in this format:
 SUBJECT: [new subject]
@@ -534,14 +555,33 @@ Do not include any other text or explanations."""
             enhanced_subject = subject
             enhanced_body = body
         
+        # CRITICAL: Run compliance check on enhanced email
+        compliance_result = check_compliance(
+            body=enhanced_body,
+            subject=enhanced_subject,
+            recipient_name=None,
+            company_name=company
+        )
+        
+        # If enhanced email violates compliance, reject and use local fallback
+        if not compliance_result.get('is_sendable', False):
+            logger.warning(
+                f"Enhanced email failed compliance: {compliance_result.get('summary')}. "
+                f"Using local enhancement instead."
+            )
+            return _enhance_email_locally(subject, body, pattern, company, product, category)
+        
         return {
             "success": True,
             "subject": enhanced_subject,
             "body": enhanced_body,
-            "enhancement_note": "Powered by Groq AI - makes email more compelling and professional"
+            "enhancement_note": "Powered by Groq AI - compliant, compelling, and professional",
+            "compliance_score": compliance_result.get('score', 0),
+            "compliance_status": compliance_result.get('status', 'CLEAR')
         }
     except Exception as e:
         # Fallback to local enhancement if Groq fails
+        logger.exception(f"Enhance with LLM failed: {e}")
         return _enhance_email_locally(subject, body, pattern, company, product, category)
 
 

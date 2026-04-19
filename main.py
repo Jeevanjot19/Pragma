@@ -273,71 +273,71 @@ def generate_demo_run_logs():
     time_offset = 0  # Seconds into the "run"
     
     # Stage 1: Initializing (0-5 seconds)
-    logs.append({"time": time_offset, "stage": "init", "message": "🔍 Initializing discovery pipeline..."})
+    logs.append({"time": time_offset, "stage": "init", "message": "Initializing discovery pipeline..."})
     time_offset += 2
-    logs.append({"time": time_offset, "stage": "init", "message": "✓ Connected to news sources"})
+    logs.append({"time": time_offset, "stage": "init", "message": "[OK] Connected to news sources"})
     time_offset += 3
     
     # Stage 2: News Monitor (5-20 seconds) - fetching feeds
-    logs.append({"time": time_offset, "stage": "news", "message": "📰 Running news monitor..."})
+    logs.append({"time": time_offset, "stage": "news", "message": "Running news monitor..."})
     time_offset += 2
-    logs.append({"time": time_offset, "stage": "news", "message": "📡 Fetching TechCrunch updates..."})
+    logs.append({"time": time_offset, "stage": "news", "message": "[FETCH] TechCrunch feed..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "news", "message": "📡 Fetching Product Hunt updates..."})
+    logs.append({"time": time_offset, "stage": "news", "message": "[FETCH] Product Hunt feed..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "news", "message": "📡 Fetching AngelList updates..."})
+    logs.append({"time": time_offset, "stage": "news", "message": "[FETCH] AngelList feed..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "news", "message": "📡 Fetching VentureBeat updates..."})
+    logs.append({"time": time_offset, "stage": "news", "message": "[FETCH] VentureBeat feed..."})
     time_offset += 2
     
     # Stage 3: Company Discovery (20-35 seconds) - finding companies
-    logs.append({"time": time_offset, "stage": "discovery", "message": "🔎 Discovering companies from feeds..."})
+    logs.append({"time": time_offset, "stage": "discovery", "message": "Discovering companies from feeds..."})
     time_offset += 1
     
     # Simulate incremental discovery
     for i, company in enumerate(company_names[:12]):
-        logs.append({"time": time_offset, "stage": "discovery", "message": f"✓ Found {company}"})
+        logs.append({"time": time_offset, "stage": "discovery", "message": f"[FOUND] {company}"})
         time_offset += 1 if i % 3 == 0 else 0.5
     
-    logs.append({"time": time_offset, "stage": "discovery", "message": f"✓ Total: {prospects_count} companies discovered"})
+    logs.append({"time": time_offset, "stage": "discovery", "message": f"[OK] Total: {prospects_count} companies discovered"})
     time_offset += 1
     
     # Stage 4: Cleaning (35-40 seconds)
-    logs.append({"time": time_offset, "stage": "clean", "message": "🧹 Removing non-prospects..."})
+    logs.append({"time": time_offset, "stage": "clean", "message": "Removing non-prospects..."})
     time_offset += 2
-    logs.append({"time": time_offset, "stage": "clean", "message": "✓ Filtered to qualified prospects"})
+    logs.append({"time": time_offset, "stage": "clean", "message": "[OK] Filtered to qualified prospects"})
     time_offset += 1
     
     # Stage 5: WHO Scoring (40-48 seconds) - fit scoring
-    logs.append({"time": time_offset, "stage": "who", "message": "📊 Calculating WHO scores (fit)..."})
+    logs.append({"time": time_offset, "stage": "who", "message": "Calculating WHO scores (fit)..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "who", "message": f"✓ {hot_count} HOT prospects (fit score 70-100)"})
+    logs.append({"time": time_offset, "stage": "who", "message": f"[SCORE] {hot_count} HOT prospects (fit 70-100)"})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "who", "message": f"✓ {warm_count} WARM prospects (fit score 40-70)"})
+    logs.append({"time": time_offset, "stage": "who", "message": f"[SCORE] {warm_count} WARM prospects (fit 40-70)"})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "who", "message": f"✓ {watch_count} WATCH prospects (fit score <40)"})
+    logs.append({"time": time_offset, "stage": "who", "message": f"[SCORE] {watch_count} WATCH prospects (fit <40)"})
     time_offset += 2
     
     # Stage 6: Monitoring (48-56 seconds) - temporal signals
-    logs.append({"time": time_offset, "stage": "monitor", "message": "📡 Running company monitoring (temporal signals)..."})
+    logs.append({"time": time_offset, "stage": "monitor", "message": "Running company monitoring (temporal signals)..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "monitor", "message": "✓ Detecting funding events..."})
+    logs.append({"time": time_offset, "stage": "monitor", "message": "[DETECT] Funding events..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "monitor", "message": "✓ Detecting product launches..."})
+    logs.append({"time": time_offset, "stage": "monitor", "message": "[DETECT] Product launches..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "monitor", "message": "✓ Detecting app updates..."})
+    logs.append({"time": time_offset, "stage": "monitor", "message": "[DETECT] App updates..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "monitor", "message": f"✓ Found {signals_count} temporal signals"})
+    logs.append({"time": time_offset, "stage": "monitor", "message": f"[OK] Found {signals_count} temporal signals"})
     time_offset += 2
     
     # Stage 7: WHEN Scoring (56-60 seconds) - urgency scoring
-    logs.append({"time": time_offset, "stage": "when", "message": "⏰ Calculating WHEN scores (urgency)..."})
+    logs.append({"time": time_offset, "stage": "when", "message": "Calculating WHEN scores (urgency)..."})
     time_offset += 1
-    logs.append({"time": time_offset, "stage": "when", "message": f"✓ Prioritized {hot_count} HOT prospects with timing signals"})
+    logs.append({"time": time_offset, "stage": "when", "message": f"[OK] Prioritized {hot_count} HOT prospects with timing signals"})
     time_offset += 2
     
     # Stage 8: Complete (60+ seconds)
-    logs.append({"time": time_offset, "stage": "complete", "message": "✅ Discovery pipeline complete!"})
+    logs.append({"time": time_offset, "stage": "complete", "message": "Pipeline discovery complete"})
     
     return logs
 
