@@ -179,24 +179,37 @@ primary_client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-# Versatile model for all tasks (only using one model to avoid rate limits)
-MODEL = "llama-3.3-70b-versatile"  # Versatile model handles both generation and extraction
+# Models for different tasks
+MODEL_QUALITY = "llama-3.3-70b-versatile"  # High quality, expensive, for complex reasoning
+MODEL_FAST = "llama-3.1-8b-instant"  # Cheap, fast, for structured extraction
 
 # Rate limiting — Groq free tier is generous but we still throttle
 _last_call_time = 0
 MIN_CALL_INTERVAL = 1.5  # seconds between LLM calls (safe for free tier with multiple workers)
 
+# Token budget tracking
+_tokens_used_today = 0
+DAILY_TOKEN_BUDGET = 80000  # Leave 20k headroom, don't use all 100k
 
-def _call_llm(prompt: str, max_tokens: int = 500) -> str | None:
+
+def _call_llm(prompt: str, max_tokens: int = 500, use_fast_model: bool = False) -> str | None:
     """
     Single unified LLM call using primary API only.
     - No failover to backup (backup key was causing 2x request rate)
     - Includes exponential backoff retry on rate limit errors
+    - Tracks token usage and stops when daily budget exceeded
     - All LLM calls go through here
     """
-    global _last_call_time
+    global _last_call_time, _tokens_used_today
 
-    model = MODEL
+    model = MODEL_FAST if use_fast_model else MODEL_QUALITY
+    
+    # Check token budget before calling
+    estimated_tokens = (len(prompt) // 4) + max_tokens
+    if _tokens_used_today + estimated_tokens > DAILY_TOKEN_BUDGET:
+        logger.warning(f"Daily token budget reached ({_tokens_used_today}/{DAILY_TOKEN_BUDGET}), skipping LLM call")
+        return None
+    
     max_retries = 5
     base_delay = 1.0
 
@@ -214,11 +227,23 @@ def _call_llm(prompt: str, max_tokens: int = 500) -> str | None:
                 max_tokens=max_tokens
             )
             _last_call_time = time.time()
+            
+            # Track actual tokens used
+            if hasattr(response, 'usage') and response.usage:
+                _tokens_used_today += response.usage.total_tokens
+                logger.debug(f"LLM call used {response.usage.total_tokens} tokens (total: {_tokens_used_today}/{DAILY_TOKEN_BUDGET})")
+            
             return response.choices[0].message.content.strip()
 
         except Exception as e:
             error_msg = str(e).lower()
             _last_call_time = time.time()
+            
+            # Check if TPD exhaustion
+            if "tokens per day" in error_msg or "tpd" in error_msg:
+                _tokens_used_today = DAILY_TOKEN_BUDGET  # Mark budget as exhausted
+                logger.error(f"Daily token limit hit — stopping all LLM calls for today")
+                return None
             
             # Check if rate limit error
             is_rate_limit = (
@@ -686,8 +711,8 @@ Rules for is_relevant = false:
 
 Return ONLY the JSON array. No explanation. No markdown."""
 
-    # Use versatile model for batch extraction (no rate limit issues)
-    raw = _call_llm(prompt, max_tokens=1500)
+    # Use fast model for batch extraction (structured task, doesn't need quality model)
+    raw = _call_llm(prompt, max_tokens=1500, use_fast_model=True)
     
     if not raw:
         return [None] * len(articles)

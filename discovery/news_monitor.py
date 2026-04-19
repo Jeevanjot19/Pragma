@@ -271,8 +271,8 @@ def process_query_batch(query: str, feed_url: str) -> dict:
 
     logger.info(f"Found {len(unprocessed)} unprocessed articles for '{query}'")
 
-    # BATCH in groups of 2 to AGGRESSIVELY reduce token usage
-    BATCH_SIZE = 2  # Process 2 articles at a time to minimize token burn per request
+    # BATCH in groups of 8 to amortize prompt overhead across more articles
+    BATCH_SIZE = 8  # Larger batches = 4x fewer prompt overhead tokens vs batch size 2
     extracted_list = []
     
     for i in range(0, len(unprocessed), BATCH_SIZE):
