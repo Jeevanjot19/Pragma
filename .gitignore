@@ -23,8 +23,8 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Database
-pragma.db
+# Database (tracked - provides initial seed data)
+# pragma.db is now committed to ensure Render always has data
 pragma.db-wal
 pragma.db-shm
 
