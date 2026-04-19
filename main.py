@@ -373,6 +373,44 @@ def backup_db():
         logger.error(f"Database backup failed: {e}")
         return {"status": "error", "error": str(e)}
 
+@app.get("/api/admin/export-db")
+def export_db():
+    """Export database as base64 for backup.
+    
+    Returns the pragma.db file as base64-encoded JSON.
+    Use this to backup all prospects, signals, and monitoring events.
+    """
+    import os
+    import base64
+    
+    db_path = os.environ.get("DB_PATH", "pragma.db")
+    
+    if not os.path.exists(db_path):
+        return {"error": "Database file not found"}
+    
+    try:
+        with open(db_path, 'rb') as f:
+            db_bytes = f.read()
+        
+        db_b64 = base64.b64encode(db_bytes).decode('utf-8')
+        
+        with get_db() as conn:
+            prospect_count = conn.execute("SELECT COUNT(*) as c FROM prospects").fetchone()['c']
+            signal_count = conn.execute("SELECT COUNT(*) as c FROM signals").fetchone()['c']
+            event_count = conn.execute("SELECT COUNT(*) as c FROM monitoring_events").fetchone()['c']
+        
+        return {
+            "status": "exported",
+            "db_data": db_b64,
+            "size_bytes": len(db_bytes),
+            "prospects_in_db": prospect_count,
+            "signals_in_db": signal_count,
+            "monitoring_events_in_db": event_count
+        }
+    except Exception as e:
+        logger.error(f"Database export failed: {e}")
+        return {"status": "error", "error": str(e)}
+
 @app.post("/api/enrich")
 def trigger_enrichment():
     """Enrich all existing prospects with Play Store data and recalculate scores.
