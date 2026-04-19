@@ -117,22 +117,33 @@ def run_discovery_background(job_id: str):
         except Exception as e:
             logger.error(f"Play Store enrichment failed: {e}")
         
-        # Step 4: Populate monitoring events (temporal signals for WHEN score)
-        discovery_jobs[job_id]["progress"] = "Running company monitoring (temporal signals)..."
+        # Step 4: Calculate WHO scores FIRST — this sets status to HOT/WARM/WATCH
+        # Must happen before monitoring so monitoring can find prospects by status
+        discovery_jobs[job_id]["progress"] = "Calculating WHO scores..."
         try:
-            logger.info("Running monitoring pipeline to populate temporal signals...")
-            run_full_monitoring()
-        except Exception as e:
-            logger.error(f"Monitoring pipeline failed: {e}")
-        
-        # Step 5: Calculate and persist scores - ALWAYS RUNS
-        discovery_jobs[job_id]["progress"] = "Calculating WHO and WHEN scores..."
-        try:
-            logger.info("Calculating and persisting WHO/WHEN scores...")
+            logger.info("Calculating and persisting WHO scores...")
             recalculate_all_scores()
         except Exception as e:
             logger.error(f"Score calculation failed: {e}")
             news_result["error"] = str(e)
+        
+        # Step 5: NOW run monitoring — prospects have proper status now
+        discovery_jobs[job_id]["progress"] = "Running company monitoring (temporal signals)..."
+        try:
+            logger.info("Running monitoring pipeline to populate temporal signals...")
+            from discovery.company_monitor import run_full_monitoring
+            run_full_monitoring()
+        except Exception as e:
+            logger.error(f"Monitoring pipeline failed: {e}")
+        
+        # Step 6: Recalculate WHEN scores after monitoring events exist
+        discovery_jobs[job_id]["progress"] = "Calculating WHEN scores with temporal signals..."
+        try:
+            logger.info("Recalculating WHEN scores with monitoring events...")
+            from signals.timing import get_all_when_scores
+            get_all_when_scores()
+        except Exception as e:
+            logger.error(f"WHEN score calculation failed: {e}")
         
         # Mark complete
         discovery_jobs[job_id].update({
@@ -226,6 +237,69 @@ def get_discovery_status(job_id: str):
 def get_all_discovery_status():
     """Get status of all discovery jobs (current and historical)."""
     return discovery_jobs
+
+
+@app.post("/api/admin/clean-seeds")
+def clean_seed_data():
+    """Remove hardcoded seed prospects (source=null, signal_count=0) that corrupt real data.
+    
+    Seed data was inserted during init but has wrong/placeholder app IDs and no actual signals.
+    These interfere with real discovered prospects. Remove them after detecting real data.
+    
+    Also removes known garbage entries that keep getting discovered incorrectly.
+    """
+    try:
+        with get_db() as conn:
+            # Step 1: Delete signals for seed prospects
+            deleted_signals = conn.execute("""
+                DELETE FROM signals WHERE prospect_id IN (
+                    SELECT id FROM prospects 
+                    WHERE source IS NULL 
+                    AND signal_count = 0
+                )
+            """).rowcount
+            
+            # Step 2: Delete the seed prospects themselves
+            deleted_seeds = conn.execute("""
+                DELETE FROM prospects 
+                WHERE source IS NULL
+                AND signal_count = 0
+            """).rowcount
+            
+            # Step 3: Delete known garbage/non-fintech companies that keep appearing
+            garbage_companies = [
+                'IndiaStack', 'CoinSwitch', 'Arya.ag', 'Arya',
+                'NSE', 'National Stock Exchange', 'Indusind Bank', 'IndusInd',
+                'Candescent', 'Eat App', 'Knight FinTech', 'BWDisrupt',
+                'The Economic Times', 'Economic Times',
+                'FinTech Global', 'Fintech Global',
+                'Blostem', 'Pragma',
+                'Dabur Ventures', 'Dabur India', 'Dabur',
+                'Dream11', 'Nubank', 'Aditya Birla',
+                'Moneycontrol', 'Times Of India', 'Livemint'
+            ]
+            deleted_garbage = 0
+            for company in garbage_companies:
+                deleted_garbage += conn.execute(
+                    "DELETE FROM prospects WHERE LOWER(name) = LOWER(?)",
+                    (company,)
+                ).rowcount
+            
+            conn.commit()
+            remaining = conn.execute("SELECT COUNT(*) as c FROM prospects").fetchone()['c']
+            
+        logger.info(f"Cleanup: deleted {deleted_seeds} seeds, {deleted_garbage} garbage, {deleted_signals} orphan signals. Remaining: {remaining}")
+        
+        return {
+            "status": "cleaned",
+            "deleted_seed_prospects": deleted_seeds,
+            "deleted_garbage_companies": deleted_garbage,
+            "deleted_orphan_signals": deleted_signals,
+            "remaining_prospects": remaining
+        }
+    except Exception as e:
+        logger.error(f"Cleanup failed: {e}")
+        return {"status": "error", "error": str(e)}
 
 
 @app.post("/api/enrich")
