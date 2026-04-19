@@ -1694,9 +1694,12 @@ function showScreen(id) {
 ═══════════════════════════════════════════════ */
 async function apiFetch(path, opts={}) {
   try {
-    // Add a timeout to fetch calls (10 seconds)
+    // Add a timeout to fetch calls (60 seconds for outreach generation, 10 seconds for others)
+    const isLongOperation = path.includes('/api/how/generate') || path.includes('/api/discover');
+    const timeoutMs = isLongOperation ? 60000 : 10000;
+    
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     
     const r = await fetch(API + path, { ...opts, signal: controller.signal });
     clearTimeout(timeout);
