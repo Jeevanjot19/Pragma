@@ -49,6 +49,9 @@ def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
     Generates monitoring events for substantial news in last 7 days.
     Deduplicates by source URL to prevent recording same article twice.
     Returns count of NEW events created (excludes deduplicated).
+    
+    NOTE: RSS feeds may have truncated summaries, so we trust that results
+    from company-specific Google News search are relevant to the company.
     """
     new_events = 0
     
@@ -67,7 +70,7 @@ def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
     
     seven_days_ago = datetime.now() - timedelta(days=7)
     
-    for entry in feed.entries[:10]:  # Check top 10 recent articles
+    for entry in feed.entries[:20]:  # Check top 20 recent articles (was 10)
         try:
             title = entry.get('title', '')
             url = entry.get('link', '')
@@ -94,6 +97,7 @@ def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
                 continue
             
             # Categorize the news
+            # NOTE: Pass company_name but categorize_news no longer requires it in content
             event_type, urgency = categorize_news(title, summary, prospect_name)
             
             if event_type:
@@ -131,62 +135,78 @@ def monitor_company_news(prospect_name: str, prospect_id: int) -> int:
 def categorize_news(title: str, summary: str, company_name: str) -> tuple:
     """
     Categorize news article by event type and urgency.
-    INTENTIONALLY RESTRICTIVE to avoid noise. Only signals material business events.
-    Returns (event_type, urgency) or (None, None) if not a notable event.
+    SMARTER APPROACH: Trust Google News search results + look for event keywords.
+    Company name is checked but NOT required (RSS summaries are often truncated).
     
-    Key principle: Article must actually be about THIS company.
-    Generic mentions don't count — require company name in content.
+    Strategy:
+    1. Google News search is already company-specific (no generic articles)
+    2. If we got this article from that search, it's about the company
+    3. Just identify event type and urgency from keywords
+    4. Company name in content is a confidence boost but not required
+    
+    Returns (event_type, urgency) or (None, None) if not a notable event.
     """
     content = (title + " " + summary).lower()
     name_lower = company_name.lower()
+    company_in_content = name_lower in content
 
-    # Article must actually be about this company
-    if name_lower not in content:
-        return (None, None)
-
-    # FUNDING — require strong funding signals (improved detection)
-    # Look for explicit funding rounds OR funding amount mentions
+    # FUNDING — highest priority event (strong indicators)
     funding_rounds = ['series a', 'series b', 'series c', 'series d', 'series e',
                       'seed round', 'pre-series', 'seed funding', 'seed investment']
     funding_verbs = ['raises', 'raised', 'secures', 'secured', 'announces funding']
     
+    # Also check for "funding" keyword explicitly in title or content
+    has_funding_keyword = 'funding' in content or 'fundraising' in content
+    
     has_round = any(term in content for term in funding_rounds)
     has_verb = any(term in content for term in funding_verbs)
+    # Match amounts: $10 million, ₹100 crore, $80M, $80Mn, ₹50Cr, etc.
+    has_amount = bool(re.search(r'[₹$£€]\s*\d+\s*(crore|cr|million|mn|m|billion|bn|b|lakh|lacs|k|thousand|t)', content))
     
-    # Check for funding amount (e.g., "₹100 crore", "$10 million")
-    has_amount = bool(re.search(r'[₹$]\s*\d+\s*(crore|million|billion|lakh)', content))
-    
-    # Count signals: need round + verb + amount OR just 2 strong signals
-    funding_signals = sum([has_round, has_verb, has_amount])
-    if funding_signals >= 2:
+    # Funding classification:
+    # - If title/content says "Funding" → HIGH (company likely got funding)
+    # - If verb + amount → HIGH
+    # - If round terminology → HIGH
+    if has_funding_keyword:
+        return ("FUNDING", "HIGH")
+    if (has_verb and has_amount) or has_round:
         return ("FUNDING", "HIGH")
 
-    # PRODUCT_LAUNCH — launch language + financial product context
+    # PRODUCT_LAUNCH — new products, expansions
     launch_terms = ['launches', 'launched', 'introduces', 'introduces new',
                     'rolls out', 'unveils', 'announces new product',
-                    'new feature', 'expands into']
-    if any(t in content for t in launch_terms):
-        # Extra check: is it financial product related?
-        fin_terms = ['fixed deposit', 'fd', 'savings', 'investment',
-                     'credit', 'loan', 'banking', 'wealth', 'insurance']
-        if any(t in content for t in fin_terms):
-            return ("PRODUCT_LAUNCH", "HIGH")
+                    'new feature', 'expands into', 'launches feature']
+    fin_terms = ['fixed deposit', 'fd', 'savings', 'investment',
+                 'credit', 'loan', 'banking', 'wealth', 'insurance', 'trading',
+                 'mutual fund', 'stocks', 'payment', 'crypto', 'bitcoin']
+    
+    has_launch = any(t in content for t in launch_terms)
+    has_fin = any(t in content for t in fin_terms)
+    
+    if has_launch and has_fin:
+        return ("PRODUCT_LAUNCH", "HIGH")
+    if has_launch and company_in_content:
         return ("PRODUCT_LAUNCH", "MEDIUM")
 
-    # LEADERSHIP_HIRE — require 2+ leadership indicators
-    leadership_terms = ['appoints', 'appointed', 'names new',
-                        'hires', 'joins as', 'ceo', 'cto', 'cfo',
-                        'chief', 'vp of', 'head of', 'director of']
-    if sum(1 for t in leadership_terms if t in content) >= 2:
-        return ("LEADERSHIP_HIRE", "MEDIUM")
-
-    # PARTNERSHIP — explicit partnership language
-    if any(t in content for t in ['partners with', 'partnership with',
-                                   'integrates with', 'ties up with']):
+    # PARTNERSHIP — strategic alignments
+    partnership_terms = ['partners with', 'partnership with',
+                        'integrates with', 'ties up with', 'partners',
+                        'integration', 'collaborates with', 'collaboration']
+    has_partnership = any(t in content for t in partnership_terms)
+    
+    if has_partnership and company_in_content:
         return ("PARTNERSHIP", "MEDIUM")
 
-    # Skip regulatory (move to separate detector if needed)
-    # Skip generic news — no boost value
+    # LEADERSHIP_HIRE — team growth
+    leadership_terms = ['appoints', 'appointed', 'names', 'hires',
+                        'joins as', 'ceo', 'cto', 'cfo', 'chief',
+                        'vp of', 'head of', 'director of']
+    leadership_count = sum(1 for t in leadership_terms if t in content)
+    
+    if leadership_count >= 2 and company_in_content:
+        return ("LEADERSHIP_HIRE", "MEDIUM")
+
+    # Not enough signal
     return (None, None)
 
 

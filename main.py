@@ -140,8 +140,9 @@ def run_discovery_background(job_id: str):
         discovery_jobs[job_id]["progress"] = "Calculating WHEN scores with temporal signals..."
         try:
             logger.info("Recalculating WHEN scores with monitoring events...")
-            from signals.timing import get_all_when_scores
-            get_all_when_scores()
+            from signals.timing import save_all_when_scores
+            when_count = save_all_when_scores()
+            logger.info(f"Persisted WHEN scores for {when_count} prospects")
         except Exception as e:
             logger.error(f"WHEN score calculation failed: {e}")
         
