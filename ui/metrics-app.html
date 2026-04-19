@@ -55,19 +55,56 @@
             font-size: 0.95rem;
             font-weight: 500;
             transition: all 0.3s;
+            white-space: nowrap;
         }
 
         .nav-buttons a.active {
             background: #2563eb;
             color: white;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
         }
 
         .nav-buttons a:not(.active) {
             color: #334155;
+            border: 1px solid transparent;
         }
 
         .nav-buttons a:not(.active):hover {
             background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #334155;
+        }
+
+        .nav-buttons.mobile-open {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            gap: 0;
+            z-index: 99;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .nav-buttons.mobile-open a {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            border-radius: 0;
+        }
+
+        .nav-buttons.mobile-open a:last-child {
+            border-bottom: none;
         }
 
         .container {
@@ -260,6 +297,18 @@
             .pattern-metrics {
                 grid-template-columns: 1fr;
             }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .nav-buttons {
+                display: none;
+            }
+
+            .nav-buttons.mobile-open {
+                display: flex;
+            }
         }
     </style>
 </head>
@@ -267,7 +316,8 @@
     <header>
         <div class="header-content">
             <div class="logo">Blostem ACTIVATE</div>
-            <nav class="nav-buttons">
+            <button class="menu-toggle" id="menu-toggle">☰</button>
+            <nav class="nav-buttons" id="nav-buttons">
                 <a href="dashboard.html">Dashboard</a>
                 <a href="interventions.html">Interventions</a>
                 <a href="contacts-app.html">Contacts</a>
@@ -305,6 +355,25 @@
     </div>
 
     <script>
+        // Mobile Menu Toggle
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.getElementById('menu-toggle');
+            const navButtons = document.getElementById('nav-buttons');
+            
+            if (menuToggle && navButtons) {
+                menuToggle.addEventListener('click', () => {
+                    navButtons.classList.toggle('mobile-open');
+                });
+
+                // Close menu when a link is clicked
+                navButtons.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        navButtons.classList.remove('mobile-open');
+                    });
+                });
+            }
+        });
+
         async function loadMetrics() {
             try {
                 const metrics = await api.getInterventionMetrics();
