@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Request
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db, remove_non_prospects, get_monitoring_events
@@ -299,6 +299,53 @@ def clean_seed_data():
         }
     except Exception as e:
         logger.error(f"Cleanup failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+@app.post("/api/admin/restore-db")
+async def restore_db(request: Request):
+    """Restore database from base64-encoded upload.
+    
+    Used to upload your local pragma.db file to Render's ephemeral storage.
+    
+    Request body: {"db_data": "base64-encoded-database"}
+    
+    DELETE THIS ENDPOINT AFTER USE — it's only for emergency data restoration.
+    """
+    import base64
+    import os
+    
+    try:
+        body = await request.json()
+        db_b64 = body.get("db_data")
+        
+        if not db_b64:
+            return {"error": "No db_data provided in request"}
+        
+        # Decode base64
+        db_bytes = base64.b64decode(db_b64)
+        
+        # Write to pragma.db
+        db_path = os.environ.get("DB_PATH", "pragma.db")
+        with open(db_path, 'wb') as f:
+            f.write(db_bytes)
+        
+        logger.info(f"Database restored from upload: {len(db_bytes)} bytes → {db_path}")
+        
+        # Verify it worked by checking prospect count
+        with get_db() as conn:
+            prospect_count = conn.execute("SELECT COUNT(*) as c FROM prospects").fetchone()['c']
+            signal_count = conn.execute("SELECT COUNT(*) as c FROM signals").fetchone()['c']
+        
+        return {
+            "status": "restored",
+            "size_bytes": len(db_bytes),
+            "prospects_in_db": prospect_count,
+            "signals_in_db": signal_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Database restore failed: {e}")
         return {"status": "error", "error": str(e)}
 
 
