@@ -349,6 +349,29 @@ async def restore_db(request: Request):
         logger.error(f"Database restore failed: {e}")
         return {"status": "error", "error": str(e)}
 
+@app.get("/api/admin/backup-db")
+def backup_db():
+    """Export database for backup.
+    
+    Returns the pragma.db file as a downloadable attachment.
+    Use this to backup all prospects, signals, and monitoring events.
+    """
+    import os
+    
+    db_path = os.environ.get("DB_PATH", "pragma.db")
+    
+    if not os.path.exists(db_path):
+        return {"error": "Database file not found"}
+    
+    try:
+        return FileResponse(
+            path=db_path,
+            media_type="application/octet-stream",
+            filename="pragma-backup.db"
+        )
+    except Exception as e:
+        logger.error(f"Database backup failed: {e}")
+        return {"status": "error", "error": str(e)}
 
 @app.post("/api/enrich")
 def trigger_enrichment():
