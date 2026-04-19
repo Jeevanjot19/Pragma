@@ -716,7 +716,7 @@
   .activation-card.green-card { border-left: 3px solid var(--green); }
   .ac-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .ac-name { font-family: var(--font-head); font-size: 14px; font-weight: 700; flex: 1; word-wrap: break-word; overflow-wrap: break-word; }
-  .ac-body { font-size: 12px; color: var(--text3); margin-bottom: 12px; line-height: 1.5; font-family: var(--font-mono); word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-height: 80px; overflow-y: auto; }
+  .ac-body { font-size: 12px; color: var(--text3); margin-bottom: 12px; line-height: 1.5; font-family: var(--font-mono); word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-height: 240px; overflow-y: auto; }
   .ac-footer { display: flex; align-items: center; gap: 8px; }
 
   /* ─── EVENT TIMELINE ──────────────────────────────────── */
@@ -2680,7 +2680,16 @@ async function markResolved(partnerId, pattern, btn) {
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ pattern, resolution: 'Marked resolved via dashboard' })
   });
-  if (data) { toast('Stall marked as resolved', 'green'); loadActivation(); }
+  if (data) { 
+    toast('Stall marked as resolved', 'green'); 
+    // Remove the card immediately from view
+    const card = btn.closest('.activation-card');
+    if (card) {
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(10px)';
+      setTimeout(() => card.remove(), 200);
+    }
+  }
   else btn.disabled = false;
 }
 

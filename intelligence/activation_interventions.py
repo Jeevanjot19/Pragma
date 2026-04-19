@@ -352,13 +352,6 @@ def check_email_compliance(subject: str, body: str) -> dict:
             score -= 12
             is_compliant = False
     
-    # Check for excessive ALL CAPS words (spam indicator)
-    caps_words = re.findall(r'\b[A-Z]{2,}\b', body)
-    if len(caps_words) >= 3:
-        warnings.append({"type": "EXCESSIVE_CAPS", "message": f"Too many ALL CAPS words ({len(caps_words)}+) - looks like spam", "severity": "warning"})
-        score -= 20
-        is_compliant = False
-    
     # Check for too many links (spam indicator)
     links = re.findall(r'https?://\S+', body)
     if len(links) > 2:
