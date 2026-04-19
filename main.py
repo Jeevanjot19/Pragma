@@ -66,14 +66,52 @@ def about2():
 
 @app.post("/api/discover")
 def trigger_discovery():
-    news_result = run_news_monitor()
-    remove_non_prospects()
+    """Run full discovery pipeline: news extraction → enrichment → scoring → monitoring.
     
-    # Enrich known prospects with Play Store data
-    from discovery.play_store import enrich_all_prospects
-    enrich_all_prospects()
+    Runs all steps in order, with error handling so that scoring always runs at the end.
+    This ensures prospects get WHO and WHEN scores even if some steps fail.
+    """
+    news_result = {"new_prospects": 0, "error": None}
     
-    recalculate_all_scores()
+    # Step 1: Extract prospects from news
+    try:
+        logger.info("Starting discovery: running news monitor...")
+        news_result = run_news_monitor()
+    except Exception as e:
+        logger.error(f"News monitor failed: {e}")
+        news_result["error"] = str(e)
+    
+    # Step 2: Remove non-prospects (always safe)
+    try:
+        remove_non_prospects()
+    except Exception as e:
+        logger.error(f"Non-prospect removal failed: {e}")
+    
+    # Step 3: Enrich with Play Store data (doesn't use Groq)
+    try:
+        logger.info("Enriching prospects with Play Store data...")
+        from discovery.play_store import enrich_all_prospects
+        enrich_all_prospects()
+    except Exception as e:
+        logger.error(f"Play Store enrichment failed: {e}")
+    
+    # Step 4: Populate monitoring events (temporal signals for WHEN score)
+    try:
+        logger.info("Running monitoring pipeline to populate temporal signals...")
+        from discovery.company_monitor import run_full_monitoring
+        run_full_monitoring()
+    except Exception as e:
+        logger.error(f"Monitoring pipeline failed: {e}")
+    
+    # Step 5: Calculate and persist scores - ALWAYS RUNS
+    # This ensures all prospects get WHO and WHEN scores
+    try:
+        logger.info("Calculating and persisting WHO/WHEN scores...")
+        recalculate_all_scores()
+    except Exception as e:
+        logger.error(f"Score calculation failed: {e}")
+        news_result["error"] = str(e)
+    
     return {"status": "complete", **news_result}
 
 @app.post("/api/enrich")
