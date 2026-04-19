@@ -11,10 +11,19 @@ from outreach.generator import generate_outreach_package
 from database import get_db
 from pydantic import BaseModel
 from typing import Optional
+import threading
+import uuid
+import logging
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
-# Pydantic Models for API Request Bodies
+# Discovery Job Management (Async Background Tasks)
 # ============================================================================
+# In-memory job store for tracking discovery progress
+# In production, use a real job queue (Celery + Redis) or Render Background Workers
+discovery_jobs = {}
 
 class ApiCallLog(BaseModel):
     """Webhook payload for logging partner API calls."""
@@ -64,55 +73,160 @@ def root():
 def about2():
     return FileResponse("pragma-about2.html", media_type="text/html")
 
+
+def run_discovery_background(job_id: str):
+    """Runs the full discovery pipeline in a background thread.
+    
+    This allows the HTTP endpoint to return immediately while discovery 
+    runs in the background. Frontend polls /api/discover/status/{job_id} to track progress.
+    
+    Solves Render's 30-second timeout issue for 12-minute discovery runs.
+    """
+    try:
+        discovery_jobs[job_id] = {
+            "status": "running",
+            "started_at": datetime.now().isoformat(),
+            "progress": "Starting news monitor...",
+            "result": None,
+            "error": None
+        }
+        
+        # Step 1: Extract prospects from news
+        discovery_jobs[job_id]["progress"] = "Running news monitor (10–15 minutes)..."
+        news_result = {"new_prospects": 0, "error": None}
+        try:
+            logger.info("Starting discovery: running news monitor...")
+            news_result = run_news_monitor()
+        except Exception as e:
+            logger.error(f"News monitor failed: {e}")
+            news_result["error"] = str(e)
+        
+        # Step 2: Remove non-prospects (always safe)
+        discovery_jobs[job_id]["progress"] = "Cleaning non-prospects..."
+        try:
+            remove_non_prospects()
+        except Exception as e:
+            logger.error(f"Non-prospect removal failed: {e}")
+        
+        # Step 3: Enrich with Play Store data (doesn't use Groq)
+        discovery_jobs[job_id]["progress"] = "Enriching from Play Store..."
+        try:
+            logger.info("Enriching prospects with Play Store data...")
+            from discovery.play_store import enrich_all_prospects
+            enrich_all_prospects()
+        except Exception as e:
+            logger.error(f"Play Store enrichment failed: {e}")
+        
+        # Step 4: Populate monitoring events (temporal signals for WHEN score)
+        discovery_jobs[job_id]["progress"] = "Running company monitoring (temporal signals)..."
+        try:
+            logger.info("Running monitoring pipeline to populate temporal signals...")
+            run_full_monitoring()
+        except Exception as e:
+            logger.error(f"Monitoring pipeline failed: {e}")
+        
+        # Step 5: Calculate and persist scores - ALWAYS RUNS
+        discovery_jobs[job_id]["progress"] = "Calculating WHO and WHEN scores..."
+        try:
+            logger.info("Calculating and persisting WHO/WHEN scores...")
+            recalculate_all_scores()
+        except Exception as e:
+            logger.error(f"Score calculation failed: {e}")
+            news_result["error"] = str(e)
+        
+        # Mark complete
+        discovery_jobs[job_id].update({
+            "status": "complete",
+            "completed_at": datetime.now().isoformat(),
+            "progress": "Done!",
+            "result": {
+                "new_prospects": news_result.get("new_prospects", 0),
+                "error": news_result.get("error")
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Discovery job {job_id} failed: {e}")
+        discovery_jobs[job_id].update({
+            "status": "failed",
+            "error": str(e),
+            "completed_at": datetime.now().isoformat()
+        })
+
+
 @app.post("/api/discover")
 def trigger_discovery():
-    """Run full discovery pipeline: news extraction → enrichment → scoring → monitoring.
+    """Kick off discovery in background, return immediately with job ID.
     
-    Runs all steps in order, with error handling so that scoring always runs at the end.
-    This ensures prospects get WHO and WHEN scores even if some steps fail.
+    Frontend should poll /api/discover/status/{job_id} to track progress.
+    
+    This solves the Render 30-second timeout for 12-minute discovery runs.
+    Instead of waiting for the entire pipeline, the endpoint returns instantly
+    and discovery runs as a background thread.
+    
+    Returns:
+        {
+            "status": "started",
+            "job_id": "abc123de",
+            "message": "Discovery started in background. Poll for updates.",
+            "poll_url": "/api/discover/status/abc123de"
+        }
     """
-    news_result = {"new_prospects": 0, "error": None}
     
-    # Step 1: Extract prospects from news
-    try:
-        logger.info("Starting discovery: running news monitor...")
-        news_result = run_news_monitor()
-    except Exception as e:
-        logger.error(f"News monitor failed: {e}")
-        news_result["error"] = str(e)
+    # Check if already running
+    for job in discovery_jobs.values():
+        if job["status"] == "running":
+            return {
+                "status": "already_running",
+                "message": "Discovery is already in progress. Wait for it to finish.",
+                "jobs": {k: v for k, v in discovery_jobs.items()}
+            }
     
-    # Step 2: Remove non-prospects (always safe)
-    try:
-        remove_non_prospects()
-    except Exception as e:
-        logger.error(f"Non-prospect removal failed: {e}")
+    # Create job with unique ID
+    job_id = str(uuid.uuid4())[:8]
     
-    # Step 3: Enrich with Play Store data (doesn't use Groq)
-    try:
-        logger.info("Enriching prospects with Play Store data...")
-        from discovery.play_store import enrich_all_prospects
-        enrich_all_prospects()
-    except Exception as e:
-        logger.error(f"Play Store enrichment failed: {e}")
+    # Kick off background thread
+    thread = threading.Thread(
+        target=run_discovery_background,
+        args=(job_id,),
+        daemon=True
+    )
+    thread.start()
     
-    # Step 4: Populate monitoring events (temporal signals for WHEN score)
-    try:
-        logger.info("Running monitoring pipeline to populate temporal signals...")
-        from discovery.company_monitor import run_full_monitoring
-        run_full_monitoring()
-    except Exception as e:
-        logger.error(f"Monitoring pipeline failed: {e}")
+    return {
+        "status": "started",
+        "job_id": job_id,
+        "message": "Discovery started in background. Poll /api/discover/status for updates.",
+        "poll_url": f"/api/discover/status/{job_id}"
+    }
+
+
+@app.get("/api/discover/status/{job_id}")
+def get_discovery_status(job_id: str):
+    """Poll this endpoint to check discovery progress.
     
-    # Step 5: Calculate and persist scores - ALWAYS RUNS
-    # This ensures all prospects get WHO and WHEN scores
-    try:
-        logger.info("Calculating and persisting WHO/WHEN scores...")
-        recalculate_all_scores()
-    except Exception as e:
-        logger.error(f"Score calculation failed: {e}")
-        news_result["error"] = str(e)
+    Frontend should call this every 5-10 seconds while status is "running".
     
-    return {"status": "complete", **news_result}
+    Returns:
+        {
+            "status": "running|complete|failed",
+            "progress": "Current step...",
+            "started_at": "2025-04-19T10:30:00",
+            "completed_at": "2025-04-19T10:45:00" (only if complete/failed),
+            "result": { "new_prospects": 45, "error": null },
+            "error": "Error message if failed"
+        }
+    """
+    if job_id not in discovery_jobs:
+        return {"error": f"Job {job_id} not found"}
+    return discovery_jobs[job_id]
+
+
+@app.get("/api/discover/status")
+def get_all_discovery_status():
+    """Get status of all discovery jobs (current and historical)."""
+    return discovery_jobs
+
 
 @app.post("/api/enrich")
 def trigger_enrichment():
