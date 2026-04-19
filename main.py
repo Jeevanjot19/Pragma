@@ -240,6 +240,162 @@ def get_all_discovery_status():
     return discovery_jobs
 
 
+# ============================================================================
+# PIPELINE DEMO MODE - For Product Demos & Investor Pitches
+# ============================================================================
+# Shows a realistic, animated simulation of the discovery pipeline using
+# actual database data. Makes it look like the pipeline is running without
+# actually running it (which takes 12+ minutes and consumes API tokens).
+
+def generate_demo_run_logs():
+    """Generate realistic simulated pipeline logs using actual database data.
+    
+    Returns a list of log entries with timestamps spread over ~60 seconds,
+    showing the full pipeline: feeds → discovery → WHO/WHEN scoring.
+    """
+    import random
+    
+    # Get actual data from database
+    with get_db() as conn:
+        prospects_count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
+        signals_count = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
+        hot_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='HOT'").fetchone()[0]
+        warm_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='WARM'").fetchone()[0]
+        watch_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='WATCH'").fetchone()[0]
+        
+        # Get sample company names for realistic logs
+        companies = conn.execute(
+            "SELECT name FROM prospects ORDER BY RANDOM() LIMIT 15"
+        ).fetchall()
+        company_names = [c[0] for c in companies]
+    
+    logs = []
+    time_offset = 0  # Seconds into the "run"
+    
+    # Stage 1: Initializing (0-5 seconds)
+    logs.append({"time": time_offset, "stage": "init", "message": "🔍 Initializing discovery pipeline..."})
+    time_offset += 2
+    logs.append({"time": time_offset, "stage": "init", "message": "✓ Connected to news sources"})
+    time_offset += 3
+    
+    # Stage 2: News Monitor (5-20 seconds) - fetching feeds
+    logs.append({"time": time_offset, "stage": "news", "message": "📰 Running news monitor..."})
+    time_offset += 2
+    logs.append({"time": time_offset, "stage": "news", "message": "📡 Fetching TechCrunch updates..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "news", "message": "📡 Fetching Product Hunt updates..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "news", "message": "📡 Fetching AngelList updates..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "news", "message": "📡 Fetching VentureBeat updates..."})
+    time_offset += 2
+    
+    # Stage 3: Company Discovery (20-35 seconds) - finding companies
+    logs.append({"time": time_offset, "stage": "discovery", "message": "🔎 Discovering companies from feeds..."})
+    time_offset += 1
+    
+    # Simulate incremental discovery
+    for i, company in enumerate(company_names[:12]):
+        logs.append({"time": time_offset, "stage": "discovery", "message": f"✓ Found {company}"})
+        time_offset += 1 if i % 3 == 0 else 0.5
+    
+    logs.append({"time": time_offset, "stage": "discovery", "message": f"✓ Total: {prospects_count} companies discovered"})
+    time_offset += 1
+    
+    # Stage 4: Cleaning (35-40 seconds)
+    logs.append({"time": time_offset, "stage": "clean", "message": "🧹 Removing non-prospects..."})
+    time_offset += 2
+    logs.append({"time": time_offset, "stage": "clean", "message": "✓ Filtered to qualified prospects"})
+    time_offset += 1
+    
+    # Stage 5: WHO Scoring (40-48 seconds) - fit scoring
+    logs.append({"time": time_offset, "stage": "who", "message": "📊 Calculating WHO scores (fit)..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "who", "message": f"✓ {hot_count} HOT prospects (fit score 70-100)"})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "who", "message": f"✓ {warm_count} WARM prospects (fit score 40-70)"})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "who", "message": f"✓ {watch_count} WATCH prospects (fit score <40)"})
+    time_offset += 2
+    
+    # Stage 6: Monitoring (48-56 seconds) - temporal signals
+    logs.append({"time": time_offset, "stage": "monitor", "message": "📡 Running company monitoring (temporal signals)..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "monitor", "message": "✓ Detecting funding events..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "monitor", "message": "✓ Detecting product launches..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "monitor", "message": "✓ Detecting app updates..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "monitor", "message": f"✓ Found {signals_count} temporal signals"})
+    time_offset += 2
+    
+    # Stage 7: WHEN Scoring (56-60 seconds) - urgency scoring
+    logs.append({"time": time_offset, "stage": "when", "message": "⏰ Calculating WHEN scores (urgency)..."})
+    time_offset += 1
+    logs.append({"time": time_offset, "stage": "when", "message": f"✓ Prioritized {hot_count} HOT prospects with timing signals"})
+    time_offset += 2
+    
+    # Stage 8: Complete (60+ seconds)
+    logs.append({"time": time_offset, "stage": "complete", "message": "✅ Discovery pipeline complete!"})
+    
+    return logs
+
+
+@app.post("/api/pipeline/demo-run")
+def run_demo_pipeline():
+    """Run a realistic demo simulation of the discovery pipeline.
+    
+    This endpoint is used in product demos/investor pitches to show the pipeline
+    working with actual data, without the 12+ minute runtime or API token cost.
+    
+    It generates realistic logs spread over ~60 seconds and returns the actual
+    prospect/signal counts from the database.
+    
+    Returns:
+        {
+            "status": "demo_complete",
+            "logs": [...list of log entries with timestamps...],
+            "duration_seconds": 60,
+            "result": {
+                "total_prospects": 49,
+                "hot_prospects": 18,
+                "warm_prospects": 19,
+                "watch_prospects": 12,
+                "total_signals": 41
+            }
+        }
+    """
+    try:
+        with get_db() as conn:
+            prospects_count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
+            signals_count = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
+            hot_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='HOT'").fetchone()[0]
+            warm_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='WARM'").fetchone()[0]
+            watch_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='WATCH'").fetchone()[0]
+        
+        logs = generate_demo_run_logs()
+        
+        return {
+            "status": "demo_complete",
+            "logs": logs,
+            "duration_seconds": 60,
+            "result": {
+                "total_prospects": prospects_count,
+                "hot_prospects": hot_count,
+                "warm_prospects": warm_count,
+                "watch_prospects": watch_count,
+                "total_signals": signals_count
+            }
+        }
+    except Exception as e:
+        logger.error(f"Demo pipeline failed: {e}")
+        return {
+            "status": "demo_failed",
+            "error": str(e)
+        }
+
+
 @app.post("/api/admin/clean-seeds")
 def clean_seed_data():
     """Remove hardcoded seed prospects (source=null, signal_count=0) that corrupt real data.
