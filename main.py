@@ -585,7 +585,7 @@ def trigger_enrichment():
         "warm_prospects": warm
     }
 
-@app.get("/api/status")
+@app.api_route("/api/status", methods=["GET", "HEAD"])
 def get_status():
     """Check if the backend is ready and has data."""
     with get_db() as conn:
