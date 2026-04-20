@@ -703,7 +703,7 @@ def get_prospects(status: str = None, limit: int = 50):
                    COUNT(s.id) as signal_count
                    FROM prospects p
                    LEFT JOIN signals s ON s.prospect_id = p.id
-                   WHERE p.status = ? AND p.is_existing_partner = 0
+                   WHERE p.status = ? AND p.is_existing_partner = 0 AND p.is_excluded = 0
                    GROUP BY p.id
                    ORDER BY p.who_score DESC
                    LIMIT ?""",
@@ -715,7 +715,7 @@ def get_prospects(status: str = None, limit: int = 50):
                    COUNT(s.id) as signal_count
                    FROM prospects p
                    LEFT JOIN signals s ON s.prospect_id = p.id
-                   WHERE p.is_existing_partner = 0
+                   WHERE p.is_existing_partner = 0 AND p.is_excluded = 0
                    GROUP BY p.id
                    ORDER BY p.who_score DESC
                    LIMIT ?""",
@@ -752,29 +752,29 @@ def get_stats():
     """Dashboard stats for WHO layer."""
     with get_db() as conn:
         total = conn.execute(
-            "SELECT COUNT(*) as c FROM prospects WHERE is_existing_partner = 0"
+            "SELECT COUNT(*) as c FROM prospects WHERE is_existing_partner = 0 AND is_excluded = 0"
         ).fetchone()['c']
         
         hot = conn.execute(
-            "SELECT COUNT(*) as c FROM prospects WHERE status = 'HOT'"
+            "SELECT COUNT(*) as c FROM prospects WHERE status = 'HOT' AND is_excluded = 0"
         ).fetchone()['c']
         
         warm = conn.execute(
-            "SELECT COUNT(*) as c FROM prospects WHERE status = 'WARM'"
+            "SELECT COUNT(*) as c FROM prospects WHERE status = 'WARM' AND is_excluded = 0"
         ).fetchone()['c']
         
         watch = conn.execute(
-            "SELECT COUNT(*) as c FROM prospects WHERE status = 'WATCH'"
+            "SELECT COUNT(*) as c FROM prospects WHERE status = 'WATCH' AND is_excluded = 0"
         ).fetchone()['c']
         
         displacement = conn.execute(
-            "SELECT COUNT(*) as c FROM prospects WHERE using_competitor IS NOT NULL"
+            "SELECT COUNT(*) as c FROM prospects WHERE using_competitor IS NOT NULL AND is_excluded = 0"
         ).fetchone()['c']
         
         by_product = conn.execute(
             """SELECT recommended_product, COUNT(*) as count 
                FROM prospects 
-               WHERE is_existing_partner = 0
+               WHERE is_existing_partner = 0 AND is_excluded = 0
                GROUP BY recommended_product"""
         ).fetchall()
     

@@ -234,6 +234,7 @@ def get_all_when_scores() -> list:
         prospects = conn.execute("""
             SELECT id FROM prospects
             WHERE is_existing_partner = 0
+            AND is_excluded = 0
             ORDER BY who_score DESC
         """).fetchall()
 
@@ -278,6 +279,7 @@ def get_weekly_priorities() -> dict:
 
     return {
         'generated_at': datetime.now().isoformat(),
+        'all_prospects': all_scores,
         'call_this_week': [
             s for s in all_scores if s['action'] == 'CALL THIS WEEK'
         ],
