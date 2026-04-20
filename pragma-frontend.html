@@ -3183,19 +3183,19 @@ async function runDiscovery() {
         <div style="font-size: 20px; font-weight: 600; color: var(--green);">
           <span id="stat-hot">0</span>
         </div>
-        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">🔥 HOT</div>
+        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">HOT</div>
       </div>
       <div style="text-align: center; padding: 8px; border-radius: 6px; background: rgba(245,200,66,0.08);">
         <div style="font-size: 20px; font-weight: 600; color: var(--yellow);">
           <span id="stat-warm">0</span>
         </div>
-        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">🔥 WARM</div>
+        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">WARM</div>
       </div>
       <div style="text-align: center; padding: 8px; border-radius: 6px; background: rgba(255,77,106,0.08);">
         <div style="font-size: 20px; font-weight: 600; color: var(--orange);">
           <span id="stat-signals">0</span>
         </div>
-        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">⚡ Signals</div>
+        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">Signals</div>
       </div>
     `;
     container.appendChild(statsSection);
@@ -3249,10 +3249,10 @@ async function runDiscovery() {
           
           // Color-code based on log type
           let iconAndColor = '→ ';
-          if (log.message.includes('HOT')) iconAndColor = '🔥 ';
-          else if (log.message.includes('WARM')) iconAndColor = '⚡ ';
-          else if (log.message.includes('signal')) iconAndColor = '⭐ ';
-          else if (log.message.includes('complete') || log.message.includes('Found')) iconAndColor = '✓ ';
+          if (log.message.includes('HOT')) iconAndColor = '';
+          else if (log.message.includes('WARM')) iconAndColor = '';
+          else if (log.message.includes('signal')) iconAndColor = '';
+          else if (log.message.includes('complete') || log.message.includes('Found')) iconAndColor = '';
           
           logLine.style.cssText = `
             margin-bottom: 6px;
@@ -3281,7 +3281,7 @@ async function runDiscovery() {
         
         // Update header
         header.innerHTML = `
-          <div style="color: var(--green); font-size: 20px;">✅</div>
+          <div style="color: var(--green); font-size: 20px;">✓</div>
           <div>
             <div style="font-weight: 600; color: var(--text1);">Pipeline Complete</div>
             <div style="font-size: 12px; color: var(--text3); margin-top: 2px;">All prospects scored and ready</div>
@@ -3293,7 +3293,7 @@ async function runDiscovery() {
         
         // Show success message
         setTimeout(() => {
-          toast(`✅ Demo complete! ${result.hot_prospects} HOT + ${result.warm_prospects} WARM prospects ready.`, 'green');
+          toast(`Demo complete! ${result.hot_prospects} HOT + ${result.warm_prospects} WARM prospects ready.`, 'green');
         }, 300);
 
         // Auto-close after 3 seconds
