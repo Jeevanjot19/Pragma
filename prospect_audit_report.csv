@@ -1,0 +1,136 @@
+Rank,Prospect Name,Category,Status,WHO Score,WHEN Score,Action,Install Count,Signal Type,Signal Title,Signal Strength,Monitoring Events Count,Last Event Type,Last Event Date,Has FD,Has RD,Has Bonds,Has UPI Credit,Has Mutual Funds,Has Stocks,Has Insurance,Recommended Product,Description
+1,Bachatt,savings,HOT,80,50,CALL THIS WEEK,"1,000,000+",PRODUCT_GAP,Bachatt needs RD SDK,HIGH,5,APP_UPDATE,2026-04-20,1,0,0,0,1,0,0,RD SDK,"<a href=""https://www.google.com/url?q=https%3A%2F%2Fwww.bachatt.app%2F&sa=D&sntz=1&usg=AOvVaw0_KDUxY"
+,,,,,,,,FUNDING_EXPANSION,"Raised 12, plans to add expand AI-led savings, credit play",HIGH,,,,,,,,,,,,
+,,,,,,,,FUNDING_EXPANSION,"Raised 12, plans to add expand AI savings",HIGH,,,,,,,,,,,,
+,,,,,,,,FUNDING_EXPANSION,"Raised 4, plans to add revolutionise daily savings",HIGH,,,,,,,,,,,,
+2,Kreditbee,lending,HOT,65,50,CALL THIS WEEK,"10,000,000+",PRODUCT_GAP,Kreditbee needs Credit on UPI,HIGH,6,PRODUCT_MILESTONE,2026-04-17,0,0,0,0,0,0,0,Credit on UPI,
+,,,,,,,,FUNDING_EXPANSION,"Raised 120, plans to add pre-IPO raise",HIGH,,,,,,,,,,,,
+3,Stashfin,neobank,HOT,65,45,EMAIL THIS WEEK,"10,000,000+",PRODUCT_GAP,Stashfin needs RD SDK,HIGH,5,APP_UPDATE,2026-04-20,0,0,0,0,0,0,0,RD SDK,"Stashfin is an online personal loan app trusted by over 4 Crore Indians.
+ 
+Download the Stashfin l"
+,,,,,,,,FUNDING_EXPANSION,"Raised 270, plans to add expansion",HIGH,,,,,,,,,,,,
+4,StockGro,wealth,HOT,65,39,SEND INTRO EMAIL,"10,000,000+",PRODUCT_GAP,StockGro needs FD + RD SDK,HIGH,3,APP_UPDATE,2026-04-20,0,0,0,0,0,0,0,FD + RD SDK,"🚀 Simplify Your Trading Journey with StockGro – Your All-in-One Stock Market Companion
+Unlock smart"
+,,,,,,,,FUNDING_EXPANSION,"Raised Rs 150 Cr, plans to add expansion plans",HIGH,,,,,,,,,,,,
+5,Gullak,savings,WARM,55,50,CALL THIS WEEK,"1,000,000+",PRODUCT_GAP,Gullak needs RD SDK,HIGH,6,APP_UPDATE,2026-04-20,0,0,0,0,1,0,0,RD SDK,"Introducing Gullak: India’s #1 Gold Savings App ✨
+The easiest, smartest, and most trusted way to Sa"
+,,,,,,,,FUNDING_EXPANSION,"Raised 7.5, plans to add expand reach, strengthen brand",HIGH,,,,,,,,,,,,
+6,PhonePe,payment,WARM,45,5,MONITOR,"100,000,000+",PRODUCT_GAP,PhonePe needs Credit on UPI,HIGH,4,USER_MILESTONE,2026-04-14,0,0,0,0,0,0,0,Credit on UPI,
+7,PB Fintech,wealth,WARM,45,19,MONITOR,,PRODUCT_GAP,PB Fintech needs FD SDK,HIGH,3,PARTNERSHIP,2026-04-08,0,0,0,0,0,0,0,FD + RD SDK,
+,,,,,,,,FUNDING_EXPANSION,"Raised 313.84, plans to add investment in UAE insurance market",HIGH,,,,,,,,,,,,
+8,Airtel Payments Bank,neobank,HOT,40,38,SEND INTRO EMAIL,"50,000,000+",,,,2,PARTNERSHIP,2026-04-07,1,1,1,1,1,1,1,FD + RD SDK,Airtel Payments Bank has 500M+ Airtel users and 100M+ active banking users. Regulatory cap of ₹2L me
+9,JioFinance,neobank,WARM,35,55,CALL THIS WEEK,"10,000,000+",PRODUCT_GAP,JioFinance needs RD SDK,HIGH,4,APP_UPDATE,2026-04-20,1,0,0,0,1,0,1,RD SDK,JioFinance is an all-in-one app to manage your money smartly. From secure UPI and bill payments to m
+10,Jar,savings,WARM,35,50,CALL THIS WEEK,"10,000,000+",PRODUCT_GAP,Jar needs RD SDK,HIGH,3,APP_UPDATE,2026-04-20,0,0,0,0,0,0,1,RD SDK,"We at Jar think <b>“Everyone can Buy Digital Gold”</b>, No matter how small the amount is. Saving Mo"
+11,Groww,broker,WATCH,30,7,MONITOR,"5,000,000+",PRODUCT_GAP,Groww needs FD + RD SDK,HIGH,4,FEATURE_EXPANSION,2026-04-17,0,0,0,0,0,0,0,FD + RD SDK,
+12,Nuvama,wealth,WATCH,25,15,MONITOR,"1,000,000+",PRODUCT_GAP,Nuvama needs FD + RD SDK,HIGH,2,PRODUCT_UPDATE,2026-04-17,0,0,0,0,1,1,0,FD + RD SDK,"<h1>Trading & Investing App for Stocks, Mutual Funds, IPOs & More – Nuvama Markets</h1>
+⭐ 4.5★ Rate"
+13,Fi Money,neobank,WATCH,25,10,MONITOR,"1,000,000+",PRODUCT_GAP,Fi Money needs RD SDK,HIGH,4,FEATURE_LAUNCH,2026-04-15,0,0,0,0,0,0,0,RD SDK,
+14,Niyo,neobank,WATCH,25,13,MONITOR,"1,000,000+",PRODUCT_GAP,Niyo needs RD SDK,HIGH,3,USER_GROWTH,2026-04-12,0,0,0,0,0,0,0,RD SDK,"Niyo Card With Zero Forex Markup Charges
+24-hour doorstep delivery | Assisted KYC verification
+1M+"
+15,ZET,payment,WATCH,25,5,MONITOR,"1,000,000+",PRODUCT_GAP,ZET needs Credit on UPI,HIGH,3,USER_GROWTH,2026-04-17,1,0,0,0,0,0,0,Credit on UPI,<b>Increase Your Credit Score to 750+ | RuPay Credit Card for UPI | Cashback on 80+ Leading Brands |
+16,Fino Payments Bank,neobank,WARM,25,20,MONITOR,"5,000,000+",,,,2,PARTNERSHIP,2026-03-10,1,1,1,1,0,1,1,FD SDK,"Fino Payments Bank serves 13M+ customers, strong in semi-urban/rural. Same regulatory constraint as "
+17,India Post Payments Bank,neobank,WATCH,20,20,MONITOR,"10,000,000+",,,,1,PRODUCT_LAUNCH,2026-02-12,1,0,1,0,1,1,0,FD SDK,India Post Payments Bank has 650Cr+ accounts and 650+ district HQs. Regulatory cap means no own FD i
+18,Credilio,lending,WATCH,19,5,MONITOR,"100,000+",PRODUCT_GAP,Credilio needs Credit on UPI,HIGH,4,PRODUCT_MILESTONE,2026-04-18,0,0,0,0,0,0,0,Credit on UPI,"With the Credilio Pro app, you can:
+
+★ Access India’s first truly digital loans & cards selling ap"
+19,PayU,payment,WATCH,15,5,MONITOR,"5,000,000+",,,,1,USER_MILESTONE,2026-01-31,0,0,0,0,0,0,0,Credit on UPI,
+20,BharatPe,payment,WATCH,15,5,MONITOR,"5,000,000+",,,,3,USER_MILESTONE,2026-03-22,0,0,0,0,0,0,0,Credit on UPI,
+21,Moneyview,lending,WATCH,15,5,MONITOR,"5,000,000+",,,,2,REGULATORY,2026-02-02,0,0,0,0,0,0,0,FD SDK,
+22,NAVI,lending,WATCH,15,5,MONITOR,"5,000,000+",,,,3,REGULATORY,2026-03-24,0,0,0,0,0,0,0,FD SDK,
+23,LazyPay,lending,WATCH,15,5,MONITOR,"5,000,000+",,,,1,PRODUCT_LAUNCH,2026-02-07,0,0,0,0,0,0,0,Credit on UPI,
+24,FamPay,neobank,WATCH,15,10,MONITOR,,PRODUCT_GAP,FamPay needs FD SDK,HIGH,4,PRODUCT_UPDATE,2026-04-14,0,0,0,0,1,0,0,RD SDK,India first neobank for teens and young adults. Launched FamInvest MF product 2024. 2025 roadmap inc
+25,OneCard,lending,WATCH,10,6,MONITOR,"1,000,000+",,,,3,USER_MILESTONE,2026-04-13,0,0,0,0,0,0,0,FD-backed Credit Card infrastructure,
+26,Slice,lending,WATCH,10,5,MONITOR,"1,000,000+",,,,1,REGULATORY,2026-03-22,0,0,0,0,0,0,0,FD SDK,
+27,Niyo Global,neobank,WATCH,7,24,NURTURE,"500,000+",,,,2,PRODUCT_LAUNCH,2026-04-09,0,0,0,0,0,0,0,RD SDK,
+28,"Groww Stock, Mutual Fund, Gold",,WATCH,0,20,MONITOR,,,,,0,,,0,1,1,0,1,1,0,,"<b><font color=""#00D09C"">Groww</font></b> is India's No.1 Stock Broker 🏆, trusted by 4 Crore+ Indian"
+29,"INDmoney: Stocks, Mutual Funds",,WATCH,0,20,MONITOR,,,,,0,,,1,1,1,0,1,1,0,,"<h2>Invest In Indian & US Share Market from One App</h2>
+INDmoney is a share market app that lets y"
+30,Dhan: Share Market Trading App,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"Trusted by 1 Mn+ users, Dhan is the go-to trading app for traders & investors seeking speed, advance"
+31,"Angel One: Stocks, Mutual Fund",,WATCH,0,25,NURTURE,,,,,0,,,1,1,1,0,1,1,1,,"Angel One is for Everyone. Built on over 25 years of experience, it is trusted by 3.5 crore+ Indians"
+32,Upstox Stocks IPO Mutual Funds,,WATCH,0,25,NURTURE,,,,,0,,,1,1,1,0,1,1,1,,"Welcome to <font color=""#59288A"">Upstox</font>! We're here to help you Invest Right in Stocks, Mutua"
+33,Investing.com: Stock Market,,WATCH,0,15,MONITOR,,,,,0,,,0,0,1,0,0,1,0,,Join the millions of people using the Investing.com app every day to stay on top of the stock market
+34,HDFC SKY: Demat Stocks IPO MF,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"Expand your investment horizons with <b>HDFC SKY</b> by <b>HDFC Securities</b>, a leading stock mark"
+35,"ET Money Mutual Fund, SIF, SIP",,WATCH,0,25,NURTURE,,,,,0,,,1,1,1,0,1,1,1,,"<b>ET Money: All Your Wealth. One Intelligent App</b>
+
+ET Money helps you plan, invest, grow & man"
+36,"MO RIISE: Stocks, IPO & Demat",,WATCH,0,20,MONITOR,,,,,0,,,0,1,1,0,1,1,0,,40 lakh+ users. 37+ years of expertise. One app to manage all your investments in the stock market—M
+37,E*TRADE: Invest. Trade. Save.,,WATCH,0,15,MONITOR,,,,,0,,,1,1,0,0,1,1,0,,"Welcome to E*TRADE from Morgan Stanley, where we simplify investing and trading no matter your exper"
+38,"Univest: Stocks, F&O, Equity",,WATCH,0,10,MONITOR,,,,,0,,,0,1,0,0,0,1,0,,"Simplify your investment journey with Univest, an all-in-one stock market platform for every investo"
+39,SBI Securities: Stocks & SIP,,WATCH,0,20,MONITOR,,,,,0,,,1,1,1,0,1,1,0,,"SBI Securities is the Investing & Trading App for All. With over 25+ years of experience, trusted by"
+40,"Invest BharatPe: Gold, FD, MF",,WATCH,0,15,MONITOR,,,,,0,,,1,1,0,0,1,0,1,,"​​<b>Invest BharatPe - A Simple Way to Turn Daily Savings Into Long-Term Wealth.</b>
+
+Invest Bhara"
+41,mStock: Demat & Stock Trading,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"<h1>Start Your Trading Journey with m.Stock by Mirae Asset!</h1>
+
+With the m.Stock online investme"
+42,Axis Mutual Fund Invest Online,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"The Official Mobile App of Axis Mutual Fund for Investors
+
+Fast, simple & paperless investments wi"
+43,Tickertape: US & Indian Stocks,,WATCH,0,20,MONITOR,,,,,0,,,1,1,0,0,1,1,1,,"Smarter investing starts with Tickertape. Research stocks, mutual funds, and ETFs across Indian and "
+44,"5paisa: Stocks, MF, F&O App",,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,Join our community of <b>50 lakh+ smart investors and traders</b> who manage all their market needs 
+45,"SMC Ace: Demat, Stocks & IPO",,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"
+<b> SMC Ace - Your trusted stock trading app and mutual fund app for the Indian share market. </b>"
+46,Zerodha Kite - Trade & Invest,,WATCH,0,20,MONITOR,,,,,0,,,0,1,1,0,1,1,0,,Zerodha Kite is our flagship trading app for the share market. We serve over 1.6 crore customers acr
+47,"smallcase: Stocks, MFs, FDs",,WATCH,0,20,MONITOR,,,,,0,,,1,1,0,0,1,1,1,,smallcase is a stock and mutual fund investment app that helps you invest in diversified model portf
+48,Money Saver - Savings Goal,,WATCH,0,5,MONITOR,,,,,0,,,0,1,0,0,0,0,0,,Start saving smarter with Money Saver – the ultimate app to save money and reach your savings goal. 
+49,Aura - India's Gold Saving App,,WATCH,0,5,MONITOR,,,,,0,,,0,1,0,0,0,0,0,,"⭐ Introducing Aura Gold , your premier destination for buying, selling, and saving gold. With its fr"
+50,Savings Goal,,WATCH,0,5,MONITOR,,,,,0,,,0,1,0,0,0,0,0,,"Ever dream of having a nice trip to Paris with your love, new flagship smartphone, new car, travel a"
+51,JamJars: Savings Tracker,,WATCH,0,10,MONITOR,,,,,0,,,0,1,0,0,0,1,0,,Most people have one bank account and five different goals. JamJars gives you a separate jar for eac
+52,Saving Diary - Money Manager,,WATCH,0,5,MONITOR,,,,,0,,,0,1,0,0,0,0,0,,"Saving Diary: Expense Tracker & Budget Planner
+
+Take control of your money with Saving Diary, the "
+53,Savings Tracker - Goal Tracker,,WATCH,0,5,MONITOR,,,,,0,,,0,1,0,0,0,0,0,,"Welcome to Savings Tracker
+
+Want to monitor your saving you set for your goal? I know it's kind of"
+54,Savings Challenge,,WATCH,0,5,MONITOR,,,,,0,,,0,1,0,0,0,0,0,,It's already a great thing to think about and even start on saving up money for your goals - like to
+55,"Stable Money: FDs, Bonds, Gold",,WATCH,0,25,NURTURE,,,,,0,,,1,1,1,0,1,1,1,,"🌟 Join 30L+ Indians & grow your wealth with Stable Money & Stable Bonds – a secure, paperless platfo"
+56,Money Box Savings Goal Tracker,,WATCH,0,5,MONITOR,,,,,0,,,0,1,0,0,0,0,0,,Money Box Savings Goal Tracker is your go-to app for managing and achieving your financial goals wit
+57,Savings Goal: Piggy Bank,,WATCH,0,10,MONITOR,,,,,0,,,0,1,0,0,1,0,0,,"Savings Goal: Piggy Bank — Money Saving & Budget Tracker App
+Achieve your savings goals faster with"
+58,Spare8: Digital Gold Invest,,WATCH,0,5,MONITOR,,,,,0,,,1,1,0,0,0,0,0,,"Spare8 is a digital gold savings and investment app built for users who want a safe, transparent and"
+59,"Fi Money: Savings, Card, Loans",,WATCH,0,20,MONITOR,,,,,0,,,0,1,0,0,1,1,1,,"<h1>Take Control of Your Finances with Fi: Investing, Banking, and Beyond💸</h1>
+Fi Money, working w"
+60,Nippon India Mutual Fund,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"Nippon India Mutual Fund App – The Best Platform for Smarter Investing
+
+NIMF App is your one-stop "
+61,INDIA MUTUAL FUND BAZAAR,,WATCH,0,10,MONITOR,,,,,0,,,0,0,0,0,1,0,0,,"Its all about Mutual Funds! Plan for better, Invest better and earn better – use our easy to use mob"
+62,MINTIT: SIP & Mutual Fund App,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"💡Welcome To MINTIT – India’s Trusted Mutual Fund App
+
+Do you want to invest in mutual funds but do"
+63,FundsIndia: Mutual Funds & SIP,,WATCH,0,15,MONITOR,,,,,0,,,1,1,0,0,1,1,0,,Welcome to FundsIndia – your trusted online investment platform designed to simplify mutual fund inv
+64,BANK OF INDIA MUTUAL FUND,,WATCH,0,10,MONITOR,,,,,0,,,0,1,0,0,1,0,0,,"Welcome to the official Bank of India Mutual Fund App (BOIMF) - designed for investors seeking fast,"
+65,SBI Mutual Fund - InvesTap Nxt,,WATCH,0,15,MONITOR,,,,,0,,,0,0,0,0,1,1,0,,"""Investap Nxt - the latest offering by India's largest AMC now offers two new powerful features:
+
+"
+66,Sahi : Options & Stock Trading,,WATCH,0,10,MONITOR,,,,,0,,,0,1,0,0,0,1,0,,"Sahi – Precision Trading for Active F&O, Equity Intraday Traders & Investors
+Designed for High Perf"
+67,Bajaj Broking: Demat & Trading,,WATCH,0,20,MONITOR,,,,,0,,,0,1,1,0,1,1,0,,"<b>Bajaj Broking - India's Trusted Trading App for Mutual Fund, SIP, IPO Investment,  along with Sto"
+68,StockEdge: Stock Market App,,WATCH,0,15,MONITOR,,,,,0,,,0,0,0,0,1,1,0,,"<b>StockEdge</b> is a SEBI-regulated stock market analytics platform, designed for traders & investo"
+69,Share.Market: Stocks & Trading,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"<b>Share.Market by PhonePe - India's Leading Stock Market & Investment App</b>
+
+Your trusted onlin"
+70,TradingView: Track All Markets,,WATCH,0,20,MONITOR,,,,,0,,,1,0,1,0,1,1,0,,"Simple for beginners and effective for technical analysis experts, TradingView has all of the instru"
+71,Ms india wealth,,WATCH,0,10,MONITOR,,,,,0,,,0,0,0,0,1,0,0,,"MS INDIA FINANCIAL SERVICES is an AMFI Certified Mutual Fund Distributor.
+
+Emergence of MS INDIA F"
+72,Wealth Monitor: MF & Stocks,,WATCH,0,10,MONITOR,,,,,0,,,0,1,0,0,1,0,0,,Wealth Monitor is a powerful financial tool designed to help you make smarter investment decisions. 
+73,InvestMates: AI Wealth Manager,,WATCH,0,25,NURTURE,,,,,0,,,1,1,1,0,1,1,1,,"Welcome to InvestMates, the All-in-One AI Wealth Management app for Indians worldwide,  where we've "
+74,Wealthy Partner - MFDs & IFAs,,WATCH,0,25,NURTURE,,,,,0,,,1,1,1,0,1,1,1,,"<b>Wealthy Partners App</b>  is one of the fastest-growing 🚀 apps made for mutual fund distributors,"
+75,Genvest- AI Wealth Management,,WATCH,0,10,MONITOR,,,,,0,,,0,1,0,0,1,0,0,,"Genvest – AI-Powered Wealth Management for Smarter Investing
+
+Genvest helps you manage, track, and"
+76,Manavi Wealth,,WATCH,0,25,NURTURE,,,,,0,,,1,1,1,0,1,1,1,,Manavi Wealth is one-stop solution for all your Wealth Management needs. You can use this state of t
+77,Nivesh Wealth Management App,,WATCH,0,20,MONITOR,,,,,0,,,1,1,1,0,1,0,1,,"Nivesh: Your Ultimate Wealth Management & Investment Partner! 
+
+Invest smarter, grow faster! Nives"
+78,Dezerv: Mutual Funds & Stocks,,WATCH,0,15,MONITOR,,,,,0,,,1,1,0,0,1,1,0,,"Stop juggling multiple investment apps. Dezerv brings all your Mutual Funds, Stocks, NPS, FDs and ot"
+79,RailOne,,WATCH,0,10,MONITOR,,,,,0,,,0,1,0,0,1,0,0,,"RailOne: Your All-in-One App by Indian Railways
+RailOne is a comprehensive app developed by Indian "
+80,"MobiKwik: Loans, UPI & Wallet",,WATCH,0,20,MONITOR,,,,,0,,,1,1,1,0,1,1,0,,"MobiKwik is India’s favourite app for <b>instant loans up to ₹15 Lakhs</b>, seamless <b>UPI payments"
+81,"Bajaj Finserv: Loans, UPI & FD",,WATCH,0,15,MONITOR,,,,,0,,,1,1,0,0,1,0,1,,The <b>Bajaj Finserv</b> UPI & Loan App is trusted by 50 million+ customers across India for their f
+82,5nance - Wealth Management,,WATCH,0,20,MONITOR,,,,,0,,,0,1,0,0,1,1,1,,"⭐ Join India’s leading Performance Driven Wealth Management Platform, which offers AI Based Advisory"
+83,My Wealth Galaxy,,WATCH,0,5,MONITOR,,,,,0,,,0,1,0,0,0,0,0,,Wealth Galaxy is your smart digital payments and rewards platform designed to simplify your daily fi
+84,CoinDCX: Bitcoin Crypto App,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"Download CoinDCX Bitcoin crypto app to instantly buy, sell, & trade Bitcoin(BTC), Ethereum(ETH), XRP"
+85,RN Wealth Client,,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"RN Wealth Offering Online Equity, Mutual-Fund, SIP. RN Wealth helps us personalize and frequently im"
+86,"Motilal Oswal MF, PMS & AIF",,WATCH,0,15,MONITOR,,,,,0,,,0,1,0,0,1,1,0,,"<h2>Introducing Motilal Oswal AMC Mobile App: Your Ultimate Investment Companion for Mutual Funds, P"
