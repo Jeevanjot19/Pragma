@@ -368,18 +368,18 @@ def run_demo_pipeline():
     """
     try:
         with get_db() as conn:
-            prospects_count = conn.execute("SELECT COUNT(*) FROM prospects").fetchone()[0]
+            prospects_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE is_excluded=0").fetchone()[0]
             signals_count = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
-            hot_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='HOT'").fetchone()[0]
-            warm_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='WARM'").fetchone()[0]
-            watch_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='WATCH'").fetchone()[0]
+            hot_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='HOT' AND is_excluded=0").fetchone()[0]
+            warm_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='WARM' AND is_excluded=0").fetchone()[0]
+            watch_count = conn.execute("SELECT COUNT(*) FROM prospects WHERE status='WATCH' AND is_excluded=0").fetchone()[0]
         
         logs = generate_demo_run_logs()
         
         return {
             "status": "demo_complete",
             "logs": logs,
-            "duration_seconds": 60,
+            "duration_seconds": 45,
             "result": {
                 "total_prospects": prospects_count,
                 "hot_prospects": hot_count,

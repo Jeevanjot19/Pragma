@@ -462,6 +462,7 @@
   }
   @keyframes slideIn { from { transform: translateX(40px); opacity:0; } to { transform: none; opacity:1; } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideInLeft { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 
   .drawer-header {
     padding: 20px 24px;
@@ -3160,32 +3161,41 @@ async function runDiscovery() {
     `;
     container.appendChild(logsContainer);
 
-    // Stats section
+    // Stats section with live counters
     const statsSection = document.createElement('div');
+    statsSection.id = 'demo-stats';
     statsSection.style.cssText = `
       padding: 16px 20px;
       border-top: 1px solid var(--border);
-      background: var(--bg1);
+      background: linear-gradient(135deg, rgba(0,212,255,0.05) 0%, rgba(157,110,255,0.05) 100%);
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     `;
     statsSection.innerHTML = `
-      <div style="text-align: center;">
-        <div style="font-size: 20px; font-weight: 600; color: var(--accent);">${result.total_prospects || 0}</div>
+      <div style="text-align: center; padding: 8px; border-radius: 6px; background: rgba(0,212,255,0.08);">
+        <div style="font-size: 20px; font-weight: 600; color: var(--accent);">
+          <span id="stat-total">0</span>
+        </div>
         <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">Total Prospects</div>
       </div>
-      <div style="text-align: center;">
-        <div style="font-size: 20px; font-weight: 600; color: var(--green);">${result.hot_prospects || 0}</div>
-        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">HOT (High Fit)</div>
+      <div style="text-align: center; padding: 8px; border-radius: 6px; background: rgba(0,229,153,0.08);">
+        <div style="font-size: 20px; font-weight: 600; color: var(--green);">
+          <span id="stat-hot">0</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">🔥 HOT</div>
       </div>
-      <div style="text-align: center;">
-        <div style="font-size: 20px; font-weight: 600; color: var(--yellow);">${result.warm_prospects || 0}</div>
-        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">WARM (Medium Fit)</div>
+      <div style="text-align: center; padding: 8px; border-radius: 6px; background: rgba(245,200,66,0.08);">
+        <div style="font-size: 20px; font-weight: 600; color: var(--yellow);">
+          <span id="stat-warm">0</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">🔥 WARM</div>
       </div>
-      <div style="text-align: center;">
-        <div style="font-size: 20px; font-weight: 600; color: var(--orange);">${result.total_signals || 0}</div>
-        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">Signals Found</div>
+      <div style="text-align: center; padding: 8px; border-radius: 6px; background: rgba(255,77,106,0.08);">
+        <div style="font-size: 20px; font-weight: 600; color: var(--orange);">
+          <span id="stat-signals">0</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">⚡ Signals</div>
       </div>
     `;
     container.appendChild(statsSection);
@@ -3206,6 +3216,7 @@ async function runDiscovery() {
     // Animate logs
     const startTime = Date.now();
     const logElements = [];
+    let displayedHot = 0, displayedWarm = 0, displayedSignals = 0, displayedTotal = 0;
     
     const animateLogs = setInterval(() => {
       const elapsed = (Date.now() - startTime) / 1000;
@@ -3214,16 +3225,45 @@ async function runDiscovery() {
       // Update progress bar
       document.getElementById('demo-progress-fill').style.width = (progress * 100) + '%';
 
+      // Animate stat counters smoothly
+      const targetTotal = Math.floor(progress * (result.total_prospects || 0));
+      const targetHot = Math.floor(progress * (result.hot_prospects || 0));
+      const targetWarm = Math.floor(progress * (result.warm_prospects || 0));
+      const targetSignals = Math.floor(progress * (result.total_signals || 0));
+      
+      if (targetTotal > displayedTotal) document.getElementById('stat-total').textContent = targetTotal;
+      if (targetHot > displayedHot) document.getElementById('stat-hot').textContent = targetHot;
+      if (targetWarm > displayedWarm) document.getElementById('stat-warm').textContent = targetWarm;
+      if (targetSignals > displayedSignals) document.getElementById('stat-signals').textContent = targetSignals;
+      
+      displayedTotal = targetTotal;
+      displayedHot = targetHot;
+      displayedWarm = targetWarm;
+      displayedSignals = targetSignals;
+
       // Add logs that have reached their time
       logs.forEach((log, idx) => {
         if (log.time <= elapsed && !logElements.includes(idx)) {
           logElements.push(idx);
           const logLine = document.createElement('div');
+          
+          // Color-code based on log type
+          let iconAndColor = '→ ';
+          if (log.message.includes('HOT')) iconAndColor = '🔥 ';
+          else if (log.message.includes('WARM')) iconAndColor = '⚡ ';
+          else if (log.message.includes('signal')) iconAndColor = '⭐ ';
+          else if (log.message.includes('complete') || log.message.includes('Found')) iconAndColor = '✓ ';
+          
           logLine.style.cssText = `
-            margin-bottom: 8px;
-            animation: fadeIn 0.3s ease-in;
+            margin-bottom: 6px;
+            padding: 4px 8px;
+            border-left: 2px solid var(--accent);
+            border-radius: 2px;
+            animation: slideInLeft 0.3s ease-out;
+            font-size: 11px;
+            color: var(--text2);
           `;
-          logLine.textContent = log.message;
+          logLine.textContent = iconAndColor + log.message;
           logsContainer.appendChild(logLine);
           logsContainer.scrollTop = logsContainer.scrollHeight;
         }
@@ -3233,12 +3273,18 @@ async function runDiscovery() {
       if (progress >= 1) {
         clearInterval(animateLogs);
         
+        // Update counters to final values
+        document.getElementById('stat-total').textContent = result.total_prospects;
+        document.getElementById('stat-hot').textContent = result.hot_prospects;
+        document.getElementById('stat-warm').textContent = result.warm_prospects;
+        document.getElementById('stat-signals').textContent = result.total_signals;
+        
         // Update header
         header.innerHTML = `
-          <div style="color: var(--green); font-size: 20px;">[DONE]</div>
+          <div style="color: var(--green); font-size: 20px;">✅</div>
           <div>
             <div style="font-weight: 600; color: var(--text1);">Pipeline Complete</div>
-            <div style="font-size: 12px; color: var(--text3); margin-top: 2px;">Demo simulation finished</div>
+            <div style="font-size: 12px; color: var(--text3); margin-top: 2px;">All prospects scored and ready</div>
           </div>
         `;
         
@@ -3247,7 +3293,7 @@ async function runDiscovery() {
         
         // Show success message
         setTimeout(() => {
-          toast(`✅ Demo complete! View your ${result.hot_prospects} HOT prospects in the dashboard.`, 'green');
+          toast(`✅ Demo complete! ${result.hot_prospects} HOT + ${result.warm_prospects} WARM prospects ready.`, 'green');
         }, 300);
 
         // Auto-close after 3 seconds
