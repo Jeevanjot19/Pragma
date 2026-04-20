@@ -229,12 +229,11 @@ def calculate_when_score(prospect_id: int) -> dict:
 
 
 def get_all_when_scores() -> list:
-    """Get WHEN scores for all qualified prospects. Returns sorted by when_score DESC."""
+    """Get WHEN scores for ALL prospects (not just HOT/WARM). Returns sorted by when_score DESC."""
     with get_db() as conn:
         prospects = conn.execute("""
             SELECT id FROM prospects
             WHERE is_existing_partner = 0
-            AND status IN ('HOT', 'WARM')
             ORDER BY who_score DESC
         """).fetchall()
 
